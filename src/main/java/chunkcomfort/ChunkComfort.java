@@ -1,5 +1,6 @@
 package chunkcomfort;
 
+import chunkcomfort.handlers.ForgeConfigHandler;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.Instance;
 import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
@@ -23,11 +24,15 @@ public class ChunkComfort {
 	@Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {
         ModRegistry.init();
+        ForgeConfigHandler.initialize();
 
+        // Run test
+        chunkcomfort.handlers.RegistryTest.runTest();
     }
 
     @Mod.EventHandler
     public void postInit(FMLPostInitializationEvent event) {
         completedLoading = true;
     }
+
 }
