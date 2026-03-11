@@ -6,9 +6,6 @@ import net.minecraft.util.ResourceLocation;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * Registry for fire blocks
- */
 public class FireBlockRegistry {
 
     private static final Set<Block> FIRE_BLOCKS = new HashSet<>();
@@ -25,24 +22,26 @@ public class FireBlockRegistry {
         FIRE_BLOCKS.clear();
     }
 
-    /**
-     * Reload registry from config strings
-     * Each line is a block ID, e.g. minecraft:torch
-     */
     public static void reload(String[] configLines) {
+
         clear();
 
         if (configLines == null) return;
 
-        for (int i = 0; i < configLines.length; i++) {
-            String blockId = configLines[i].trim();
+        for (String blockId : configLines) {
+
+            blockId = blockId.trim();
+
             if (blockId.isEmpty()) continue;
 
             try {
+
                 Block block = Block.REGISTRY.getObject(new ResourceLocation(blockId));
+
                 if (block != null) {
                     register(block);
                 }
+
             } catch (Exception ignored) {}
         }
     }
