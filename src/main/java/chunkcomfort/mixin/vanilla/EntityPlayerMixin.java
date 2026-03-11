@@ -1,4 +1,4 @@
-package replacememodid.mixin.vanilla;
+package chunkcomfort.mixin.vanilla;
 
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.DamageSource;
@@ -7,7 +7,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import replacememodid.ReplaceMeModName;
+import chunkcomfort.ChunkComfort;
 
 @Mixin(EntityPlayer.class)
 public abstract class EntityPlayerMixin {
@@ -16,7 +16,7 @@ public abstract class EntityPlayerMixin {
             method = "attackEntityFrom",
             at = @At("HEAD")
     )
-    public void replacememodid_vanillaEntityPlayer_attackEntityFrom(DamageSource source, float amount, CallbackInfoReturnable<Boolean> cir) {
-        ReplaceMeModName.LOGGER.log(Level.INFO, "Player attacked");
+    public void chunkcomfort_vanillaEntityPlayer_attackEntityFrom(DamageSource source, float amount, CallbackInfoReturnable<Boolean> cir) {
+        ChunkComfort.LOGGER.log(Level.INFO, "Player attacked");
     }
 }

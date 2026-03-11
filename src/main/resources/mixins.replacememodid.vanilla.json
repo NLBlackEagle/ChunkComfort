@@ -1,7 +1,7 @@
 {
   "required": true,
-  "package": "replacememodid.mixin",
-  "refmap": "mixins.replacememodid.refmap.json",
+  "package": "chunkcomfort.mixin",
+  "refmap": "mixins.chunkcomfort.refmap.json",
   "compatibilityLevel": "JAVA_8",
   "target": "@env(DEFAULT)",
   "minVersion": "0.8",

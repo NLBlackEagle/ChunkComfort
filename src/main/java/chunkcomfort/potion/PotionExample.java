@@ -1,4 +1,4 @@
-package replacememodid.potion;
+package chunkcomfort.potion;
 
 import net.minecraft.entity.EntityLivingBase;
 

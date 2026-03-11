@@ -1,17 +1,17 @@
-package replacememodid;
+package chunkcomfort;
 
 import java.util.Map;
 import org.spongepowered.asm.launch.MixinBootstrap;
 import net.minecraftforge.fml.relauncher.IFMLLoadingPlugin;
 
 @IFMLLoadingPlugin.MCVersion("1.12.2")
-public class ReplaceMeModNamePlugin implements IFMLLoadingPlugin {
+public class ChunkComfortPlugin implements IFMLLoadingPlugin {
 
-	public ReplaceMeModNamePlugin() {
+	public ChunkComfortPlugin() {
 		MixinBootstrap.init();
 		//False for Vanilla/Coremod mixins, true for regular mod mixins
-		//FermiumRegistryAPI.enqueueMixin(false, "mixins.replacememodid.vanilla.json");
-		//FermiumRegistryAPI.enqueueMixin(true, "mixins.replacememodid.jei.json", () -> Loader.isModLoaded("jei"));
+		//FermiumRegistryAPI.enqueueMixin(false, "mixins.chunkcomfort.vanilla.json");
+		//FermiumRegistryAPI.enqueueMixin(true, "mixins.chunkcomfort.jei.json", () -> Loader.isModLoaded("jei"));
 		//--> Replaced by @MixinConfig.MixinToggle in ForgeConfigHandler. This way is still an option for more complicated conditions
 	}
 
