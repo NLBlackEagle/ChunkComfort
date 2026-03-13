@@ -33,31 +33,43 @@ public class CommandChunkComfort extends CommandBase {
 
             BlockPos pos = sender.getPosition();
 
-            Chunk chunk = sender.getEntityWorld().getChunk(pos);
+            int playerChunkX = pos.getX() >> 4;
+            int playerChunkZ = pos.getZ() >> 4;
 
-            ChunkComfortData data = chunk.getCapability(ChunkComfortCapability.CHUNK_COMFORT_CAP, null);
+            int totalComfort = 0;
+            int totalFire = 0;
+            int countedChunks = 0;
 
-            if (data == null) {
-                sender.sendMessage(new TextComponentString("Chunk comfort data not initialized."));
-                return;
+            sender.sendMessage(new TextComponentString("Chunk Comfort Info (3x3):"));
+
+            for (int dx = -1; dx <= 1; dx++) {
+                for (int dz = -1; dz <= 1; dz++) {
+
+                    Chunk chunk = sender.getEntityWorld().getChunk(playerChunkX + dx, playerChunkZ + dz);
+
+                    ChunkComfortData data = chunk.getCapability(ChunkComfortCapability.CHUNK_COMFORT_CAP, null);
+
+                    if (data == null) continue;
+
+                    totalComfort += data.comfortScore;
+                    totalFire += data.fireCount;
+                    countedChunks++;
+
+                    sender.sendMessage(new TextComponentString(
+                            "Chunk [" + (playerChunkX + dx) + "," + (playerChunkZ + dz) + "] " +
+                                    "Comfort: " + data.comfortScore +
+                                    ", Fire: " + data.fireCount
+                    ));
+                }
             }
 
-            sender.sendMessage(new TextComponentString("Chunk Comfort Info:"));
-            sender.sendMessage(new TextComponentString("Comfort Score: " + data.comfortScore));
-            sender.sendMessage(new TextComponentString("Fire Count: " + data.fireCount));
-            sender.sendMessage(new TextComponentString("Initialized: " + data.initialized));
-            sender.sendMessage(new TextComponentString("Groups:"));
+            sender.sendMessage(new TextComponentString("-------------------"));
+            sender.sendMessage(new TextComponentString("Total Comfort (3x3): " + totalComfort));
+            sender.sendMessage(new TextComponentString("Total Fire (3x3): " + totalFire));
 
-            data.groups.forEach((name, group) -> {
-
-                sender.sendMessage(new TextComponentString(
-                        "  " + name +
-                                " -> Limit: " + group.limit +
-                                ", CurrentScore: " + group.currentScore +
-                                ", Counts: " + group.counts
-                ));
-
-            });
+            if (countedChunks > 0) {
+                sender.sendMessage(new TextComponentString("Average Comfort: " + (totalComfort / countedChunks)));
+            }
         }
     }
 }
