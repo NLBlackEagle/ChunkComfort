@@ -1,36 +1,104 @@
 package chunkcomfort.chunk;
 
-import chunkcomfort.comfort.GroupScoreCalculator;
 import net.minecraft.block.Block;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
+
 import chunkcomfort.chunk.ChunkComfortData.GroupData;
 import chunkcomfort.registry.BlockComfortEntry;
 import chunkcomfort.registry.BlockComfortRegistry;
 import chunkcomfort.registry.FireBlockRegistry;
 
 import java.util.ArrayDeque;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Queue;
 
-public class ChunkBlockUpdateScheduler {
+public class ChunkUpdateManager {
 
     private static final int MAX_BLOCK_UPDATES_PER_TICK = 10;
-    private static final Queue<BlockUpdate> updateQueue = new ArrayDeque<>();
+    private static final int MAX_CHUNKS_PER_TICK = 5;
 
-    /** Add a block update to the queue */
-    public static void queueBlockUpdate(World world, BlockPos pos, Block oldBlock, Block newBlock) {
-        updateQueue.add(new BlockUpdate(world, pos, oldBlock, newBlock));
+    private static final Queue<BlockUpdate> blockUpdateQueue = new ArrayDeque<>();
+    private static final Queue<Chunk> chunkScanQueue = new ArrayDeque<>();
+
+    private static final Map<EntityPlayer, PlayerChunkData> lastPlayerChunk = new HashMap<>();
+
+
+    /* ---------------- INITIALIZATION ---------------- */
+
+    public static void initChunkIfNeeded(Chunk chunk) {
+
+        ChunkComfortData data = chunk.getCapability(ChunkComfortCapability.CHUNK_COMFORT_CAP, null);
+
+        if (data == null || data.initialized) return;
+
+        queueChunkForScan(chunk);
     }
 
-    /** Process queued block updates; call this once per server tick */
-    public static void processQueue() {
+
+    /* ---------------- BLOCK UPDATE QUEUE ---------------- */
+
+    public static void queueBlockUpdate(World world, BlockPos pos, Block oldBlock, Block newBlock) {
+        blockUpdateQueue.add(new BlockUpdate(world, pos, oldBlock, newBlock));
+    }
+
+
+    /* ---------------- CHUNK SCAN QUEUE ---------------- */
+
+    public static void queueChunkForScan(Chunk chunk) {
+
+        ChunkComfortData data = chunk.getCapability(ChunkComfortCapability.CHUNK_COMFORT_CAP, null);
+
+        if (data != null && !data.initialized) {
+            chunkScanQueue.add(chunk);
+        }
+    }
+
+
+    /* ---------------- PROCESS TICK ---------------- */
+
+    public static void processQueues() {
+
+        processChunkScans();
+        processBlockUpdates();
+    }
+
+
+    /* ---------------- PROCESS CHUNK SCANS ---------------- */
+
+    private static void processChunkScans() {
 
         int processed = 0;
 
-        while (processed < MAX_BLOCK_UPDATES_PER_TICK && !updateQueue.isEmpty()) {
+        while (processed < MAX_CHUNKS_PER_TICK && !chunkScanQueue.isEmpty()) {
 
-            BlockUpdate update = updateQueue.poll();
+            Chunk chunk = chunkScanQueue.poll();
+            if (chunk == null) continue;
+
+            ChunkComfortData data = chunk.getCapability(ChunkComfortCapability.CHUNK_COMFORT_CAP, null);
+
+            if (data != null && !data.initialized) {
+                ChunkComfortScanner.scanChunk(chunk);
+                data.initialized = true;
+            }
+
+            processed++;
+        }
+    }
+
+
+    /* ---------------- PROCESS BLOCK UPDATES ---------------- */
+
+    private static void processBlockUpdates() {
+
+        int processed = 0;
+
+        while (processed < MAX_BLOCK_UPDATES_PER_TICK && !blockUpdateQueue.isEmpty()) {
+
+            BlockUpdate update = blockUpdateQueue.poll();
             if (update == null) continue;
 
             Chunk chunk = update.world.getChunk(update.pos);
@@ -43,10 +111,8 @@ public class ChunkBlockUpdateScheduler {
                 data.initialized = true;
             }
 
-            int oldGroupDelta = 0;
-            int newGroupDelta = 0;
+            /* OLD BLOCK */
 
-            // OLD BLOCK
             if (update.oldBlock != null) {
 
                 BlockComfortEntry oldEntry = BlockComfortRegistry.get(update.oldBlock);
@@ -61,10 +127,7 @@ public class ChunkBlockUpdateScheduler {
 
                         if (count > 0) {
                             group.counts.put(oldEntry.getValue(), count - 1);
-                            group.currentScore = Math.max(0, group.currentScore - oldEntry.getValue());
                         }
-
-                        oldGroupDelta = oldEntry.getValue();
                     }
                 }
 
@@ -73,7 +136,8 @@ public class ChunkBlockUpdateScheduler {
                 }
             }
 
-            // NEW BLOCK
+            /* NEW BLOCK */
+
             if (update.newBlock != null) {
 
                 BlockComfortEntry newEntry = BlockComfortRegistry.get(update.newBlock);
@@ -84,9 +148,6 @@ public class ChunkBlockUpdateScheduler {
 
                     group.limit = newEntry.getLimit();
                     group.counts.merge(newEntry.getValue(), 1, Integer::sum);
-                    group.currentScore += newEntry.getValue();
-
-                    newGroupDelta = newEntry.getValue();
                 }
 
                 if (FireBlockRegistry.contains(update.newBlock)) {
@@ -94,18 +155,24 @@ public class ChunkBlockUpdateScheduler {
                 }
             }
 
-            for (ChunkComfortData.GroupData gd : data.groups.values()) {
+            /* RECALCULATE SCORES */
+
+            for (GroupData gd : data.groups.values()) {
                 GroupScoreCalculator.calculate(gd);
             }
 
             data.comfortScore =
-                    data.groups.values().stream()
+                    data.groups.values()
+                            .stream()
                             .mapToInt(gd -> gd.currentScore)
                             .sum();
 
             processed++;
         }
     }
+
+
+    /* ---------------- INTERNAL DATA ---------------- */
 
     private static class BlockUpdate {
 
@@ -119,6 +186,17 @@ public class ChunkBlockUpdateScheduler {
             this.pos = pos;
             this.oldBlock = oldBlock;
             this.newBlock = newBlock;
+        }
+    }
+
+    private static class PlayerChunkData {
+
+        int x;
+        int z;
+
+        PlayerChunkData(int x, int z) {
+            this.x = x;
+            this.z = z;
         }
     }
 }

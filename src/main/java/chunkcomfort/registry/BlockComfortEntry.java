@@ -14,19 +14,8 @@ public class BlockComfortEntry {
         this.group = group;
     }
 
-    public String getBlockId() {
-        return blockId;
-    }
-
-    public int getValue() {
-        return value;
-    }
-
-    public int getLimit() {
-        return limit;
-    }
-
-    public String getGroup() {
-        return group;
-    }
+    public String getBlockId() { return blockId; }
+    public int getValue() { return value; }
+    public int getLimit() { return limit; }
+    public String getGroup() { return group; }
 }

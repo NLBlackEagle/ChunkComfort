@@ -1,5 +1,6 @@
-package chunkcomfort.handlers;
+package chunkcomfort.debug;
 
+import chunkcomfort.handlers.ForgeConfigHandler;
 import chunkcomfort.registry.BlockComfortRegistry;
 import chunkcomfort.registry.FireBlockRegistry;
 import chunkcomfort.registry.ComfortEffectRegistry;

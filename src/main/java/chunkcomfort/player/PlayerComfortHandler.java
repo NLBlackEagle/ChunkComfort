@@ -1,8 +1,8 @@
-package chunkcomfort.handlers;
+package chunkcomfort.player;
 
 import chunkcomfort.chunk.ChunkComfortCapability;
 import chunkcomfort.chunk.ChunkComfortData;
-import chunkcomfort.player.PlayerComfortStorage;
+import chunkcomfort.handlers.ForgeConfigHandler;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
@@ -24,7 +24,7 @@ public class PlayerComfortHandler {
         if (player.ticksExisted % ForgeConfigHandler.server.comfortCheckInterval != 0) return;
 
         Chunk chunk = player.world.getChunk(player.chunkCoordX, player.chunkCoordZ);
-        chunkcomfort.chunk.ChunkInitializationManager.initChunkIfNeeded(chunk);
+        chunkcomfort.chunk.ChunkUpdateManager.initChunkIfNeeded(chunk);
 
         float comfort = calculatePlayerComfort(player);
 

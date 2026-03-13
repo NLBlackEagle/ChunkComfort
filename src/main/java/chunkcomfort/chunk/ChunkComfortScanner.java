@@ -1,12 +1,10 @@
-package chunkcomfort.comfort;
+package chunkcomfort.chunk;
 
-import chunkcomfort.chunk.ChunkComfortCapability;
 import net.minecraft.block.Block;
 import net.minecraft.init.Blocks;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.chunk.Chunk;
 
-import chunkcomfort.chunk.ChunkComfortData;
 import chunkcomfort.chunk.ChunkComfortData.GroupData;
 import chunkcomfort.registry.BlockComfortEntry;
 import chunkcomfort.registry.BlockComfortRegistry;

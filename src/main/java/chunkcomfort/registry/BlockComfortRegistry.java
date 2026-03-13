@@ -27,33 +27,23 @@ public class BlockComfortRegistry {
     }
 
     public static void reload(String[] configLines) {
-
         clear();
-
         if (configLines == null) return;
 
         for (String line : configLines) {
-
             try {
-
                 String[] parts = line.split(",");
-
                 if (parts.length != 4) continue;
 
                 String blockId = parts[0].trim();
-
                 int value = Integer.parseInt(parts[1].trim());
-
                 int limit = Integer.parseInt(parts[2].trim());
-
                 String group = parts[3].trim();
 
                 Block block = Block.REGISTRY.getObject(new ResourceLocation(blockId));
-
-                if (block == null) continue;
-
-                register(block, new BlockComfortEntry(blockId, value, limit, group));
-
+                if (block != null) {
+                    register(block, new BlockComfortEntry(blockId, value, limit, group));
+                }
             } catch (Exception ignored) {}
         }
     }

@@ -1,22 +1,14 @@
 package chunkcomfort;
 
-import chunkcomfort.chunk.ChunkComfortData;
-import chunkcomfort.chunk.ChunkComfortStorage;
-import chunkcomfort.handlers.ChunkBlockUpdateHandler;
-import chunkcomfort.handlers.ChunkCapabilityHandler;
-import chunkcomfort.handlers.ForgeConfigHandler;
-import chunkcomfort.handlers.ModRegistry;
 import chunkcomfort.debug.CommandChunkComfort;
-
+import chunkcomfort.handlers.ChunkEventHandler;
+import chunkcomfort.registry.ModRegistry;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.common.capabilities.CapabilityManager;
-
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.Instance;
 import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -41,20 +33,8 @@ public class ChunkComfort {
 
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {
-
-        ModRegistry.init();
-        ForgeConfigHandler.initialize();
-
-        chunkcomfort.handlers.RegistryTest.runTest();
-
-        CapabilityManager.INSTANCE.register(
-                ChunkComfortData.class,
-                new ChunkComfortStorage(),
-                ChunkComfortData::new
-        );
-
-        MinecraftForge.EVENT_BUS.register(new ChunkCapabilityHandler());
-        MinecraftForge.EVENT_BUS.register(new ChunkBlockUpdateHandler());
+        ModRegistry.init();  // Initialize config, capabilities, and registries
+        MinecraftForge.EVENT_BUS.register(new ChunkEventHandler());  // Register chunk-related events
     }
 
     @Mod.EventHandler
