@@ -112,60 +112,43 @@ public class ChunkUpdateManager {
             }
 
             /* OLD BLOCK */
-
             if (update.oldBlock != null) {
-
                 BlockComfortEntry oldEntry = BlockComfortRegistry.get(update.oldBlock);
-
                 if (oldEntry != null) {
-
                     GroupData group = data.groups.get(oldEntry.getGroup());
-
                     if (group != null) {
-
                         int count = group.counts.getOrDefault(oldEntry.getValue(), 0);
-
-                        if (count > 0) {
-                            group.counts.put(oldEntry.getValue(), count - 1);
-                        }
+                        if (count > 0) group.counts.put(oldEntry.getValue(), count - 1);
                     }
                 }
 
                 if (FireBlockRegistry.contains(update.oldBlock)) {
-                    data.fireCount = Math.max(0, data.fireCount - 1);
+                    data.fireCount = Math.max(0, data.fireCount - 1); // decrement safely
                 }
             }
 
             /* NEW BLOCK */
-
             if (update.newBlock != null) {
-
                 BlockComfortEntry newEntry = BlockComfortRegistry.get(update.newBlock);
-
                 if (newEntry != null) {
-
                     GroupData group = data.groups.computeIfAbsent(newEntry.getGroup(), k -> new GroupData());
-
                     group.limit = newEntry.getLimit();
                     group.counts.merge(newEntry.getValue(), 1, Integer::sum);
                 }
 
                 if (FireBlockRegistry.contains(update.newBlock)) {
-                    data.fireCount++;
+                    data.fireCount++; // increment safely
                 }
             }
 
             /* RECALCULATE SCORES */
-
             for (GroupData gd : data.groups.values()) {
                 GroupScoreCalculator.calculate(gd);
             }
 
-            data.comfortScore =
-                    data.groups.values()
-                            .stream()
-                            .mapToInt(gd -> gd.currentScore)
-                            .sum();
+            data.comfortScore = data.groups.values().stream()
+                    .mapToInt(gd -> gd.currentScore)
+                    .sum();
 
             processed++;
         }

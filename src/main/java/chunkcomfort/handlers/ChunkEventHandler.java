@@ -1,12 +1,9 @@
 package chunkcomfort.handlers;
 
-import chunkcomfort.chunk.ChunkComfortData;
-import chunkcomfort.chunk.ChunkComfortProvider;
-import chunkcomfort.chunk.ChunkUpdateManager;
+import chunkcomfort.chunk.*;
 
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.chunk.Chunk;
-
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -17,10 +14,7 @@ public class ChunkEventHandler {
 
     @SubscribeEvent
     public void attachChunkCapabilities(AttachCapabilitiesEvent<Chunk> event) {
-
         ChunkComfortData data = new ChunkComfortData();
-        data.initialized = true;
-
         event.addCapability(
                 new ResourceLocation("chunkcomfort", "chunk_comfort"),
                 new ChunkComfortProvider(data)
@@ -29,14 +23,21 @@ public class ChunkEventHandler {
 
     @SubscribeEvent
     public void onServerTick(ServerTickEvent event) {
-
         if (event.phase != TickEvent.Phase.END) return;
-
         ChunkUpdateManager.processQueues();
     }
 
     @SubscribeEvent
     public void onBlockPlace(BlockEvent.PlaceEvent event) {
+
+        Chunk chunk = event.getWorld().getChunk(event.getPos());
+
+        ChunkComfortData data = chunk.getCapability(ChunkComfortCapability.CHUNK_COMFORT_CAP, null);
+
+        // If chunk never scanned, do it now
+        if (!data.initialized) {
+            ChunkComfortScanner.scanChunk(chunk);
+        }
 
         ChunkUpdateManager.queueBlockUpdate(
                 event.getWorld(),
