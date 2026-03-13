@@ -101,8 +101,7 @@ public class ChunkBlockUpdateScheduler {
             data.comfortScore =
                     data.groups.values().stream()
                             .mapToInt(gd -> gd.currentScore)
-                            .sum()
-                            + data.fireCount;
+                            .sum();
 
             processed++;
         }
