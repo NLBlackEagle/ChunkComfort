@@ -56,13 +56,12 @@ public class ForgeConfigHandler {
         @Config.Comment({
                 "Block comfort entries",
                 "Format: <block>,<value>,<limit>,<group>",
-                "Example: variedcommodities:chair,2,3,seating"
+                "Example: minecraft:crafting_table,2,3,workstation"
         })
         @Config.Name("Block Comfort Entries")
         public String[] blockComfortEntries = new String[]{
-                "variedcommodities:chair,2,3,seating",
-                "variedcommodities:stool_3,2,3,seating",
-                "variedcommodities:stool_1,1,3,seating"
+                "minecraft:bookshelf,1,10,furniture",
+                "minecraft:crafting_table,10,5,workstation"
         };
 
         @Config.Comment("Blocks that count as fire sources")
