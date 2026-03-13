@@ -1,6 +1,7 @@
 package chunkcomfort.registry;
 
 import net.minecraft.block.Block;
+import net.minecraft.init.Blocks;
 import net.minecraft.util.ResourceLocation;
 
 import java.util.HashMap;
@@ -41,9 +42,14 @@ public class BlockComfortRegistry {
                 String group = parts[3].trim();
 
                 Block block = Block.REGISTRY.getObject(new ResourceLocation(blockId));
-                if (block != null) {
-                    register(block, new BlockComfortEntry(blockId, value, limit, group));
+
+                // Skip invalid or air blocks
+                if (block == null || block == Blocks.AIR) {
+                    System.out.println("[ChunkComfort] Invalid or AIR block in config: " + blockId);
+                    continue;
                 }
+
+                register(block, new BlockComfortEntry(blockId, value, limit, group));
             } catch (Exception ignored) {}
         }
     }
