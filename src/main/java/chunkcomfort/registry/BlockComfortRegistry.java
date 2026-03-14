@@ -34,12 +34,11 @@ public class BlockComfortRegistry {
             if (line == null || line.isEmpty()) continue;
 
             String[] parts = line.split(",");
-            if (parts.length < 4) continue;
+            if (parts.length < 3) continue; // now we expect 3 parts
 
             String blockName = parts[0];
             int value;
-            // We can ignore 'limit' here in this registry
-            String group = parts[3];
+            String group = parts[2]; // group is now the 3rd part
 
             try {
                 value = Integer.parseInt(parts[1]);

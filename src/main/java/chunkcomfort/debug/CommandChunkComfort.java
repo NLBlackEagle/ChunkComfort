@@ -1,5 +1,6 @@
 package chunkcomfort.debug;
 
+import chunkcomfort.chunk.AreaComfortCalculator;
 import chunkcomfort.chunk.ChunkUpdateManager;
 import chunkcomfort.chunk.ChunkComfortData;
 import net.minecraft.command.CommandBase;
@@ -7,7 +8,9 @@ import net.minecraft.command.ICommandSender;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextComponentString;
-import net.minecraft.world.chunk.Chunk;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class CommandChunkComfort extends CommandBase {
 
@@ -33,12 +36,11 @@ public class CommandChunkComfort extends CommandBase {
         int playerChunkX = pos.getX() >> 4;
         int playerChunkZ = pos.getZ() >> 4;
 
-        int totalComfort = 0;
-        int countedChunks = 0;
+        sender.sendMessage(new TextComponentString("Chunk Comfort Info (3x3, with group limits applied to total):"));
 
-        sender.sendMessage(new TextComponentString("Chunk Comfort Info (3x3):"));
+        Map<String, Integer> summedGroups = new HashMap<String, Integer>();
 
-        // Scan 3x3 chunks
+        // First: sum all groups across 3x3 chunks
         for (int dx = -1; dx <= 1; dx++) {
             for (int dz = -1; dz <= 1; dz++) {
 
@@ -46,29 +48,44 @@ public class CommandChunkComfort extends CommandBase {
                 int chunkZ = playerChunkZ + dz;
 
                 ChunkComfortData data = ChunkUpdateManager.getChunkData(chunkX, chunkZ);
-                int chunkComfort = 0;
 
-                // Sum all group totals in this chunk
-                for (String group : data.groupTotals.keySet()) {
-                    chunkComfort += data.getComfort(group);
+                // Sum group totals
+                for (Map.Entry<String, Integer> entry : data.groupTotals.entrySet()) {
+                    String group = entry.getKey();
+                    int value = entry.getValue();
+                    if (summedGroups.containsKey(group)) {
+                        summedGroups.put(group, summedGroups.get(group) + value);
+                    } else {
+                        summedGroups.put(group, value);
+                    }
                 }
-
-                totalComfort += chunkComfort;
-                countedChunks++;
-
-                sender.sendMessage(new TextComponentString(
-                        "Chunk [" + chunkX + "," + chunkZ + "] Comfort: " + chunkComfort
-                ));
             }
         }
 
-        sender.sendMessage(new TextComponentString("-------------------"));
-        sender.sendMessage(new TextComponentString("Total Comfort (3x3): " + totalComfort));
+        // Apply group limits to summed totals
+        int totalComfort = 0;
+        StringBuilder groupDisplay = new StringBuilder();
 
-        if (countedChunks > 0) {
-            sender.sendMessage(new TextComponentString(
-                    "Average Comfort: " + (totalComfort / countedChunks)
-            ));
+        for (Map.Entry<String, Integer> entry : summedGroups.entrySet()) {
+            String group = entry.getKey();
+            int value = entry.getValue();
+
+            int limit = AreaComfortCalculator.getGroupLimit(group);
+            int applied = Math.min(value, limit);
+
+            totalComfort += applied;
+
+            groupDisplay.append(group)
+                    .append(": ")
+                    .append(applied)
+                    .append("/")
+                    .append(limit)
+                    .append("  ");
         }
+
+        // Display results
+        sender.sendMessage(new TextComponentString("Total Comfort (3x3, limited): " + totalComfort));
+        sender.sendMessage(new TextComponentString("Group breakdown: " + groupDisplay.toString()));
+        sender.sendMessage(new TextComponentString("Average Comfort: " + (totalComfort / 9)));
     }
 }

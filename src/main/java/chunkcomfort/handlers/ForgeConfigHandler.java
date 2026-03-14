@@ -2,6 +2,7 @@ package chunkcomfort.handlers;
 
 
 import chunkcomfort.ChunkComfort;
+import chunkcomfort.chunk.AreaComfortCalculator;
 import chunkcomfort.registry.BlockComfortRegistry;
 import net.minecraftforge.common.config.Config;
 import net.minecraftforge.common.config.ConfigManager;
@@ -27,12 +28,24 @@ public class ForgeConfigHandler {
 
         @Config.Comment({
                 "Block comfort entries",
-                "Format: <block>,<value>,<limit>,<group>",
-                "Example: minecraft:crafting_table,2,3,workstation"
+                "Format: <block>,<value>,<group>",
+                "Example: minecraft:crafting_table,10,workstation"
         })
+        @Config.Name("Block Comfort Entries")
         public String[] blockComfortEntries = new String[]{
-                "minecraft:bookshelf,1,10,furniture",
-                "minecraft:crafting_table,10,5,workstation"
+                "minecraft:bookshelf,1,furniture",
+                "minecraft:crafting_table,10,workstation"
+        };
+
+        @Config.Comment({
+                "Maximum allowed points per comfort group",
+                "Format: <group>,<limit>",
+                "Example: furniture,10"
+        })
+        @Config.Name("Group Comfort Limits")
+        public String[] groupLimits = new String[]{
+                "furniture,10",
+                "workstation,20"
         };
 
         @Config.Comment("Blocks that count as fire sources")
@@ -58,6 +71,7 @@ public class ForgeConfigHandler {
         BlockComfortRegistry.reload(server.blockComfortEntries);
         //FireBlockRegistry.reload(server.fireBlocks);
         //ComfortEffectRegistry.reload(server.comfortEffects);
+        AreaComfortCalculator.reloadGroupLimits(server.groupLimits); // new hook
     }
 
     @Mod.EventBusSubscriber(modid = ChunkComfort.MODID)
