@@ -1,6 +1,6 @@
 package chunkcomfort.debug;
 
-import chunkcomfort.chunk.ChunkComfortCapability;
+import chunkcomfort.chunk.ChunkUpdateManager;
 import chunkcomfort.chunk.ChunkComfortData;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.ICommandSender;
@@ -18,58 +18,57 @@ public class CommandChunkComfort extends CommandBase {
 
     @Override
     public String getUsage(ICommandSender sender) {
-        return "/chunkcomfort <info|scan|radius>";
+        return "/chunkcomfort <info>";
     }
 
     @Override
     public void execute(MinecraftServer server, ICommandSender sender, String[] args) {
 
-        if (args.length == 0) {
-            sender.sendMessage(new TextComponentString("/chunkcomfort <info|scan|radius>"));
+        if (args.length == 0 || !"info".equalsIgnoreCase(args[0])) {
+            sender.sendMessage(new TextComponentString("/chunkcomfort info"));
             return;
         }
 
-        if ("info".equalsIgnoreCase(args[0])) {
+        BlockPos pos = sender.getPosition();
+        int playerChunkX = pos.getX() >> 4;
+        int playerChunkZ = pos.getZ() >> 4;
 
-            BlockPos pos = sender.getPosition();
+        int totalComfort = 0;
+        int countedChunks = 0;
 
-            int playerChunkX = pos.getX() >> 4;
-            int playerChunkZ = pos.getZ() >> 4;
+        sender.sendMessage(new TextComponentString("Chunk Comfort Info (3x3):"));
 
-            int totalComfort = 0;
-            int totalFire = 0;
-            int countedChunks = 0;
+        // Scan 3x3 chunks
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dz = -1; dz <= 1; dz++) {
 
-            sender.sendMessage(new TextComponentString("Chunk Comfort Info (3x3):"));
+                int chunkX = playerChunkX + dx;
+                int chunkZ = playerChunkZ + dz;
 
-            for (int dx = -1; dx <= 1; dx++) {
-                for (int dz = -1; dz <= 1; dz++) {
+                ChunkComfortData data = ChunkUpdateManager.getChunkData(chunkX, chunkZ);
+                int chunkComfort = 0;
 
-                    Chunk chunk = sender.getEntityWorld().getChunk(playerChunkX + dx, playerChunkZ + dz);
-
-                    ChunkComfortData data = chunk.getCapability(ChunkComfortCapability.CHUNK_COMFORT_CAP, null);
-
-                    if (data == null) continue;
-
-                    totalComfort += data.comfortScore;
-                    totalFire += data.fireCount;
-                    countedChunks++;
-
-                    sender.sendMessage(new TextComponentString(
-                            "Chunk [" + (playerChunkX + dx) + "," + (playerChunkZ + dz) + "] " +
-                                    "Comfort: " + data.comfortScore +
-                                    ", Fire: " + data.fireCount
-                    ));
+                // Sum all group totals in this chunk
+                for (String group : data.groupTotals.keySet()) {
+                    chunkComfort += data.getComfort(group);
                 }
-            }
 
-            sender.sendMessage(new TextComponentString("-------------------"));
-            sender.sendMessage(new TextComponentString("Total Comfort (3x3): " + totalComfort));
-            sender.sendMessage(new TextComponentString("Total Fire (3x3): " + totalFire));
+                totalComfort += chunkComfort;
+                countedChunks++;
 
-            if (countedChunks > 0) {
-                sender.sendMessage(new TextComponentString("Average Comfort: " + (totalComfort / countedChunks)));
+                sender.sendMessage(new TextComponentString(
+                        "Chunk [" + chunkX + "," + chunkZ + "] Comfort: " + chunkComfort
+                ));
             }
+        }
+
+        sender.sendMessage(new TextComponentString("-------------------"));
+        sender.sendMessage(new TextComponentString("Total Comfort (3x3): " + totalComfort));
+
+        if (countedChunks > 0) {
+            sender.sendMessage(new TextComponentString(
+                    "Average Comfort: " + (totalComfort / countedChunks)
+            ));
         }
     }
 }

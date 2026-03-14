@@ -2,55 +2,66 @@ package chunkcomfort.registry;
 
 import net.minecraft.block.Block;
 import net.minecraft.init.Blocks;
-import net.minecraft.util.ResourceLocation;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class BlockComfortRegistry {
 
-    private static final Map<Block, BlockComfortEntry> ENTRIES = new HashMap<>();
+    private static final Map<Block, ComfortEntry> ENTRIES = new HashMap<Block, ComfortEntry>();
 
-    public static void register(Block block, BlockComfortEntry entry) {
-        ENTRIES.put(block, entry);
+    static {
+        // Default hardcoded entries
+        ENTRIES.put(Blocks.BOOKSHELF, new ComfortEntry(1, "furniture"));
+        ENTRIES.put(Blocks.CRAFTING_TABLE, new ComfortEntry(10, "workstation"));
     }
 
-    public static BlockComfortEntry get(Block block) {
+    public static ComfortEntry getEntry(Block block) {
         return ENTRIES.get(block);
     }
 
-    public static boolean contains(Block block) {
-        return ENTRIES.containsKey(block);
-    }
-
-    public static void clear() {
+    /**
+     * Reload the registry from config entries.
+     * Each entry format: <block>,<value>,<limit>,<group>
+     */
+    public static void reload(String[] entries) {
         ENTRIES.clear();
+
+        if (entries == null) return;
+
+        for (int i = 0; i < entries.length; i++) {
+            String line = entries[i];
+            if (line == null || line.isEmpty()) continue;
+
+            String[] parts = line.split(",");
+            if (parts.length < 4) continue;
+
+            String blockName = parts[0];
+            int value;
+            // We can ignore 'limit' here in this registry
+            String group = parts[3];
+
+            try {
+                value = Integer.parseInt(parts[1]);
+            } catch (NumberFormatException e) {
+                value = 0;
+            }
+
+            // Resolve block from registry
+            Block block = Block.getBlockFromName(blockName);
+            if (block != null) {
+                ENTRIES.put(block, new ComfortEntry(value, group));
+            }
+        }
     }
 
-    public static void reload(String[] configLines) {
-        clear();
-        if (configLines == null) return;
+    public static class ComfortEntry {
+        public final int value;
+        public final String group;
 
-        for (String line : configLines) {
-            try {
-                String[] parts = line.split(",");
-                if (parts.length != 4) continue;
-
-                String blockId = parts[0].trim();
-                int value = Integer.parseInt(parts[1].trim());
-                int limit = Integer.parseInt(parts[2].trim());
-                String group = parts[3].trim();
-
-                Block block = Block.REGISTRY.getObject(new ResourceLocation(blockId));
-
-                // Skip invalid or air blocks
-                if (block == null || block == Blocks.AIR) {
-                    System.out.println("[ChunkComfort] Invalid or AIR block in config: " + blockId);
-                    continue;
-                }
-
-                register(block, new BlockComfortEntry(blockId, value, limit, group));
-            } catch (Exception ignored) {}
+        public ComfortEntry(int value, String group) {
+            this.value = value;
+            this.group = group;
         }
     }
 }

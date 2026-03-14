@@ -1,8 +1,8 @@
 package chunkcomfort;
 
 import chunkcomfort.debug.CommandChunkComfort;
-import chunkcomfort.handlers.ChunkEventHandler;
-import chunkcomfort.registry.ModRegistry;
+import chunkcomfort.handlers.ChunkComfortEventHandler;
+import chunkcomfort.handlers.ForgeConfigHandler;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.Instance;
@@ -33,17 +33,26 @@ public class ChunkComfort {
 
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {
-        ModRegistry.init();  // Initialize config, capabilities, and registries
-        MinecraftForge.EVENT_BUS.register(new ChunkEventHandler());  // Register chunk-related events
+
+        // Initialize Forge config
+        ForgeConfigHandler.initialize();
+
+        // Register event handler for block place/break updates
+        MinecraftForge.EVENT_BUS.register(new ChunkComfortEventHandler());
+
+        LOGGER.info("ChunkComfort preInit complete.");
     }
 
     @Mod.EventHandler
     public void postInit(FMLPostInitializationEvent event) {
         completedLoading = true;
+        LOGGER.info("ChunkComfort postInit complete. Mod is ready.");
     }
 
     @Mod.EventHandler
     public void serverStarting(FMLServerStartingEvent event) {
+        // Register the debug command
         event.registerServerCommand(new CommandChunkComfort());
+        LOGGER.info("ChunkComfort server commands registered.");
     }
 }
