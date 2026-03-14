@@ -36,6 +36,19 @@ public class CommandChunkComfort extends CommandBase {
         int playerChunkX = pos.getX() >> 4;
         int playerChunkZ = pos.getZ() >> 4;
 
+        int comfortActive = AreaComfortCalculator.calculateComfortActivation(
+                sender.getEntityWorld(),
+                playerChunkX,
+                playerChunkZ
+        );
+
+        sender.sendMessage(new TextComponentString("Comfort Activation Score: " + comfortActive));
+
+        if (comfortActive < 1) {
+            sender.sendMessage(new TextComponentString("Comfort system inactive (no fire source found in 3x3 area)."));
+            return;
+        }
+
         sender.sendMessage(new TextComponentString("Chunk Comfort Info (3x3, with group limits applied to total):"));
 
         // Map to sum all groups across 3x3 area

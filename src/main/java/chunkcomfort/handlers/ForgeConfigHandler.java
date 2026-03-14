@@ -4,6 +4,7 @@ package chunkcomfort.handlers;
 import chunkcomfort.ChunkComfort;
 import chunkcomfort.chunk.AreaComfortCalculator;
 import chunkcomfort.registry.BlockComfortRegistry;
+import chunkcomfort.registry.FireBlockRegistry;
 import net.minecraftforge.common.config.Config;
 import net.minecraftforge.common.config.ConfigManager;
 import net.minecraftforge.fml.client.event.ConfigChangedEvent;
@@ -69,7 +70,7 @@ public class ForgeConfigHandler {
 
     public static void reloadRegistries() {
         BlockComfortRegistry.reload(server.blockComfortEntries);
-        //FireBlockRegistry.reload(server.fireBlocks);
+        FireBlockRegistry.reload(server.fireBlocks);
         //ComfortEffectRegistry.reload(server.comfortEffects);
         AreaComfortCalculator.reloadGroupLimits(server.groupLimits); // new hook
     }

@@ -1,7 +1,12 @@
 package chunkcomfort.chunk;
 
+import chunkcomfort.registry.FireBlockRegistry;
+import net.minecraft.block.Block;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
+import net.minecraft.world.World;
+import net.minecraft.world.chunk.Chunk;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -37,8 +42,62 @@ public class AreaComfortCalculator {
         }
     }
 
+    public static int calculateComfortActivation(World world, int chunkX, int chunkZ) {
+
+        int comfortActive = 0;
+
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dz = -1; dz <= 1; dz++) {
+
+                Chunk chunk = world.getChunk(chunkX + dx, chunkZ + dz);
+
+                if (chunkContainsFire(chunk)) {
+                    comfortActive += 1;
+                    return comfortActive; // one fire source is enough
+                }
+            }
+        }
+
+        return comfortActive;
+    }
+
+    private static boolean chunkContainsFire(Chunk chunk) {
+
+        int startX = chunk.x * 16;
+        int startZ = chunk.z * 16;
+
+        World world = chunk.getWorld();
+
+        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+
+        for (int x = 0; x < 16; x++) {
+            for (int z = 0; z < 16; z++) {
+                for (int y = 0; y < world.getHeight(); y++) {
+
+                    pos.setPos(startX + x, y, startZ + z);
+
+                    Block block = world.getBlockState(pos).getBlock();
+
+                    if (FireBlockRegistry.isFireBlock(block)) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
     public static int calculatePlayerComfort(EntityPlayer player) {
         ChunkPos center = new ChunkPos(player.getPosition());
+
+        int comfortActive = calculateComfortActivation(player.world, center.x, center.z);
+
+        // If no activation condition is met, comfort system is disabled
+        if (comfortActive < 1) {
+            return 0;
+        }
+
         Map<String, Integer> summed = new HashMap<String, Integer>();
 
         // Scan 3x3 area
