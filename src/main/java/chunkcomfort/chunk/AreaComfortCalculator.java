@@ -42,20 +42,36 @@ public class AreaComfortCalculator {
         }
     }
 
-    public static int calculateComfortActivation(World world, int chunkX, int chunkZ) {
+    public static int calculateComfortActivation(World world, int chunkX, int chunkZ, EntityPlayer player) {
 
         int comfortActive = 0;
 
+        // Shelter requirement (no skylight)
+        if (!world.canSeeSky(player.getPosition().up())) {
+            comfortActive += 1;
+        }
+
+        boolean fireFound = false;
+
+        // Fire Requirement
         for (int dx = -1; dx <= 1; dx++) {
             for (int dz = -1; dz <= 1; dz++) {
 
                 Chunk chunk = world.getChunk(chunkX + dx, chunkZ + dz);
 
                 if (chunkContainsFire(chunk)) {
-                    comfortActive += 1;
-                    return comfortActive; // one fire source is enough
+                    fireFound = true;
+                    break;
                 }
             }
+
+            if (fireFound) {
+                break;
+            }
+        }
+
+        if (fireFound) {
+            comfortActive += 1;
         }
 
         return comfortActive;
@@ -91,10 +107,10 @@ public class AreaComfortCalculator {
     public static int calculatePlayerComfort(EntityPlayer player) {
         ChunkPos center = new ChunkPos(player.getPosition());
 
-        int comfortActive = calculateComfortActivation(player.world, center.x, center.z);
+        int comfortActive = calculateComfortActivation(player.world, center.x, center.z, player);
 
         // If no activation condition is met, comfort system is disabled
-        if (comfortActive < 1) {
+        if (comfortActive < 2) {
             return 0;
         }
 

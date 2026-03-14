@@ -5,6 +5,7 @@ import chunkcomfort.chunk.ChunkUpdateManager;
 import chunkcomfort.chunk.ChunkComfortData;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.ICommandSender;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextComponentString;
@@ -35,16 +36,18 @@ public class CommandChunkComfort extends CommandBase {
         BlockPos pos = sender.getPosition();
         int playerChunkX = pos.getX() >> 4;
         int playerChunkZ = pos.getZ() >> 4;
+        EntityPlayer player = (EntityPlayer) sender.getCommandSenderEntity();
 
         int comfortActive = AreaComfortCalculator.calculateComfortActivation(
                 sender.getEntityWorld(),
                 playerChunkX,
-                playerChunkZ
+                playerChunkZ,
+                player
         );
 
         sender.sendMessage(new TextComponentString("Comfort Activation Score: " + comfortActive));
 
-        if (comfortActive < 1) {
+        if (comfortActive < 2) {
             sender.sendMessage(new TextComponentString("Comfort system inactive (no fire source found in 3x3 area)."));
             return;
         }
