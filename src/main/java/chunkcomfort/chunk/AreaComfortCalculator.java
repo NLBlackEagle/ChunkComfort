@@ -3,6 +3,7 @@ package chunkcomfort.chunk;
 import java.util.HashMap;
 import java.util.Map;
 
+import chunkcomfort.registry.BiomeComfortRegistry;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
@@ -78,14 +79,10 @@ public class AreaComfortCalculator {
 
         int comfortActive = calculateComfortActivation(player.world, center.x, center.z, player);
 
-        // If no activation condition is met, comfort system is disabled
-        if (comfortActive < 2) {
-            return 0;
-        }
+        if (comfortActive < 2) return 0;
 
         Map<String, Integer> summedGroups = new HashMap<>();
 
-        // Sum 3x3 area using cached totals per chunk
         for (int dx = -1; dx <= 1; dx++) {
             for (int dz = -1; dz <= 1; dz++) {
                 ChunkComfortData data = ChunkUpdateManager.getChunkData(center.x + dx, center.z + dz);
@@ -95,7 +92,6 @@ public class AreaComfortCalculator {
             }
         }
 
-        // Apply group limits
         int totalComfort = 0;
         for (Map.Entry<String, Integer> entry : summedGroups.entrySet()) {
             String group = entry.getKey();
@@ -103,6 +99,13 @@ public class AreaComfortCalculator {
             int limit = getGroupLimit(group);
             totalComfort += Math.min(value, limit);
         }
+
+        // Apply biome comfort modifier
+        String biomeName = player.world.getBiome(player.getPosition()).getRegistryName().toString();
+        int biomeModifier = BiomeComfortRegistry.getBiomeModifier(biomeName);
+
+        totalComfort += biomeModifier;
+        if (totalComfort < 0) totalComfort = 0;
 
         return totalComfort;
     }

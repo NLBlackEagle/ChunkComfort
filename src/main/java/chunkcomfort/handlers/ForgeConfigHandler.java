@@ -3,6 +3,7 @@ package chunkcomfort.handlers;
 
 import chunkcomfort.ChunkComfort;
 import chunkcomfort.chunk.AreaComfortCalculator;
+import chunkcomfort.registry.BiomeComfortRegistry;
 import chunkcomfort.registry.BlockComfortRegistry;
 import chunkcomfort.registry.FireBlockRegistry;
 import net.minecraftforge.common.config.Config;
@@ -49,12 +50,22 @@ public class ForgeConfigHandler {
                 "workstation,20"
         };
 
+
         @Config.Comment("Blocks that count as fire sources")
+        @Config.Name("Fire Blocks")
         public String[] fireBlocks = new String[]{
                 "minecraft:torch",
                 "minecraft:fire",
                 "minecraft:lantern"
         };
+
+        @Config.Comment({
+                "Biome comfort modifiers",
+                "Format: <biome>,<modifier>",
+                "Example: minecraft:plains,5  or  minecraft:desert,-3"
+        })
+        @Config.Name("Biome Comfort Modifiers")
+        public String[] biomeComfortModifiers = new String[]{};
 
         @Config.Comment({
                 "Comfort tier effects",
@@ -72,6 +83,7 @@ public class ForgeConfigHandler {
         BlockComfortRegistry.reload(server.blockComfortEntries);
         FireBlockRegistry.reload(server.fireBlocks);
         //ComfortEffectRegistry.reload(server.comfortEffects);
+        BiomeComfortRegistry.reload(server.biomeComfortModifiers);
         AreaComfortCalculator.reloadGroupLimits(server.groupLimits); // new hook
     }
 
