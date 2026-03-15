@@ -48,7 +48,7 @@ public class CommandChunkComfort extends CommandBase {
         sender.sendMessage(new TextComponentString("Comfort Activation Score: " + comfortActive));
 
         if (comfortActive < 2) {
-            sender.sendMessage(new TextComponentString("Comfort system inactive (no fire source found in 3x3 area)."));
+            sender.sendMessage(new TextComponentString("Comfort system inactive, no fire and/or shelter detected"));
             return;
         }
 

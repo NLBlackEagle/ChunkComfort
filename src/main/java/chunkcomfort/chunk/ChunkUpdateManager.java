@@ -1,6 +1,7 @@
 package chunkcomfort.chunk;
 
 import chunkcomfort.registry.BlockComfortRegistry;
+import chunkcomfort.registry.FireBlockRegistry;
 import net.minecraft.block.Block;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
@@ -10,63 +11,70 @@ import java.util.Map;
 
 public class ChunkUpdateManager {
 
-    // Store comfort data per chunk (X,Z)
-    private static final Map<String, ChunkComfortData> CHUNK_DATA = new HashMap<String, ChunkComfortData>();
+    private static final Map<String, ChunkComfortData> CHUNK_DATA = new HashMap<>();
 
-    /**
-     * Called when a block is placed.
-     */
     public static void onBlockPlaced(World world, BlockPos pos, Block block) {
         ChunkComfortData data = getOrCreateChunkData(pos);
+
+        // Update comfort
         BlockComfortRegistry.ComfortEntry entry = BlockComfortRegistry.getEntry(block);
         if (entry != null) {
             data.addComfort(entry.group, entry.value);
         }
+
+        // Update fire presence
+        if (FireBlockRegistry.isFireBlock(block)) {
+            data.setFirePresent(true);
+        }
     }
 
-    /**
-     * Called when a block is broken/removed.
-     */
     public static void onBlockBroken(World world, BlockPos pos, Block block) {
         ChunkComfortData data = getOrCreateChunkData(pos);
+
+        // Update comfort
         BlockComfortRegistry.ComfortEntry entry = BlockComfortRegistry.getEntry(block);
         if (entry != null) {
             data.removeComfort(entry.group, entry.value);
         }
-    }
 
-    /**
-     * Get the data for a chunk, creating it if missing.
-     */
-    private static ChunkComfortData getOrCreateChunkData(BlockPos pos) {
-        String key = chunkKey(pos);
-        if (CHUNK_DATA.containsKey(key)) {
-            return CHUNK_DATA.get(key);
-        } else {
-            ChunkComfortData data = new ChunkComfortData();
-            CHUNK_DATA.put(key, data);
-            return data;
+        // Update fire presence: we must check if any fire remains
+        if (FireBlockRegistry.isFireBlock(block)) {
+            data.setFirePresent(scanChunkForFire(world, pos)); // see below
         }
     }
 
-    /**
-     * Generate a unique key for chunk coordinates.
-     */
+    private static boolean scanChunkForFire(World world, BlockPos pos) {
+        int chunkX = pos.getX() >> 4;
+        int chunkZ = pos.getZ() >> 4;
+        int startX = chunkX * 16;
+        int startZ = chunkZ * 16;
+
+        BlockPos.MutableBlockPos scanPos = new BlockPos.MutableBlockPos();
+        for (int x = 0; x < 16; x++) {
+            for (int z = 0; z < 16; z++) {
+                for (int y = 0; y < world.getHeight(); y++) {
+                    scanPos.setPos(startX + x, y, startZ + z);
+                    Block b = world.getBlockState(scanPos).getBlock();
+                    if (FireBlockRegistry.isFireBlock(b)) return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private static ChunkComfortData getOrCreateChunkData(BlockPos pos) {
+        String key = chunkKey(pos);
+        return CHUNK_DATA.computeIfAbsent(key, k -> new ChunkComfortData());
+    }
+
     private static String chunkKey(BlockPos pos) {
         int chunkX = pos.getX() >> 4;
         int chunkZ = pos.getZ() >> 4;
         return chunkX + "," + chunkZ;
     }
 
-    /**
-     * Get existing chunk data (or empty if missing)
-     */
     public static ChunkComfortData getChunkData(int chunkX, int chunkZ) {
         String key = chunkX + "," + chunkZ;
-        if (CHUNK_DATA.containsKey(key)) {
-            return CHUNK_DATA.get(key);
-        } else {
-            return new ChunkComfortData();
-        }
+        return CHUNK_DATA.getOrDefault(key, new ChunkComfortData());
     }
 }

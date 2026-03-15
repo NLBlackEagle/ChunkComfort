@@ -53,21 +53,17 @@ public class AreaComfortCalculator {
 
         boolean fireFound = false;
 
-        // Fire Requirement
+        // Fire Requirement using cached hasFire
         for (int dx = -1; dx <= 1; dx++) {
             for (int dz = -1; dz <= 1; dz++) {
+                ChunkComfortData data = ChunkUpdateManager.getChunkData(chunkX + dx, chunkZ + dz);
 
-                Chunk chunk = world.getChunk(chunkX + dx, chunkZ + dz);
-
-                if (chunkContainsFire(chunk)) {
+                if (data.hasFire()) {
                     fireFound = true;
                     break;
                 }
             }
-
-            if (fireFound) {
-                break;
-            }
+            if (fireFound) break;
         }
 
         if (fireFound) {
@@ -75,33 +71,6 @@ public class AreaComfortCalculator {
         }
 
         return comfortActive;
-    }
-
-    private static boolean chunkContainsFire(Chunk chunk) {
-
-        int startX = chunk.x * 16;
-        int startZ = chunk.z * 16;
-
-        World world = chunk.getWorld();
-
-        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
-
-        for (int x = 0; x < 16; x++) {
-            for (int z = 0; z < 16; z++) {
-                for (int y = 0; y < world.getHeight(); y++) {
-
-                    pos.setPos(startX + x, y, startZ + z);
-
-                    Block block = world.getBlockState(pos).getBlock();
-
-                    if (FireBlockRegistry.isFireBlock(block)) {
-                        return true;
-                    }
-                }
-            }
-        }
-
-        return false;
     }
 
     public static int calculatePlayerComfort(EntityPlayer player) {
@@ -114,39 +83,33 @@ public class AreaComfortCalculator {
             return 0;
         }
 
-        Map<String, Integer> summed = new HashMap<String, Integer>();
+        int totalComfort = 0;
+        Map<String, Integer> summedGroups = new HashMap<>();
 
-        // Scan 3x3 area
+        // Scan 3x3 area using cached totals
         for (int dx = -1; dx <= 1; dx++) {
             for (int dz = -1; dz <= 1; dz++) {
                 ChunkComfortData data = ChunkUpdateManager.getChunkData(center.x + dx, center.z + dz);
+
+                // Sum all groups (cached total per group)
                 for (Map.Entry<String, Integer> entry : data.groupTotals.entrySet()) {
                     String group = entry.getKey();
                     int value = entry.getValue();
-                    if (summed.containsKey(group)) {
-                        summed.put(group, summed.get(group) + value);
-                    } else {
-                        summed.put(group, value);
-                    }
+                    summedGroups.put(group, summedGroups.getOrDefault(group, 0) + value);
                 }
             }
         }
 
         // Apply group limits
-        int totalComfort = 0;
-        for (Map.Entry<String, Integer> entry : summed.entrySet()) {
+        int limitedTotal = 0;
+        for (Map.Entry<String, Integer> entry : summedGroups.entrySet()) {
             String group = entry.getKey();
             int value = entry.getValue();
-            int limit;
-            if (GROUP_LIMITS.containsKey(group)) {
-                limit = GROUP_LIMITS.get(group);
-            } else {
-                limit = Integer.MAX_VALUE;
-            }
-            totalComfort += Math.min(value, limit);
+            int limit = getGroupLimit(group);
+            limitedTotal += Math.min(value, limit);
         }
 
-        return totalComfort;
+        return limitedTotal;
     }
 
     public static int getGroupLimit(String group) {
