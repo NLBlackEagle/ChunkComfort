@@ -35,6 +35,7 @@ public class CommandChunkComfort extends CommandBase {
         }
 
         EntityPlayer player = (EntityPlayer) sender.getCommandSenderEntity();
+        assert player != null;
         BlockPos pos = player.getPosition();
         int playerChunkX = pos.getX() >> 4;
         int playerChunkZ = pos.getZ() >> 4;

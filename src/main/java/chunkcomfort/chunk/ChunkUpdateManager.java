@@ -13,7 +13,7 @@ public class ChunkUpdateManager {
 
     private static final Map<String, ChunkComfortData> CHUNK_DATA = new HashMap<>();
 
-    public static void onBlockPlaced(World world, BlockPos pos, Block block) {
+    public static void onBlockPlaced(BlockPos pos, Block block) {
         ChunkComfortData data = getOrCreateChunkData(pos);
 
         // Update comfort
