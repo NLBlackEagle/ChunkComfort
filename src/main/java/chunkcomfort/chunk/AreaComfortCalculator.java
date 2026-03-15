@@ -3,8 +3,10 @@ package chunkcomfort.chunk;
 import java.util.HashMap;
 import java.util.Map;
 
+import chunkcomfort.handlers.ForgeConfigHandler;
 import chunkcomfort.registry.BiomeComfortRegistry;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
 
@@ -44,28 +46,35 @@ public class AreaComfortCalculator {
     public static int calculateComfortActivation(World world, int chunkX, int chunkZ, EntityPlayer player) {
 
         int comfortActive = 0;
+        BlockPos playerPos = player.getPosition();
 
-        // Shelter requirement (no skylight)
-        if (!world.canSeeSky(player.getPosition().up())) {
+        // Shelter requirement
+        if (ForgeConfigHandler.server.requireShelter && !world.canSeeSky(playerPos.up())) {
             comfortActive += 1;
         }
 
-        boolean fireFound = false;
+        // Minimum light requirement
+        int light = world.getLight(playerPos);
+        if (ForgeConfigHandler.server.minLightLevel > 0 && light >= ForgeConfigHandler.server.minLightLevel) {
+            comfortActive += 1;
+        }
 
-        // Fire Requirement using cached hasFire
-        for (int dx = -1; dx <= 1; dx++) {
-            for (int dz = -1; dz <= 1; dz++) {
-                ChunkComfortData data = ChunkUpdateManager.getChunkData(chunkX + dx, chunkZ + dz);
-                if (data.hasFire()) {
-                    fireFound = true;
-                    break;
+        // Fire requirement (toggleable)
+        if (ForgeConfigHandler.server.requireFire) {
+            boolean fireFound = false;
+            for (int dx = -1; dx <= 1; dx++) {
+                for (int dz = -1; dz <= 1; dz++) {
+                    ChunkComfortData data = ChunkUpdateManager.getChunkData(chunkX + dx, chunkZ + dz);
+                    if (data.hasFire()) {
+                        fireFound = true;
+                        break;
+                    }
                 }
+                if (fireFound) break;
             }
-            if (fireFound) break;
-        }
-
-        if (fireFound) {
-            comfortActive += 1;
+            if (fireFound) {
+                comfortActive += 1;
+            }
         }
 
         return comfortActive;

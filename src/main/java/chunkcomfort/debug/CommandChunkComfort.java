@@ -3,6 +3,7 @@ package chunkcomfort.debug;
 import chunkcomfort.chunk.AreaComfortCalculator;
 import chunkcomfort.chunk.ChunkUpdateManager;
 import chunkcomfort.chunk.ChunkComfortData;
+import chunkcomfort.handlers.ForgeConfigHandler;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayer;
@@ -22,7 +23,7 @@ public class CommandChunkComfort extends CommandBase {
 
     @Override
     public String getUsage(ICommandSender sender) {
-        return "/chunkcomfort <info>";
+        return "/chunkcomfort info";
     }
 
     @Override
@@ -33,13 +34,13 @@ public class CommandChunkComfort extends CommandBase {
             return;
         }
 
-        BlockPos pos = sender.getPosition();
+        EntityPlayer player = (EntityPlayer) sender.getCommandSenderEntity();
+        BlockPos pos = player.getPosition();
         int playerChunkX = pos.getX() >> 4;
         int playerChunkZ = pos.getZ() >> 4;
-        EntityPlayer player = (EntityPlayer) sender.getCommandSenderEntity();
 
         int comfortActive = AreaComfortCalculator.calculateComfortActivation(
-                sender.getEntityWorld(),
+                player.world,
                 playerChunkX,
                 playerChunkZ,
                 player
@@ -47,17 +48,40 @@ public class CommandChunkComfort extends CommandBase {
 
         sender.sendMessage(new TextComponentString("Comfort Activation Score: " + comfortActive));
 
-        if (comfortActive < 2) {
-            sender.sendMessage(new TextComponentString("Comfort system inactive, no fire and/or shelter detected"));
+        // Count how many conditions are enabled
+        int requiredConditions = 0;
+        if (ForgeConfigHandler.server.requireShelter) requiredConditions++;
+        if (ForgeConfigHandler.server.minLightLevel > 0) requiredConditions++;
+        if (ForgeConfigHandler.server.requireFire) requiredConditions++;
+
+        // Build detailed status
+        StringBuilder status = new StringBuilder();
+        // Shelter check
+        if (ForgeConfigHandler.server.requireShelter && player.world.canSeeSky(pos.up())) {
+            status.append("No shelter. ");
+        }
+        // Light check
+        int playerLight = player.world.getLight(pos);
+        if (ForgeConfigHandler.server.minLightLevel > 0 && playerLight < ForgeConfigHandler.server.minLightLevel) {
+            status.append("Too dark. ");
+        }
+        // Fire check
+        if (ForgeConfigHandler.server.requireFire) {
+            if (!ChunkUpdateManager.getChunkData(playerChunkX, playerChunkZ).hasFire()) {
+                status.append("No fire. ");
+            }
+        }
+
+        if (comfortActive < requiredConditions) {
+            sender.sendMessage(new TextComponentString("Comfort system inactive: " + status.toString()));
             return;
         }
 
-        sender.sendMessage(new TextComponentString("Chunk Comfort Info (3x3, with group limits applied to total):"));
+        sender.sendMessage(new TextComponentString("Chunk Comfort Info (3x3, with group limits applied):"));
 
-        // Map to sum all groups across 3x3 area
-        Map<String, Integer> summedGroups = new HashMap<String, Integer>();
+        Map<String, Integer> summedGroups = new HashMap<>();
 
-        // First: print per-chunk raw totals
+        // Scan 3x3 area
         for (int dx = -1; dx <= 1; dx++) {
             for (int dz = -1; dz <= 1; dz++) {
                 int chunkX = playerChunkX + dx;
@@ -80,12 +104,8 @@ public class CommandChunkComfort extends CommandBase {
                             .append(AreaComfortCalculator.getGroupLimit(group))
                             .append("  ");
 
-                    // add to summedGroups for 3x3 total
-                    if (summedGroups.containsKey(group)) {
-                        summedGroups.put(group, summedGroups.get(group) + value);
-                    } else {
-                        summedGroups.put(group, value);
-                    }
+                    // Add to summed total
+                    summedGroups.put(group, summedGroups.getOrDefault(group, 0) + value);
                 }
 
                 sender.sendMessage(new TextComponentString(
@@ -95,14 +115,13 @@ public class CommandChunkComfort extends CommandBase {
             }
         }
 
-        // Apply group limits to the summed total
+        // Apply group limits to summed total
         int totalComfort = 0;
         StringBuilder totalGroupDisplay = new StringBuilder();
 
         for (Map.Entry<String, Integer> entry : summedGroups.entrySet()) {
             String group = entry.getKey();
             int value = entry.getValue();
-
             int limit = AreaComfortCalculator.getGroupLimit(group);
             int applied = Math.min(value, limit);
 

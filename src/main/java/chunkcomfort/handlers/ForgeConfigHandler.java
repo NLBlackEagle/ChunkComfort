@@ -20,6 +20,19 @@ public class ForgeConfigHandler {
 
     public static class ServerConfig {
 
+        @Config.Comment("Require shelter from sky for comfort (true/false).")
+        @Config.Name("Shelter Requirement (No Skylight)")
+        public boolean requireShelter = true;
+
+        @Config.Comment("Require fire nearby for comfort (true/false).")
+        @Config.Name("Fire Requirement")
+        public boolean requireFire = true;
+
+        @Config.Comment("Minimum light level required for comfort (0-15).")
+        @Config.RangeInt(min = 0, max = 15)
+        @Config.Name("Minimum Light Level")
+        public int minLightLevel = 7; // 0 means no restriction by default
+
         @Config.Comment("Chunk radius checked for comfort")
         @Config.RangeInt(min = 0, max = 10)
         public int chunkRadius = 1;
