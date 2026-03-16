@@ -3,12 +3,14 @@ package chunkcomfort.debug;
 import chunkcomfort.chunk.AreaComfortCalculator;
 import chunkcomfort.chunk.ChunkUpdateManager;
 import chunkcomfort.chunk.ChunkComfortData;
+import chunkcomfort.chunk.ComfortWorldData;
 import chunkcomfort.config.ForgeConfigHandler;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.text.TextComponentString;
 
 import java.util.HashMap;
@@ -67,7 +69,7 @@ public class CommandChunkComfort extends CommandBase {
         }
         // Fire check
         if (ForgeConfigHandler.server.requireFire) {
-            if (!ChunkUpdateManager.getChunkData(playerChunkX, playerChunkZ).hasFire()) {
+            if (!ChunkUpdateManager.getChunkData(player.world, playerChunkX, playerChunkZ).hasFire()) {
                 status.append("No fire. ");
             }
         }
@@ -87,7 +89,7 @@ public class CommandChunkComfort extends CommandBase {
                 int chunkX = playerChunkX + dx;
                 int chunkZ = playerChunkZ + dz;
 
-                ChunkComfortData data = ChunkUpdateManager.getChunkData(chunkX, chunkZ);
+                ChunkComfortData data = ComfortWorldData.get(player.world).getChunkData(new ChunkPos(chunkX, chunkZ));
 
                 int chunkRawTotal = 0;
                 StringBuilder chunkGroupDisplay = new StringBuilder();

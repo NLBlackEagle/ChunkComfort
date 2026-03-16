@@ -63,9 +63,12 @@ public class AreaComfortCalculator {
         // Fire requirement (toggleable)
         if (ForgeConfigHandler.server.requireFire) {
             boolean fireFound = false;
+            ComfortWorldData worldData = ComfortWorldData.get(world);
+
             for (int dx = -1; dx <= 1; dx++) {
                 for (int dz = -1; dz <= 1; dz++) {
-                    ChunkComfortData data = ChunkUpdateManager.getChunkData(chunkX + dx, chunkZ + dz);
+                    ChunkPos pos = new ChunkPos(chunkX + dx, chunkZ + dz);
+                    ChunkComfortData data = worldData.getChunkData(pos);
                     if (data.hasFire()) {
                         fireFound = true;
                         break;
@@ -73,9 +76,8 @@ public class AreaComfortCalculator {
                 }
                 if (fireFound) break;
             }
-            if (fireFound) {
-                comfortActive += 1;
-            }
+
+            if (fireFound) comfortActive += 1;
         }
 
         return comfortActive;
@@ -100,15 +102,17 @@ public class AreaComfortCalculator {
             if (PotionRegistry.COMFORT != null) {
                 player.removePotionEffect(PotionRegistry.COMFORT);
             }
-
             return 0;
         }
 
         Map<String, Integer> summedGroups = new HashMap<>();
+        ComfortWorldData worldData = ComfortWorldData.get(player.world);
 
         for (int dx = -1; dx <= 1; dx++) {
             for (int dz = -1; dz <= 1; dz++) {
-                ChunkComfortData data = ChunkUpdateManager.getChunkData(center.x + dx, center.z + dz);
+                ChunkPos pos = new ChunkPos(center.x + dx, center.z + dz);
+                ChunkComfortData data = worldData.getChunkData(pos);
+
                 for (Map.Entry<String, Integer> entry : data.groupTotals.entrySet()) {
                     summedGroups.put(entry.getKey(), summedGroups.getOrDefault(entry.getKey(), 0) + entry.getValue());
                 }

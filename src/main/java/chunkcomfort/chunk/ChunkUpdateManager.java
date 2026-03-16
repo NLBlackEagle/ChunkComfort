@@ -4,17 +4,14 @@ import chunkcomfort.registry.BlockComfortRegistry;
 import chunkcomfort.registry.FireBlockRegistry;
 import net.minecraft.block.Block;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
-
-import java.util.HashMap;
-import java.util.Map;
 
 public class ChunkUpdateManager {
 
-    private static final Map<String, ChunkComfortData> CHUNK_DATA = new HashMap<>();
-
+    /** Called when a block is placed */
     public static void onBlockPlaced(World world, BlockPos pos, Block block) {
-        ChunkComfortData data = getOrCreateChunkData(pos);
+        ChunkComfortData data = ComfortWorldData.get(world).getChunkData(posToChunkPos(pos));
 
         // Update comfort
         BlockComfortRegistry.ComfortEntry entry = BlockComfortRegistry.getEntry(block);
@@ -26,10 +23,14 @@ public class ChunkUpdateManager {
         if (FireBlockRegistry.isFireBlock(block)) {
             data.setFirePresent(true);
         }
+
+        // Persist changes
+        ComfortWorldData.get(world).setChunkData(posToChunkPos(pos), data);
     }
 
+    /** Called when a block is broken */
     public static void onBlockBroken(World world, BlockPos pos, Block block) {
-        ChunkComfortData data = getOrCreateChunkData(pos);
+        ChunkComfortData data = ComfortWorldData.get(world).getChunkData(posToChunkPos(pos));
 
         // Update comfort
         BlockComfortRegistry.ComfortEntry entry = BlockComfortRegistry.getEntry(block);
@@ -37,12 +38,16 @@ public class ChunkUpdateManager {
             data.removeComfort(entry.group, entry.value);
         }
 
-        // Update fire presence: we must check if any fire remains
+        // Update fire presence: scan chunk for remaining fire
         if (FireBlockRegistry.isFireBlock(block)) {
-            data.setFirePresent(scanChunkForFire(world, pos)); // see below
+            data.setFirePresent(scanChunkForFire(world, pos));
         }
+
+        // Persist changes
+        ComfortWorldData.get(world).setChunkData(posToChunkPos(pos), data);
     }
 
+    /** Scan the entire chunk for any fire blocks */
     private static boolean scanChunkForFire(World world, BlockPos pos) {
         int chunkX = pos.getX() >> 4;
         int chunkZ = pos.getZ() >> 4;
@@ -62,19 +67,13 @@ public class ChunkUpdateManager {
         return false;
     }
 
-    private static ChunkComfortData getOrCreateChunkData(BlockPos pos) {
-        String key = chunkKey(pos);
-        return CHUNK_DATA.computeIfAbsent(key, k -> new ChunkComfortData());
+    /** Helper to convert world position to chunk position */
+    private static ChunkPos posToChunkPos(BlockPos pos) {
+        return new ChunkPos(pos);
     }
 
-    private static String chunkKey(BlockPos pos) {
-        int chunkX = pos.getX() >> 4;
-        int chunkZ = pos.getZ() >> 4;
-        return chunkX + "," + chunkZ;
-    }
-
-    public static ChunkComfortData getChunkData(int chunkX, int chunkZ) {
-        String key = chunkX + "," + chunkZ;
-        return CHUNK_DATA.getOrDefault(key, new ChunkComfortData());
+    /** Retrieve chunk data without creating new */
+    public static ChunkComfortData getChunkData(World world, int chunkX, int chunkZ) {
+        return ComfortWorldData.get(world).getChunkData(new ChunkPos(chunkX, chunkZ));
     }
 }
