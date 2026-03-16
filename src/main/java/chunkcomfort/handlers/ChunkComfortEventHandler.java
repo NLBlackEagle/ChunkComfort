@@ -1,6 +1,5 @@
 package chunkcomfort.handlers;
 
-import chunkcomfort.chunk.AreaComfortCalculator;
 import chunkcomfort.chunk.ChunkUpdateManager;
 import chunkcomfort.player.PlayerComfortManager;
 import net.minecraft.entity.player.EntityPlayer;

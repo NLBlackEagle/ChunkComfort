@@ -5,6 +5,7 @@ import java.util.Map;
 
 import chunkcomfort.config.ForgeConfigHandler;
 import chunkcomfort.registry.BiomeComfortRegistry;
+import chunkcomfort.registry.PotionRegistry;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
@@ -94,7 +95,14 @@ public class AreaComfortCalculator {
         if (ForgeConfigHandler.server.minLightLevel > 0) requiredConditions++;
         if (ForgeConfigHandler.server.requireFire) requiredConditions++;
 
-        if (comfortActive < requiredConditions) return 0;
+        // Remove comfort potion immediately if conditions not met
+        if (comfortActive < requiredConditions) {
+            if (PotionRegistry.COMFORT != null) {
+                player.removePotionEffect(PotionRegistry.COMFORT);
+            }
+
+            return 0;
+        }
 
         Map<String, Integer> summedGroups = new HashMap<>();
 
