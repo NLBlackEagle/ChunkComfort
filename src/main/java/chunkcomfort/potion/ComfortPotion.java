@@ -1,7 +1,6 @@
 package chunkcomfort.potion;
 
 import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.potion.PotionEffect;
 
 import javax.annotation.Nonnull;
@@ -10,7 +9,7 @@ public class ComfortPotion extends PotionBase {
 
     public static final ComfortPotion INSTANCE = new ComfortPotion();
 
-    public ComfortPotion() {super("comfort", true, 0x6AB04A);}
+    public ComfortPotion() {super("comfort", false, 0x00000000);}
 
     @Override
     public boolean isReady(int duration, int amplifier) { return true; }
@@ -32,6 +31,5 @@ public class ComfortPotion extends PotionBase {
 
     @Override
     public void performEffect(EntityLivingBase entity, int amplifier) {
-
     }
 }
