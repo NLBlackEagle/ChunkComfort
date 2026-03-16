@@ -2,6 +2,7 @@ package chunkcomfort.player;
 
 import chunkcomfort.chunk.AreaComfortCalculator;
 import chunkcomfort.config.ForgeConfigHandler;
+import chunkcomfort.registry.PotionRegistry;
 
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.potion.Potion;
@@ -31,13 +32,10 @@ public class PlayerComfortManager {
 
     private static final List<ComfortTier> TIERS = new ArrayList<>();
 
-    // === CONFIG PARSER WITH DEBUG ===
     public static void reloadConfig() {
-
         TIERS.clear();
-        System.out.println("[ChunkComfort] Reloading comfort tiers...");
-
         String[] config = ForgeConfigHandler.server.comfortEffects;
+
         for (String line : config) {
             try {
                 String[] split = line.split(",", 2);
@@ -57,57 +55,66 @@ public class PlayerComfortManager {
                     int amplifier = Integer.parseInt(parts[1]);
 
                     Potion potion = Potion.REGISTRY.getObject(new ResourceLocation(potionId));
-
-                    if (potion != null) {
-                        tier.effects.add(new EffectEntry(potion, amplifier));
-                        System.out.println("[ChunkComfort] Parsed effect: " + potionId + " amplifier: " + amplifier);
-                    } else {
-                        System.out.println("[ChunkComfort] WARNING: Potion not found: " + potionId);
-                    }
+                    if (potion != null) tier.effects.add(new EffectEntry(potion, amplifier));
                 }
 
                 TIERS.add(tier);
-                System.out.println("[ChunkComfort] Loaded comfort tier: " + comfort + " with " + tier.effects.size() + " effects");
 
             } catch (Exception e) {
                 System.out.println("[ChunkComfort] Invalid comfortEffects config entry: " + line);
-                e.printStackTrace();
             }
         }
 
         TIERS.sort(Comparator.comparingInt(t -> t.comfort));
-        System.out.println("[ChunkComfort] Total comfort tiers loaded: " + TIERS.size());
     }
 
-    // === APPLY EFFECTS WITH DEBUG ===
     public static void applyComfortEffects(EntityPlayer player) {
 
         int comfort = AreaComfortCalculator.calculatePlayerComfort(player);
-        System.out.println("[ChunkComfort] Player " + player.getName() + " comfort: " + comfort + " | tiers loaded: " + TIERS.size());
 
         ComfortTier activeTier = null;
-        for (ComfortTier tier : TIERS) {
+        int tierIndex = 0;
+
+        for (int i = 0; i < TIERS.size(); i++) {
+            ComfortTier tier = TIERS.get(i);
             if (comfort >= tier.comfort) {
                 activeTier = tier;
+                tierIndex = i;
             }
         }
 
-        if (activeTier == null) {
-            System.out.println("[ChunkComfort] No active tier for comfort " + comfort);
-            return;
-        }
+        if (activeTier == null) return;
 
-        System.out.println("[ChunkComfort] Applying comfort tier: " + activeTier.comfort + " with " + activeTier.effects.size() + " effects");
-
+        // Apply configured potion effects silently (no HUD)
         for (EffectEntry entry : activeTier.effects) {
             player.addPotionEffect(new PotionEffect(
                     entry.potion,
                     220,
                     entry.amplifier,
-                    true,
-                    false
+                    true,   // ambient = true → subtle effect
+                    false   // showParticles = false → no HUD icon
             ));
-            System.out.println("[ChunkComfort] Applied potion " + entry.potion.getRegistryName() + " amplifier: " + entry.amplifier);
+        }
+
+        // Apply custom "Comfort" potion for HUD visual indicator
+        applyComfortPotion(player, tierIndex);
+    }
+
+    private static void applyComfortPotion(EntityPlayer player, int tierIndex) {
+        if (PotionRegistry.COMFORT == null) return;
+
+        PotionEffect current = player.getActivePotionEffect(PotionRegistry.COMFORT);
+        int duration = 220; // ticks
+
+        // Only reapply if missing, different tier, or almost expired
+        if (current == null || current.getAmplifier() != tierIndex || current.getDuration() < duration - 5) {
+            player.addPotionEffect(new PotionEffect(
+                    PotionRegistry.COMFORT,
+                    duration,
+                    tierIndex,
+                    false, // ambient = false → main HUD visible
+                    false   // showParticles = true → HUD icon renders
+            ));
         }
     }
 }

@@ -3,6 +3,7 @@ package chunkcomfort;
 import chunkcomfort.debug.CommandChunkComfort;
 import chunkcomfort.handlers.ChunkComfortEventHandler;
 import chunkcomfort.config.ForgeConfigHandler;
+import chunkcomfort.registry.PotionRegistry;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.Instance;
@@ -36,6 +37,9 @@ public class ChunkComfort {
 
         // Initialize Forge config
         ForgeConfigHandler.initialize();
+
+
+        PotionRegistry.registerPotions();
 
         // Register event handler for block place/break updates
         MinecraftForge.EVENT_BUS.register(new ChunkComfortEventHandler());
