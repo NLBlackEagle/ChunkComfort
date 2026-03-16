@@ -9,9 +9,7 @@ import net.minecraft.potion.Potion;
 import net.minecraft.potion.PotionEffect;
 import net.minecraft.util.ResourceLocation;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 public class PlayerComfortManager {
 
@@ -87,12 +85,15 @@ public class PlayerComfortManager {
 
         // Apply configured potion effects silently (no HUD)
         for (EffectEntry entry : activeTier.effects) {
+            Potion potion = entry.potion;
+
+            // Apply normally
             player.addPotionEffect(new PotionEffect(
-                    entry.potion,
-                    220,
+                    potion,
+                    20,           // duration in ticks
                     entry.amplifier,
-                    true,   // ambient = true → subtle effect
-                    false   // showParticles = false → no HUD icon
+                    true,          // ambient = subtle
+                    false          // no in-world particles
             ));
         }
 
@@ -104,17 +105,11 @@ public class PlayerComfortManager {
         if (PotionRegistry.COMFORT == null) return;
 
         PotionEffect current = player.getActivePotionEffect(PotionRegistry.COMFORT);
-        int duration = 220; // ticks
+        int duration = 600; // ticks
 
-        // Only reapply if missing, different tier, or almost expired
-        if (current == null || current.getAmplifier() != tierIndex || current.getDuration() < duration - 5) {
-            player.addPotionEffect(new PotionEffect(
-                    PotionRegistry.COMFORT,
-                    duration,
-                    tierIndex,
-                    false, // ambient = false → main HUD visible
-                    false   // showParticles = true → HUD icon renders
-            ));
+        if (current == null || current.getAmplifier() != tierIndex || current.getDuration() < 200) {
+
+            player.addPotionEffect(new PotionEffect(PotionRegistry.COMFORT, duration, tierIndex, false, true));
         }
     }
 }
