@@ -3,7 +3,7 @@ package chunkcomfort.debug;
 import chunkcomfort.chunk.AreaComfortCalculator;
 import chunkcomfort.chunk.ChunkUpdateManager;
 import chunkcomfort.chunk.ChunkComfortData;
-import chunkcomfort.handlers.ForgeConfigHandler;
+import chunkcomfort.config.ForgeConfigHandler;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayer;

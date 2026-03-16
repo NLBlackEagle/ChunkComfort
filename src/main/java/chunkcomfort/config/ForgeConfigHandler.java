@@ -1,8 +1,9 @@
-package chunkcomfort.handlers;
+package chunkcomfort.config;
 
 
 import chunkcomfort.ChunkComfort;
 import chunkcomfort.chunk.AreaComfortCalculator;
+import chunkcomfort.player.PlayerComfortManager;
 import chunkcomfort.registry.BiomeComfortRegistry;
 import chunkcomfort.registry.BlockComfortRegistry;
 import chunkcomfort.registry.FireBlockRegistry;
@@ -83,19 +84,19 @@ public class ForgeConfigHandler {
         @Config.Comment({
                 "Comfort tier effects",
                 "Format: <comfort>,[[<potion>,<amplifier>],[<potion>,<amplifier>]]",
-                "Example: -10,[[minecraft:weakness,0],[minecraft:blindness,0]]"
+                "Example: 10,[[minecraft:speed,0],[minecraft:regeneration,0]]"
         })
         public String[] comfortEffects = new String[]{
-                "-10,[[minecraft:weakness,0],[minecraft:blindness,0]]",
                 "10,[[minecraft:speed,0]]",
-                "20,[[minecraft:regeneration,0]]"
+                "20,[[minecraft:speed,1]]",
+                "30,[[minecraft:regeneration,0],[minecraft:speed,0]]"
         };
     }
 
     public static void reloadRegistries() {
         BlockComfortRegistry.reload(server.blockComfortEntries);
         FireBlockRegistry.reload(server.fireBlocks);
-        //ComfortEffectRegistry.reload(server.comfortEffects);
+        PlayerComfortManager.reloadConfig();
         BiomeComfortRegistry.reload(server.biomeComfortModifiers);
         AreaComfortCalculator.reloadGroupLimits(server.groupLimits); // new hook
     }

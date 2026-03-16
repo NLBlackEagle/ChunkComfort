@@ -1,11 +1,15 @@
 package chunkcomfort.handlers;
 
+import chunkcomfort.chunk.AreaComfortCalculator;
 import chunkcomfort.chunk.ChunkUpdateManager;
+import chunkcomfort.player.PlayerComfortManager;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraft.block.Block;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import net.minecraftforge.fml.common.gameevent.TickEvent;
 
 public class ChunkComfortEventHandler {
 
@@ -25,5 +29,14 @@ public class ChunkComfortEventHandler {
         Block block = event.getState().getBlock();
 
         ChunkUpdateManager.onBlockBroken(world, pos, block);
+    }
+
+    @SubscribeEvent
+    public void onPlayerTick(TickEvent.PlayerTickEvent event) {
+        if (event.phase != TickEvent.Phase.END) return;
+        EntityPlayer player = event.player;
+        if (player.world.isRemote) return;
+        if (player.ticksExisted % 20 != 0) return;
+        PlayerComfortManager.applyComfortEffects(player);
     }
 }

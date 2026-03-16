@@ -3,7 +3,7 @@ package chunkcomfort.chunk;
 import java.util.HashMap;
 import java.util.Map;
 
-import chunkcomfort.handlers.ForgeConfigHandler;
+import chunkcomfort.config.ForgeConfigHandler;
 import chunkcomfort.registry.BiomeComfortRegistry;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.math.BlockPos;
@@ -88,7 +88,13 @@ public class AreaComfortCalculator {
 
         int comfortActive = calculateComfortActivation(player.world, center.x, center.z, player);
 
-        if (comfortActive < 2) return 0;
+        // Count how many conditions are enabled
+        int requiredConditions = 0;
+        if (ForgeConfigHandler.server.requireShelter) requiredConditions++;
+        if (ForgeConfigHandler.server.minLightLevel > 0) requiredConditions++;
+        if (ForgeConfigHandler.server.requireFire) requiredConditions++;
+
+        if (comfortActive < requiredConditions) return 0;
 
         Map<String, Integer> summedGroups = new HashMap<>();
 

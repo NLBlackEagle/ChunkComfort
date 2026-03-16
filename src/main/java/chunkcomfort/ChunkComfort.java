@@ -2,7 +2,7 @@ package chunkcomfort;
 
 import chunkcomfort.debug.CommandChunkComfort;
 import chunkcomfort.handlers.ChunkComfortEventHandler;
-import chunkcomfort.handlers.ForgeConfigHandler;
+import chunkcomfort.config.ForgeConfigHandler;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.Instance;
