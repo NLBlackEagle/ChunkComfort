@@ -5,6 +5,7 @@ import chunkcomfort.player.PlayerComfortManager;
 import chunkcomfort.registry.PotionRegistry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.ScaledResolution;
+import net.minecraft.client.gui.inventory.GuiContainerCreative;
 import net.minecraft.client.gui.inventory.GuiInventory;
 import net.minecraft.client.renderer.InventoryEffectRenderer;
 import net.minecraft.potion.PotionEffect;
@@ -47,38 +48,28 @@ public abstract class InventoryEffectRendererMixin {
     )
     private void drawComfortTooltip(CallbackInfo ci) {
         Minecraft mc = Minecraft.getMinecraft();
-        if (mc.player == null) {
-            LOGGER.info("drawComfortTooltip: player is null");
-            return;
-        }
+        if (mc.player == null) return;
 
         PotionEffect comfortEffect = mc.player.getActivePotionEffect(PotionRegistry.COMFORT);
-        if (comfortEffect == null) {
-            LOGGER.info("drawComfortTooltip: Comfort effect not active");
-            return;
-        }
+        if (comfortEffect == null) return;
 
         List<String> effects = PlayerComfortManager.getEffectsForTier(comfortEffect.getAmplifier());
-        if (effects.isEmpty()) {
-            LOGGER.info("drawComfortTooltip: No Comfort effects for tier {}", comfortEffect.getAmplifier());
-            return;
-        }
+        if (effects.isEmpty()) return;
 
-        // Get raw mouse coordinates
+        // Mouse coordinates
         int rawMouseX = Mouse.getX();
         int rawMouseY = Mouse.getY();
-
         ScaledResolution sr = new ScaledResolution(mc);
         int mouseX = rawMouseX * sr.getScaledWidth() / mc.displayWidth;
         int mouseY = sr.getScaledHeight() - (rawMouseY * sr.getScaledHeight() / mc.displayHeight) - 1;
 
-        // Get visible effects, sorted like vanilla
+        // Visible effects, sorted like vanilla
         List<PotionEffect> visibleEffects = mc.player.getActivePotionEffects().stream()
                 .filter(e -> !(e instanceof ICanBeHidden && ((ICanBeHidden) e).chunkcomfort$isHidden()))
                 .sorted((a, b) -> a.getPotion().getName().compareToIgnoreCase(b.getPotion().getName()))
                 .collect(Collectors.toList());
 
-        // Find index of Comfort effect
+        // Find Comfort effect index
         int comfortIndex = -1;
         for (int i = 0; i < visibleEffects.size(); i++) {
             if (visibleEffects.get(i).getPotion() == PotionRegistry.COMFORT) {
@@ -86,34 +77,49 @@ public abstract class InventoryEffectRendererMixin {
                 break;
             }
         }
+        if (comfortIndex < 0) return;
 
-        LOGGER.info("Comfort effect index in visible effects: {}", comfortIndex);
+        // Determine GUI coordinates
+        int guiLeft, guiTop;
+        int potionX, potionY;
 
-        if (comfortIndex < 0) {
-            LOGGER.info("drawComfortTooltip: Comfort not found in visible effects");
-            return;
+        if (mc.currentScreen instanceof GuiInventory) {
+            GuiInventory inv = (GuiInventory) mc.currentScreen;
+            guiLeft = inv.getGuiLeft();
+            guiTop = inv.getGuiTop();
+            potionX = guiLeft - 124; // Survival
+        } else if (mc.currentScreen instanceof GuiContainerCreative) {
+            GuiContainerCreative creative = (GuiContainerCreative) mc.currentScreen;
+            guiLeft = creative.getGuiLeft();
+            guiTop = creative.getGuiTop();
+
+            // Fully dynamic: calculate shift based on first visible potion
+            // Vanilla shifts Creative icons slightly right
+            potionX = guiLeft - 124;
+            for (PotionEffect effect : visibleEffects) {
+                if (!(effect instanceof ICanBeHidden && ((ICanBeHidden) effect).chunkcomfort$isHidden())) {
+                    // First visible icon defines the shift
+                    potionX = potionX + (effect.getPotion() == PotionRegistry.COMFORT ? 0 : 28);
+                    break;
+                }
+            }
+        } else {
+            return; // unsupported screen
         }
 
-        if (!(mc.currentScreen instanceof GuiInventory)) {
-            LOGGER.info("drawComfortTooltip: Not in Inventory GUI, currentScreen={}", mc.currentScreen);
-            return;
-        }
-        GuiInventory inv = (GuiInventory) mc.currentScreen;
+        potionY = guiTop + 8 + comfortIndex * 33;
 
-        // Vanilla positions for potion icons in inventory (C area)
-        int iconX = inv.getGuiLeft() - 124;
-        int iconY = inv.getGuiTop() + 8 + comfortIndex * 33;
         int iconWidth = 140;
         int iconHeight = 32;
 
-        LOGGER.info("Mouse position: ({},{}), Icon area: ({},{},{},{})",
-                mouseX, mouseY, iconX, iconY, iconWidth, iconHeight);
+        LOGGER.info("[ComfortTooltip] mouse=({},{}), icon=({},{}+{}x{}), comfortIndex={}, visibleEffects={}",
+                mouseX, mouseY, potionX, potionY, iconWidth, iconHeight, comfortIndex, visibleEffects.size());
 
         // Hover check
-        if (mouseX >= iconX && mouseX <= iconX + iconWidth &&
-                mouseY >= iconY && mouseY <= iconY + iconHeight) {
+        if (mouseX >= potionX && mouseX <= potionX + iconWidth &&
+                mouseY >= potionY && mouseY <= potionY + iconHeight) {
 
-            LOGGER.info("Hover detected over Comfort effect!");
+            LOGGER.info("[ComfortTooltip] Hover detected over Comfort effect!");
 
             List<String> tooltip = new ArrayList<>();
             tooltip.add("Comfort Effects:");
@@ -129,7 +135,7 @@ public abstract class InventoryEffectRendererMixin {
                     mc.fontRenderer
             );
         } else {
-            LOGGER.info("Hover NOT detected over Comfort effect");
+            LOGGER.info("[ComfortTooltip] Hover NOT detected over Comfort effect");
         }
     }
 }
