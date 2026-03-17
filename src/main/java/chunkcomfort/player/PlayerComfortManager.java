@@ -6,6 +6,7 @@ import chunkcomfort.config.ForgeConfigHandler;
 import chunkcomfort.network.NetworkHandler;
 import chunkcomfort.network.PacketSyncHiddenEffect;
 import chunkcomfort.registry.PotionRegistry;
+import net.minecraft.client.resources.I18n;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.potion.Potion;
@@ -15,6 +16,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class PlayerComfortManager {
 
@@ -128,5 +130,15 @@ public class PlayerComfortManager {
         if (current == null || current.getAmplifier() != tierIndex || current.getDuration() < 200) {
             player.addPotionEffect(new PotionEffect(PotionRegistry.COMFORT, duration, tierIndex, false, true));
         }
+    }
+
+    public static List<String> getEffectsForTier(int tierIndex) {
+        if (tierIndex < 0 || tierIndex >= TIERS.size()) return Collections.emptyList();
+
+        ComfortTier tier = TIERS.get(tierIndex);
+
+        return tier.effects.stream()
+                .map(entry -> I18n.format(entry.potion.getName()) + " " + (entry.amplifier + 1))
+                .collect(Collectors.toList());
     }
 }
