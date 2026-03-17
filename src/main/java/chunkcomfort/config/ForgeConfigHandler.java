@@ -63,12 +63,23 @@ public class ForgeConfigHandler {
         @Config.Comment({
                 "Block comfort entries",
                 "Format: <block>,<value>,<group>",
-                "Example: minecraft:crafting_table,10,workstation"
+                "Example: minecraft:crafting_table,10,workstation",
+                "Note: do not add materials/entities here that can despawn as these blocks are cached"
         })
         @Config.Name("Block Comfort Entries")
         public String[] blockComfortEntries = new String[]{
                 "minecraft:bookshelf,1,furniture",
-                "minecraft:crafting_table,10,workstation"
+                "minecraft:bed,5,furniture",
+                "minecraft:crafting_table,10,workstation",
+                "minecraft:armor_stand,3,luxury",
+                "minecraft:painting,2,luxury",
+                "minecraft:item_frame,2,luxury",
+                "minecraft:banner,2,luxury",
+                "minecraft:flower_pot,1,luxury",
+                "minecraft:torch,1,lightsources",
+                "minecraft:lantern,1,lightsources",
+                "minecraft:furnace,1,lightsources",
+
         };
 
         @Config.Comment({
@@ -79,16 +90,15 @@ public class ForgeConfigHandler {
         @Config.Name("Group Comfort Limits")
         public String[] groupLimits = new String[]{
                 "furniture,10",
-                "workstation,20"
+                "workstation,20",
+                "luxury,3"
         };
 
 
         @Config.Comment("Blocks that count as fire sources")
         @Config.Name("Fire Blocks")
         public String[] fireBlocks = new String[]{
-                "minecraft:torch",
-                "minecraft:fire",
-                "minecraft:lantern"
+                "minecraft:fire"
         };
 
         @Config.Comment({
