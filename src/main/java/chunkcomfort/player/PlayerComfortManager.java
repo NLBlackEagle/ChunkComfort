@@ -94,7 +94,7 @@ public class PlayerComfortManager {
         // Apply configured tier effects (hidden)
         for (EffectEntry entry : activeTier.effects) {
 
-            PotionEffect effect = new PotionEffect(entry.potion, 20, entry.amplifier, true, false);
+            PotionEffect effect = new PotionEffect(entry.potion, ForgeConfigHandler.server.comfortCheckInterval + 5, entry.amplifier, true, false);
 
             player.addPotionEffect(effect);
 
