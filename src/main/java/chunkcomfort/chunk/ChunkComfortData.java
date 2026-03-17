@@ -8,7 +8,6 @@ public class ChunkComfortData {
 
     // New cached fields
     public int totalComfort = 0;     // total of all groups, before group limits
-    public boolean hasFire = false;  // whether this chunk contains fire
 
     public void addComfort(String group, int value) {
         if (groupTotals.containsKey(group)) {
@@ -38,13 +37,5 @@ public class ChunkComfortData {
 
     public int getComfort(String group) {
         return groupTotals.getOrDefault(group, 0);
-    }
-
-    public void setFirePresent(boolean fire) {
-        hasFire = fire;
-    }
-
-    public boolean hasFire() {
-        return hasFire;
     }
 }

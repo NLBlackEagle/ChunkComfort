@@ -35,6 +35,15 @@ public class ForgeConfigHandler {
         public int minLightLevel = 7;
 
         @Config.Comment({
+                "Vertical range (in blocks) to scan for fire around the player",
+                "The scan will check this value relative to the player's Y position",
+                "Default 24 (48 blocks total)"
+        })
+        @Config.RangeInt(min = 1, max = 128)
+        @Config.Name("Fire Scan Vertical Range")
+        public int fireScanVerticalRange = 24;
+
+        @Config.Comment({
                 "Chunk radius checked for comfort, recommended to leave this default.",
                 "1 = 3x3 chumks (9 chunks being scanned each comfort check interval)",
                 "2 = 5x5 chumks (25 chunks being scanned each comfort check interval)",

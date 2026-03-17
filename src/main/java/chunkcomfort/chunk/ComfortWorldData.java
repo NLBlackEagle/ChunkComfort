@@ -46,7 +46,6 @@ public class ComfortWorldData extends WorldSavedData {
             NBTTagCompound chunkTag = new NBTTagCompound();
             chunkTag.setInteger("x", pos.x);
             chunkTag.setInteger("z", pos.z);
-            chunkTag.setBoolean("fire", data.hasFire);
 
             NBTTagCompound groupsTag = new NBTTagCompound();
             for (Map.Entry<String, Integer> groupEntry : data.groupTotals.entrySet()) {
@@ -71,10 +70,8 @@ public class ComfortWorldData extends WorldSavedData {
             NBTTagCompound chunkTag = chunkList.getCompoundTagAt(i);
             int x = chunkTag.getInteger("x");
             int z = chunkTag.getInteger("z");
-            boolean fire = chunkTag.getBoolean("fire");
 
             ChunkComfortData data = new ChunkComfortData();
-            data.hasFire = fire;
 
             NBTTagCompound groupsTag = chunkTag.getCompoundTag("groups");
             for (String key : groupsTag.getKeySet()) {
