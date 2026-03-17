@@ -32,15 +32,24 @@ public class ForgeConfigHandler {
         @Config.Comment("Minimum light level required for comfort (0-15).")
         @Config.RangeInt(min = 0, max = 15)
         @Config.Name("Minimum Light Level")
-        public int minLightLevel = 7; // 0 means no restriction by default
+        public int minLightLevel = 7;
 
-        @Config.Comment("Chunk radius checked for comfort")
-        @Config.RangeInt(min = 0, max = 10)
+        @Config.Comment({
+                "Chunk radius checked for comfort, recommended to leave this default.",
+                "1 = 3x3 chumks (9 chunks being scanned each comfort check interval)",
+                "2 = 5x5 chumks (25 chunks being scanned each comfort check interval)",
+                "3 = 7x7 chumks (49 chunks being scanned each comfort check interval)",
+                "This becomes very laggy very fast!"
+        })
+        @Config.RangeInt(min = 0, max = 3)
         public int chunkRadius = 1;
 
-        @Config.Comment("Player comfort check interval (ticks)")
+        @Config.Comment({
+                "Player comfort check interval (ticks)",
+                "20 = 1 second"
+        })
         @Config.RangeInt(min = 20, max = 2000)
-        public int comfortCheckInterval = 100;
+        public int comfortCheckInterval = 20;
 
         @Config.Comment({
                 "Block comfort entries",

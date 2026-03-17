@@ -65,8 +65,11 @@ public class AreaComfortCalculator {
             boolean fireFound = false;
             ComfortWorldData worldData = ComfortWorldData.get(world);
 
-            for (int dx = -1; dx <= 1; dx++) {
-                for (int dz = -1; dz <= 1; dz++) {
+            // Clamp radius to safe range (0–3)
+            int radius = Math.min(Math.max(ForgeConfigHandler.server.chunkRadius, 0), 3);
+
+            for (int dx = -radius; dx <= radius; dx++) {
+                for (int dz = -radius; dz <= radius; dz++) {
                     ChunkPos pos = new ChunkPos(chunkX + dx, chunkZ + dz);
                     ChunkComfortData data = worldData.getChunkData(pos);
                     if (data.hasFire()) {
@@ -89,6 +92,7 @@ public class AreaComfortCalculator {
     public static int calculatePlayerComfort(EntityPlayer player) {
         ChunkPos center = new ChunkPos(player.getPosition());
 
+        // Check base comfort activation first
         int comfortActive = calculateComfortActivation(player.world, center.x, center.z, player);
 
         // Count how many conditions are enabled
@@ -105,20 +109,26 @@ public class AreaComfortCalculator {
             return 0;
         }
 
+        // Clamp radius to a safe range (0–3)
+        int radius = Math.min(Math.max(ForgeConfigHandler.server.chunkRadius, 0), 3);
+
         Map<String, Integer> summedGroups = new HashMap<>();
         ComfortWorldData worldData = ComfortWorldData.get(player.world);
 
-        for (int dx = -1; dx <= 1; dx++) {
-            for (int dz = -1; dz <= 1; dz++) {
+        // Loop over chunks dynamically based on radius
+        for (int dx = -radius; dx <= radius; dx++) {
+            for (int dz = -radius; dz <= radius; dz++) {
                 ChunkPos pos = new ChunkPos(center.x + dx, center.z + dz);
                 ChunkComfortData data = worldData.getChunkData(pos);
 
                 for (Map.Entry<String, Integer> entry : data.groupTotals.entrySet()) {
-                    summedGroups.put(entry.getKey(), summedGroups.getOrDefault(entry.getKey(), 0) + entry.getValue());
+                    summedGroups.put(entry.getKey(),
+                            summedGroups.getOrDefault(entry.getKey(), 0) + entry.getValue());
                 }
             }
         }
 
+        // Sum comfort, respecting group limits
         int totalComfort = 0;
         for (Map.Entry<String, Integer> entry : summedGroups.entrySet()) {
             String group = entry.getKey();
@@ -127,14 +137,12 @@ public class AreaComfortCalculator {
             totalComfort += Math.min(value, limit);
         }
 
-        // Apply biome comfort modifier
+        // Apply biome modifier
         String biomeName = player.world.getBiome(player.getPosition()).getRegistryName().toString();
         int biomeModifier = BiomeComfortRegistry.getBiomeModifier(biomeName);
-
         totalComfort += biomeModifier;
-        if (totalComfort < 0) totalComfort = 0;
 
-        return totalComfort;
+        return Math.max(totalComfort, 0);
     }
 
     public static int getGroupLimit(String group) {

@@ -1,6 +1,7 @@
 package chunkcomfort.handlers;
 
 import chunkcomfort.chunk.ChunkUpdateManager;
+import chunkcomfort.config.ForgeConfigHandler;
 import chunkcomfort.player.PlayerComfortManager;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraftforge.event.world.BlockEvent;
@@ -33,9 +34,13 @@ public class ChunkComfortEventHandler {
     @SubscribeEvent
     public void onPlayerTick(TickEvent.PlayerTickEvent event) {
         if (event.phase != TickEvent.Phase.END) return;
+
         EntityPlayer player = event.player;
         if (player.world.isRemote) return;
-        if (player.ticksExisted % 20 != 0) return;
+
+        // Use config interval instead of hardcoded 20
+        if (player.ticksExisted % ForgeConfigHandler.server.comfortCheckInterval != 0) return;
+
         PlayerComfortManager.applyComfortEffects(player);
     }
 }
