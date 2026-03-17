@@ -2,6 +2,7 @@ package chunkcomfort;
 
 import java.util.Map;
 
+import fermiumbooter.FermiumRegistryAPI;
 import org.spongepowered.asm.launch.MixinBootstrap;
 
 import net.minecraftforge.fml.relauncher.IFMLLoadingPlugin;
@@ -11,6 +12,8 @@ public class ChunkComfortPlugin implements IFMLLoadingPlugin {
 
     public ChunkComfortPlugin() {
         MixinBootstrap.init();
+        FermiumRegistryAPI.enqueueMixin(false, "mixins.chunkcomfort.vanilla.json");
+
     }
 
     @Override

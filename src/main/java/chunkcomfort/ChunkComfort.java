@@ -3,6 +3,7 @@ package chunkcomfort;
 import chunkcomfort.debug.CommandChunkComfort;
 import chunkcomfort.handlers.ChunkComfortEventHandler;
 import chunkcomfort.config.ForgeConfigHandler;
+import chunkcomfort.network.NetworkHandler;
 import chunkcomfort.registry.PotionRegistry;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Mod;
@@ -38,6 +39,7 @@ public class ChunkComfort {
         // Initialize Forge config
         ForgeConfigHandler.initialize();
 
+        NetworkHandler.register();
 
         PotionRegistry.registerPotions();
 

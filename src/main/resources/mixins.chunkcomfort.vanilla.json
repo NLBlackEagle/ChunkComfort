@@ -1,14 +1,18 @@
 {
   "required": true,
-  "package": "chunkcomfort.mixin",
+  "package": "chunkcomfort.mixin.vanilla",
   "refmap": "mixins.chunkcomfort.refmap.json",
   "compatibilityLevel": "JAVA_8",
   "target": "@env(DEFAULT)",
   "minVersion": "0.8",
   "mixins": [
-    "vanilla.EntityPlayerMixin"
+    "InventoryEffectRendererMixin"
+  ],
+  "client": [
+    "PotionEffectMixin"
   ],
   "injectors": {
+    "defaultRequire": 1,
     "maxShiftBy": 10
   }
 }

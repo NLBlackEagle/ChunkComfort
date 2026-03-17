@@ -1,17 +1,24 @@
 package chunkcomfort.player;
 
+import chunkcomfort.api.ICanBeHidden;
 import chunkcomfort.chunk.AreaComfortCalculator;
 import chunkcomfort.config.ForgeConfigHandler;
+import chunkcomfort.network.NetworkHandler;
+import chunkcomfort.network.PacketSyncHiddenEffect;
 import chunkcomfort.registry.PotionRegistry;
-
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.potion.Potion;
 import net.minecraft.potion.PotionEffect;
 import net.minecraft.util.ResourceLocation;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.*;
 
 public class PlayerComfortManager {
+
+    private static final Logger LOGGER = LogManager.getLogger("ChunkComfort");
 
     private static class EffectEntry {
         Potion potion;
@@ -59,7 +66,7 @@ public class PlayerComfortManager {
                 TIERS.add(tier);
 
             } catch (Exception e) {
-                System.out.println("[ChunkComfort] Invalid comfortEffects config entry: " + line);
+                LOGGER.warn("Invalid comfortEffects config entry: {}", line);
             }
         }
 
@@ -67,7 +74,6 @@ public class PlayerComfortManager {
     }
 
     public static void applyComfortEffects(EntityPlayer player) {
-
         int comfort = AreaComfortCalculator.calculatePlayerComfort(player);
 
         ComfortTier activeTier = null;
@@ -83,21 +89,33 @@ public class PlayerComfortManager {
 
         if (activeTier == null) return;
 
-        // Apply configured potion effects silently (no HUD)
+        // Apply configured tier effects (hidden)
         for (EffectEntry entry : activeTier.effects) {
-            Potion potion = entry.potion;
 
-            // Apply normally
-            player.addPotionEffect(new PotionEffect(
-                    potion,
-                    20,           // duration in ticks
-                    entry.amplifier,
-                    true,          // ambient = subtle
-                    false          // no in-world particles
-            ));
+            PotionEffect effect = new PotionEffect(entry.potion, 20, entry.amplifier, true, false);
+
+            player.addPotionEffect(effect);
+
+            PotionEffect active = player.getActivePotionEffect(entry.potion);
+            if (active != null) {
+
+                ((ICanBeHidden) active).chunkcomfort$setHidden(true);
+
+                // Send hidden state to client
+                if (!player.world.isRemote) {
+                    NetworkHandler.INSTANCE.sendTo(
+                            new PacketSyncHiddenEffect(
+                                    player.getEntityId(),
+                                    Potion.getIdFromPotion(entry.potion),
+                                    true
+                            ),
+                            (EntityPlayerMP) player
+                    );
+                }
+            }
         }
 
-        // Apply custom "Comfort" potion for HUD visual indicator
+        // Apply COMFORT potion for HUD (always visible)
         applyComfortPotion(player, tierIndex);
     }
 
@@ -108,7 +126,6 @@ public class PlayerComfortManager {
         int duration = 600; // ticks
 
         if (current == null || current.getAmplifier() != tierIndex || current.getDuration() < 200) {
-
             player.addPotionEffect(new PotionEffect(PotionRegistry.COMFORT, duration, tierIndex, false, true));
         }
     }
