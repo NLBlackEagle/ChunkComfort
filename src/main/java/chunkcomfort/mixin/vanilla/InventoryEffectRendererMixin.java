@@ -112,14 +112,9 @@ public abstract class InventoryEffectRendererMixin {
         int iconWidth = 140;
         int iconHeight = 32;
 
-        LOGGER.info("[ComfortTooltip] mouse=({},{}), icon=({},{}+{}x{}), comfortIndex={}, visibleEffects={}",
-                mouseX, mouseY, potionX, potionY, iconWidth, iconHeight, comfortIndex, visibleEffects.size());
-
         // Hover check
         if (mouseX >= potionX && mouseX <= potionX + iconWidth &&
                 mouseY >= potionY && mouseY <= potionY + iconHeight) {
-
-            LOGGER.info("[ComfortTooltip] Hover detected over Comfort effect!");
 
             List<String> tooltip = new ArrayList<>();
             tooltip.add("Comfort Effects:");
@@ -134,8 +129,6 @@ public abstract class InventoryEffectRendererMixin {
                     -1,
                     mc.fontRenderer
             );
-        } else {
-            LOGGER.info("[ComfortTooltip] Hover NOT detected over Comfort effect");
         }
     }
 }
