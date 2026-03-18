@@ -78,22 +78,31 @@ public class ForgeConfigHandler {
         })
         @Config.Name("Block Comfort Entries")
         public String[] blockComfortEntries = new String[]{
-                "minecraft:bookshelf,2,furniture,25",    // Cheap, low points
-                "minecraft:bed,8,furniture,5",          // Mid-tier, high points
+                // Furniture (cheap/low points)
+                "minecraft:bookshelf,2,furniture,25",
+                "minecraft:bed,8,furniture,5",
+
                 // Workstations (functional blocks)
                 "minecraft:crafting_table,2,workstation,5",
                 "minecraft:furnace,1,workstation,5",
+                "minecraft:cauldron,3,workstation,5",
+                "minecraft:brewing_stand,10,workstation,2",
+
                 // Enchanting (rare, late-game goal)
                 "minecraft:enchanting_table,25,enchanting,1",
+
                 // Luxury / decorative (low-per-block)
+                "minecraft:jukebox,4,luxury,3",
                 "minecraft:armor_stand,5,luxury,10",
                 "minecraft:painting,1,luxury,25",
                 "minecraft:item_frame,1,luxury,15",
                 "minecraft:carpet,1,luxury,25",
                 "minecraft:banner,3,luxury,10",
                 "minecraft:flower_pot,1,luxury,10",
+
                 // Lightsources (small contribution)
                 "minecraft:torch,1,lightsources,20"
+
         };
 
         @Config.Comment({
@@ -103,11 +112,15 @@ public class ForgeConfigHandler {
         })
         @Config.Name("Group Comfort Limits")
         public String[] groupLimits = new String[]{
-                "furniture,90",
-                "workstation,15",
-                "enchanting,25",
-                "luxury,155",
-                "lightsources,20"
+                "10,[[minecraft:haste,0]]",                               // Early: small boost
+                "30,[[minecraft:speed,0]]",                               // Early mid-game
+                "60,[[minecraft:regeneration,0]]",                        // Mid-game minor regen
+                "100,[[minecraft:speed,1],[minecraft:regeneration,1]]",  // Mid-late combo
+                "150,[[minecraft:strength,0],[minecraft:speed,1]]",      // Late-game perk
+                "200,[[minecraft:resistance,1],[minecraft:regeneration,1]]", // Strong late-game
+                "250,[[minecraft:strength,1],[minecraft:resistance,1],[minecraft:regeneration,1]]", // Epic base
+                "300,[[minecraft:strength,1],[minecraft:resistance,1],[minecraft:regeneration,2]]", // Near max
+                "350,[[minecraft:strength,2],[minecraft:resistance,2],[minecraft:regeneration,2]]"  // Max comfort
         };
 
 
