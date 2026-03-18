@@ -21,6 +21,13 @@ public class ForgeConfigHandler {
 
     public static class ServerConfig {
 
+        @Config.Comment({
+                "Set this to true if you do not want wine from the mod rustic to have a effect on hidden potions",
+                "and the comfort"
+        })
+        @Config.Name("Rustic Wine Comfort Blacklist")
+        public boolean stopRusticWine = true;
+
         @Config.Comment("Require shelter from sky for comfort (true/false).")
         @Config.Name("Shelter Requirement (No Skylight)")
         public boolean requireShelter = true;
