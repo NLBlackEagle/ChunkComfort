@@ -71,10 +71,20 @@ public class BlockComfortRegistry {
                 value = 0;
             }
 
+            // Default limit = value
+            int limit = value;
+            // Optional: parse limit from fourth part if present
+            if (parts.length >= 4) {
+                try {
+                    limit = Integer.parseInt(parts[3]);
+                } catch (NumberFormatException ignored) {
+                }
+            }
+
             // Try to resolve as block
             Block block = Block.getBlockFromName(id);
             if (block != null) {
-                BLOCK_ENTRIES.put(block, new ComfortEntry(value, group));
+                BLOCK_ENTRIES.put(block, new ComfortEntry(value, group, limit));
                 continue;
             }
 
@@ -82,10 +92,33 @@ public class BlockComfortRegistry {
             ResourceLocation rl = new ResourceLocation(id);
             if (ForgeRegistries.ENTITIES.containsKey(rl)) {
                 Class<? extends Entity> entityClass = ForgeRegistries.ENTITIES.getValue(rl).getEntityClass();
-                ENTITY_ENTRIES.put(entityClass, new ComfortEntry(value, group));
+                ENTITY_ENTRIES.put(entityClass, new ComfortEntry(value, group, limit));
                 COMFORT_ENTITY_CLASSES.add(entityClass);
             }
         }
+    }
+
+    /**
+     * Quick check: is this block a comfort block?
+     */
+    public static boolean isComfortBlock(Block block) {
+        return BLOCK_ENTRIES.containsKey(block);
+    }
+
+    /**
+     * Get the group of a comfort block
+     */
+    public static String getGroup(Block block) {
+        ComfortEntry entry = BLOCK_ENTRIES.get(block);
+        return entry != null ? entry.group : null;
+    }
+
+    /**
+     * Get the value of a comfort block
+     */
+    public static int getValue(Block block) {
+        ComfortEntry entry = BLOCK_ENTRIES.get(block);
+        return entry != null ? entry.value : 0;
     }
 
     /**
@@ -94,10 +127,12 @@ public class BlockComfortRegistry {
     public static class ComfortEntry {
         public final int value;
         public final String group;
+        public final int limit; // new
 
-        public ComfortEntry(int value, String group) {
+        public ComfortEntry(int value, String group, int limit) {
             this.value = value;
             this.group = group;
+            this.limit = limit;
         }
     }
 }

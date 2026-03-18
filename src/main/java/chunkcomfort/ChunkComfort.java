@@ -1,8 +1,8 @@
 package chunkcomfort;
 
+import chunkcomfort.config.ForgeConfigHandler;
 import chunkcomfort.debug.CommandChunkComfort;
 import chunkcomfort.handlers.ChunkComfortEventHandler;
-import chunkcomfort.config.ForgeConfigHandler;
 import chunkcomfort.network.NetworkHandler;
 import chunkcomfort.registry.PotionRegistry;
 import net.minecraftforge.common.MinecraftForge;
@@ -59,6 +59,5 @@ public class ChunkComfort {
     public void serverStarting(FMLServerStartingEvent event) {
         // Register the debug command
         event.registerServerCommand(new CommandChunkComfort());
-        LOGGER.info("ChunkComfort server commands registered.");
     }
 }

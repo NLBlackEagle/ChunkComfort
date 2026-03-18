@@ -1,11 +1,10 @@
 package chunkcomfort;
 
-import java.util.Map;
-
 import fermiumbooter.FermiumRegistryAPI;
+import net.minecraftforge.fml.relauncher.IFMLLoadingPlugin;
 import org.spongepowered.asm.launch.MixinBootstrap;
 
-import net.minecraftforge.fml.relauncher.IFMLLoadingPlugin;
+import java.util.Map;
 
 @IFMLLoadingPlugin.MCVersion("1.12.2")
 public class ChunkComfortPlugin implements IFMLLoadingPlugin {

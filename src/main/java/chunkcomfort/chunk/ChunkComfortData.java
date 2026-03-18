@@ -9,6 +9,9 @@ public class ChunkComfortData {
     // New cached fields
     public int totalComfort = 0;     // total of all groups, before group limits
 
+    public boolean initialized;
+
+
     public void addComfort(String group, int value) {
         if (groupTotals.containsKey(group)) {
             groupTotals.put(group, groupTotals.get(group) + value);

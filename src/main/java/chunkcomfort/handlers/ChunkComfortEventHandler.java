@@ -1,11 +1,13 @@
 package chunkcomfort.handlers;
 
 import chunkcomfort.chunk.ChunkUpdateManager;
+import chunkcomfort.chunk.ComfortWorldData;
 import chunkcomfort.registry.BlockComfortRegistry;
 import net.minecraft.block.Block;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
@@ -82,5 +84,14 @@ public class ChunkComfortEventHandler {
         if (player.ticksExisted % chunkcomfort.config.ForgeConfigHandler.server.comfortCheckInterval != 0) return;
 
         chunkcomfort.player.PlayerComfortManager.applyComfortEffects(player);
+    }
+
+    @SubscribeEvent
+    public void onPlayerMove(TickEvent.PlayerTickEvent event) {
+        if (event.player.world.isRemote) return; // only server side
+
+        ChunkPos pos = new ChunkPos(event.player.getPosition());
+        ComfortWorldData.get(event.player.world).getChunkData(pos);
+        // this triggers self-healing if the chunk cache is empty
     }
 }

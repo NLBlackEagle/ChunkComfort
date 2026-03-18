@@ -14,7 +14,10 @@ public class ChunkUpdateManager {
         ChunkComfortData data = ComfortWorldData.get(world).getChunkData(posToChunkPos(pos));
 
         BlockComfortRegistry.ComfortEntry entry = BlockComfortRegistry.BLOCK_ENTRIES.get(block);
-        if (entry != null) data.addComfort(entry.group, entry.value);
+        if (entry != null) {
+            int appliedValue = Math.min(entry.value, entry.limit);
+            data.addComfort(entry.group, appliedValue);
+        }
 
         ComfortWorldData.get(world).setChunkData(posToChunkPos(pos), data);
     }
@@ -24,7 +27,10 @@ public class ChunkUpdateManager {
         ChunkComfortData data = ComfortWorldData.get(world).getChunkData(posToChunkPos(pos));
 
         BlockComfortRegistry.ComfortEntry entry = BlockComfortRegistry.BLOCK_ENTRIES.get(block);
-        if (entry != null) data.removeComfort(entry.group, entry.value);
+        if (entry != null) {
+            int appliedValue = Math.min(entry.value, entry.limit);
+            data.removeComfort(entry.group, appliedValue);
+        }
 
         ComfortWorldData.get(world).setChunkData(posToChunkPos(pos), data);
     }
@@ -34,7 +40,10 @@ public class ChunkUpdateManager {
         ChunkComfortData data = ComfortWorldData.get(world).getChunkData(posToChunkPos(pos));
 
         BlockComfortRegistry.ComfortEntry entry = BlockComfortRegistry.getEntityEntry(entity);
-        if (entry != null) data.addComfort(entry.group, entry.value);
+        if (entry != null) {
+            int appliedValue = Math.min(entry.value, entry.limit);
+            data.addComfort(entry.group, appliedValue);
+        }
 
         ComfortWorldData.get(world).setChunkData(posToChunkPos(pos), data);
     }
@@ -44,7 +53,11 @@ public class ChunkUpdateManager {
         ChunkComfortData data = ComfortWorldData.get(world).getChunkData(posToChunkPos(pos));
 
         BlockComfortRegistry.ComfortEntry entry = BlockComfortRegistry.getEntityEntry(entity);
-        if (entry != null) data.removeComfort(entry.group, entry.value);
+        if (entry != null) {
+            int appliedValue = Math.min(entry.value, entry.limit);
+            data.removeComfort(entry.group, appliedValue);
+        }
+
 
         ComfortWorldData.get(world).setChunkData(posToChunkPos(pos), data);
     }

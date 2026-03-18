@@ -1,7 +1,11 @@
 package chunkcomfort.chunk;
 
+import chunkcomfort.registry.BlockComfortRegistry;
+import net.minecraft.block.Block;
+import net.minecraft.entity.Entity;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
 import net.minecraft.world.storage.WorldSavedData;
@@ -23,9 +27,78 @@ public class ComfortWorldData extends WorldSavedData {
         super(name);
     }
 
-    /** Retrieve chunk data or create a new empty one */
+    public ChunkComfortData getOrCreateChunkData(World world, ChunkPos pos) {
+        ChunkComfortData data = chunks.computeIfAbsent(pos, k -> new ChunkComfortData());
+
+        // If never scanned → scan now (once)
+        if (!data.initialized) {
+            recalcChunk(world, pos);
+            return chunks.get(pos); // get updated data
+        }
+
+        return data;
+    }
+
+    /**
+     * Lazy-load chunk data: if it doesn’t exist, create it and populate from the world.
+     */
     public ChunkComfortData getChunkData(ChunkPos pos) {
         return chunks.computeIfAbsent(pos, k -> new ChunkComfortData());
+    }
+
+    /**
+     * Recalculate the comfort for a specific chunk.
+     * This will scan all blocks in the chunk and update the ChunkComfortData.
+     */
+    public void recalcChunk(World world, ChunkPos chunkPos) {
+        ChunkComfortData data = new ChunkComfortData();
+
+        BlockPos.MutableBlockPos scanPos = new BlockPos.MutableBlockPos();
+        int startX = chunkPos.x * 16;
+        int startZ = chunkPos.z * 16;
+
+        for (int x = 0; x < 16; x++) {
+            for (int z = 0; z < 16; z++) {
+                for (int y = 0; y < world.getHeight(); y++) {
+                    scanPos.setPos(startX + x, y, startZ + z);
+                    Block block = world.getBlockState(scanPos).getBlock();
+
+                    if (BlockComfortRegistry.isComfortBlock(block)) {
+                        String group = BlockComfortRegistry.getGroup(block);
+                        int value = BlockComfortRegistry.getValue(block);
+
+                        data.groupTotals.put(
+                                group,
+                                data.groupTotals.getOrDefault(group, 0) + value
+                        );
+                    }
+                }
+            }
+        }
+
+        for (Entity entity : world.loadedEntityList) {
+            BlockPos ePos = entity.getPosition();
+
+            if ((ePos.getX() >> 4) == chunkPos.x && (ePos.getZ() >> 4) == chunkPos.z) {
+
+                BlockComfortRegistry.ComfortEntry entry = BlockComfortRegistry.getEntityEntry(entity);
+
+                if (entry != null) {
+                    data.groupTotals.put(
+                            entry.group,
+                            data.groupTotals.getOrDefault(entry.group, 0) + entry.value
+                    );
+                }
+            }
+        }
+
+        data.totalComfort = data.groupTotals.values().stream()
+                .mapToInt(Integer::intValue)
+                .sum();
+
+        data.initialized = true; // 👈 IMPORTANT
+
+        setChunkData(chunkPos, data);
     }
 
     /** Update chunk data and mark dirty for saving */
@@ -93,5 +166,14 @@ public class ComfortWorldData extends WorldSavedData {
             world.getMapStorage().setData(DATA_NAME, data);
         }
         return data;
+    }
+
+    /** Clear all cached comfort totals for all loaded chunks */
+    public void clearAllChunks() {
+        for (ChunkComfortData data : chunks.values()) {
+            data.groupTotals.clear();
+            data.totalComfort = 0;
+        }
+        markDirty();
     }
 }

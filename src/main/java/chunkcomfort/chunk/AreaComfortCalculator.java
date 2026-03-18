@@ -1,8 +1,5 @@
 package chunkcomfort.chunk;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import chunkcomfort.config.ForgeConfigHandler;
 import chunkcomfort.registry.BiomeComfortRegistry;
 import chunkcomfort.registry.FireBlockRegistry;
@@ -12,6 +9,9 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class AreaComfortCalculator {
 
@@ -174,7 +174,7 @@ public class AreaComfortCalculator {
         for (int dx = -radius; dx <= radius; dx++) {
             for (int dz = -radius; dz <= radius; dz++) {
                 ChunkPos pos = new ChunkPos(center.x + dx, center.z + dz);
-                ChunkComfortData data = worldData.getChunkData(pos);
+                ChunkComfortData data = worldData.getOrCreateChunkData(player.world, pos);
 
                 for (Map.Entry<String, Integer> entry : data.groupTotals.entrySet()) {
                     summedGroups.put(
@@ -202,6 +202,10 @@ public class AreaComfortCalculator {
         totalComfort += biomeModifier;
 
         return Math.max(totalComfort, 0);
+    }
+    public static void recalcChunk(World world, ChunkPos chunkPos) {
+        ComfortWorldData worldData = ComfortWorldData.get(world);
+        worldData.recalcChunk(world, chunkPos);
     }
 
     public static int getGroupLimit(String group) {

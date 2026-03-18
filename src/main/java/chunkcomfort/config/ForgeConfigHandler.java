@@ -68,17 +68,19 @@ public class ForgeConfigHandler {
         })
         @Config.Name("Block Comfort Entries")
         public String[] blockComfortEntries = new String[]{
-                "minecraft:bookshelf,1,furniture",
-                "minecraft:bed,5,furniture",
-                "minecraft:crafting_table,10,workstation",
-                "minecraft:armor_stand,3,luxury",
-                "minecraft:painting,2,luxury",
-                "minecraft:item_frame,2,luxury",
-                "minecraft:banner,2,luxury",
-                "minecraft:flower_pot,1,luxury",
-                "minecraft:torch,1,lightsources",
-                "minecraft:lantern,1,lightsources",
-                "minecraft:furnace,1,lightsources",
+                "minecraft:bookshelf,5,furniture,20",
+                "minecraft:bed,10,furniture,5",
+                "minecraft:crafting_table,5,workstation,5",
+                "minecraft:enchanting_table,25,enchanting,1",
+                "minecraft:armor_stand,5,luxury,5",
+                "minecraft:painting,3,luxury,20",
+                "minecraft:item_frame,2,luxury,20",
+                "minecraft:carpet,1,luxury,25",
+                "minecraft:banner,2,luxury,10",
+                "minecraft:flower_pot,1,luxury,10",
+                "minecraft:torch,1,lightsources,10",
+                "minecraft:lantern,1,lightsources,10",
+                "minecraft:furnace,1,lightsources,5",
 
         };
 
@@ -91,7 +93,8 @@ public class ForgeConfigHandler {
         public String[] groupLimits = new String[]{
                 "furniture,10",
                 "workstation,20",
-                "luxury,3"
+                "enchanting,1",
+                "luxury,100"
         };
 
 
