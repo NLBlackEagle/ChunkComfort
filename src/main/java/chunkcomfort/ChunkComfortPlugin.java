@@ -1,6 +1,7 @@
 package chunkcomfort;
 
 import fermiumbooter.FermiumRegistryAPI;
+import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.relauncher.IFMLLoadingPlugin;
 import org.spongepowered.asm.launch.MixinBootstrap;
 
@@ -12,7 +13,7 @@ public class ChunkComfortPlugin implements IFMLLoadingPlugin {
     public ChunkComfortPlugin() {
         MixinBootstrap.init();
         FermiumRegistryAPI.enqueueMixin(false, "mixins.chunkcomfort.vanilla.json");
-
+        FermiumRegistryAPI.enqueueMixin(true, "mixins.chunkcomfort.dynsurroundhud.hidehud.json", () -> Loader.isModLoaded("dshuds"));
     }
 
     @Override
