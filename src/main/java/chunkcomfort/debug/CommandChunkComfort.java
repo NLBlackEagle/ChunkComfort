@@ -62,8 +62,6 @@ public class CommandChunkComfort extends CommandBase {
 
         int comfortActive = AreaComfortCalculator.calculateComfortActivation(
                 player.world,
-                playerChunkX,
-                playerChunkZ,
                 player
         );
 
@@ -167,7 +165,6 @@ public class CommandChunkComfort extends CommandBase {
         sender.sendMessage(new TextComponentString("-------------------"));
         sender.sendMessage(new TextComponentString("Total Comfort: " + totalComfort));
         sender.sendMessage(new TextComponentString("Group breakdown: " + totalGroupDisplay));
-        sender.sendMessage(new TextComponentString("Average Comfort: " + (totalComfort / chunkCount)));
     }
 
     private void executeReload(MinecraftServer server, ICommandSender sender) {
