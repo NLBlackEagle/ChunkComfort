@@ -62,26 +62,31 @@ public class ForgeConfigHandler {
 
         @Config.Comment({
                 "Block comfort entries",
-                "Format: <block>,<value>,<group>",
-                "Example: minecraft:crafting_table,10,workstation",
+                "Format: <block>,<value>,<group>,<block_limit>",
+                "Example: minecraft:crafting_table,10,workstation,10",
+                "This will make it so you can add up to 10 crafting_tables each giving 10 points,",
+                "any extra crafting_tables added won't give points. Also if the group limit of",
+                "workstations is 5 then it only counts up to 50 points in total.",
                 "Note: do not add materials/entities here that can despawn as these blocks are cached"
         })
         @Config.Name("Block Comfort Entries")
         public String[] blockComfortEntries = new String[]{
-                "minecraft:bookshelf,5,furniture,20",
-                "minecraft:bed,10,furniture,5",
-                "minecraft:crafting_table,5,workstation,5",
+                "minecraft:bookshelf,2,furniture,25",    // Cheap, low points
+                "minecraft:bed,8,furniture,5",          // Mid-tier, high points
+                // Workstations (functional blocks)
+                "minecraft:crafting_table,2,workstation,5",
+                "minecraft:furnace,1,workstation,5",
+                // Enchanting (rare, late-game goal)
                 "minecraft:enchanting_table,25,enchanting,1",
-                "minecraft:armor_stand,5,luxury,5",
-                "minecraft:painting,3,luxury,20",
-                "minecraft:item_frame,2,luxury,20",
+                // Luxury / decorative (low-per-block)
+                "minecraft:armor_stand,5,luxury,10",
+                "minecraft:painting,1,luxury,25",
+                "minecraft:item_frame,1,luxury,15",
                 "minecraft:carpet,1,luxury,25",
-                "minecraft:banner,2,luxury,10",
+                "minecraft:banner,3,luxury,10",
                 "minecraft:flower_pot,1,luxury,10",
-                "minecraft:torch,1,lightsources,10",
-                "minecraft:lantern,1,lightsources,10",
-                "minecraft:furnace,1,lightsources,5",
-
+                // Lightsources (small contribution)
+                "minecraft:torch,1,lightsources,20"
         };
 
         @Config.Comment({
@@ -91,10 +96,11 @@ public class ForgeConfigHandler {
         })
         @Config.Name("Group Comfort Limits")
         public String[] groupLimits = new String[]{
-                "furniture,10",
-                "workstation,20",
-                "enchanting,1",
-                "luxury,100"
+                "furniture,90",
+                "workstation,15",
+                "enchanting,25",
+                "luxury,155",
+                "lightsources,20"
         };
 
 
@@ -118,9 +124,13 @@ public class ForgeConfigHandler {
                 "Example: 10,[[minecraft:speed,0],[minecraft:regeneration,0]]"
         })
         public String[] comfortEffects = new String[]{
-                "10,[[minecraft:speed,0]]",
-                "20,[[minecraft:speed,1]]",
-                "30,[[minecraft:regeneration,0],[minecraft:speed,0]]"
+                "10,[[minecraft:haste,0]]",
+                "30,[[minecraft:speed,0]]",
+                "60,[[minecraft:regeneration,0]]",
+                "100,[[minecraft:speed,1],[minecraft:regeneration,1]]",
+                "150,[[minecraft:strength,0],[minecraft:speed,1]]",
+                "200,[[minecraft:resistance,1],[minecraft:regeneration,1]]",
+                "250,[[minecraft:strength,1],[minecraft:resistance,1],[minecraft:regeneration,1]]"
         };
     }
 
