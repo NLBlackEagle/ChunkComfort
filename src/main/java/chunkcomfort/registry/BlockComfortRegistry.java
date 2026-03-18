@@ -24,12 +24,27 @@ public class BlockComfortRegistry {
     /**
      * Get the comfort entry for an entity
      */
+    private static final Map<Class<?>, ComfortEntry> ENTITY_RESOLVED_CACHE = new HashMap<>();
+
     public static ComfortEntry getEntityEntry(Entity entity) {
-        for (Class<? extends Entity> clazz : COMFORT_ENTITY_CLASSES) {
-            if (clazz.isInstance(entity)) {
-                return ENTITY_ENTRIES.get(clazz);
+        Class<?> clazz = entity.getClass();
+
+        // Check resolved cache first
+        if (ENTITY_RESOLVED_CACHE.containsKey(clazz)) {
+            return ENTITY_RESOLVED_CACHE.get(clazz);
+        }
+
+        // Check comfort classes
+        for (Class<? extends Entity> comfortClass : COMFORT_ENTITY_CLASSES) {
+            if (comfortClass.isAssignableFrom(clazz)) {
+                ComfortEntry entry = ENTITY_ENTRIES.get(comfortClass);
+                ENTITY_RESOLVED_CACHE.put(clazz, entry);
+                return entry;
             }
         }
+
+        // Not a comfort entity
+        ENTITY_RESOLVED_CACHE.put(clazz, null);
         return null;
     }
 
@@ -38,10 +53,7 @@ public class BlockComfortRegistry {
      * Optimized to skip non-comfort entities in events like LivingDeathEvent
      */
     public static boolean isComfortEntity(Entity entity) {
-        for (Class<? extends Entity> clazz : COMFORT_ENTITY_CLASSES) {
-            if (clazz.isInstance(entity)) return true;
-        }
-        return false;
+        return getEntityEntry(entity) != null;
     }
 
     /**
@@ -52,6 +64,7 @@ public class BlockComfortRegistry {
         BLOCK_ENTRIES.clear();
         ENTITY_ENTRIES.clear();
         COMFORT_ENTITY_CLASSES.clear();
+        ENTITY_RESOLVED_CACHE.clear();
 
         if (entries == null) return;
 
