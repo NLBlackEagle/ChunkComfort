@@ -47,7 +47,7 @@ public class AreaComfortCalculator {
     /**
      * Check activation conditions: shelter + light + fire.
      */
-    public static int calculateComfortActivation(World world, int chunkX, int chunkZ, EntityPlayer player) {
+    public static int calculateComfortActivation(World world, EntityPlayer player) {
         int comfortActive = 0;
         int requiredConditions = 0;
 
@@ -149,8 +149,6 @@ public class AreaComfortCalculator {
 
         int comfortActive = calculateComfortActivation(
                 player.world,
-                center.x,
-                center.z,
                 player
         );
 
@@ -202,10 +200,6 @@ public class AreaComfortCalculator {
         totalComfort += biomeModifier;
 
         return Math.max(totalComfort, 0);
-    }
-    public static void recalcChunk(World world, ChunkPos chunkPos) {
-        ComfortWorldData worldData = ComfortWorldData.get(world);
-        worldData.recalcChunk(world, chunkPos);
     }
 
     public static int getGroupLimit(String group) {

@@ -38,6 +38,7 @@ public class ChunkComfortData {
         }
     }
 
+    // Yahoo, easy getter I don't use but perhaps YOU need it! So here you go!
     public int getComfort(String group) {
         return groupTotals.getOrDefault(group, 0);
     }

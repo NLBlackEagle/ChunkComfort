@@ -30,9 +30,6 @@ public class ChunkComfort {
 
     public static boolean completedLoading = false;
 
-    @Instance(MODID)
-    public static ChunkComfort instance;
-
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {
 

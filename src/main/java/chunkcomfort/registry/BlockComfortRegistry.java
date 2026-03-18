@@ -5,10 +5,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class BlockComfortRegistry {
 
@@ -104,7 +101,7 @@ public class BlockComfortRegistry {
             // Try to resolve as entity
             ResourceLocation rl = new ResourceLocation(id);
             if (ForgeRegistries.ENTITIES.containsKey(rl)) {
-                Class<? extends Entity> entityClass = ForgeRegistries.ENTITIES.getValue(rl).getEntityClass();
+                Class<? extends Entity> entityClass = Objects.requireNonNull(ForgeRegistries.ENTITIES.getValue(rl)).getEntityClass();
                 ENTITY_ENTRIES.put(entityClass, new ComfortEntry(value, group, limit));
                 COMFORT_ENTITY_CLASSES.add(entityClass);
             }

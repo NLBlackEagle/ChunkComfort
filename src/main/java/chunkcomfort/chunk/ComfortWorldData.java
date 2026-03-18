@@ -23,9 +23,6 @@ public class ComfortWorldData extends WorldSavedData {
         super(DATA_NAME);
     }
 
-    public ComfortWorldData(String name) {
-        super(name);
-    }
 
     public ChunkComfortData getOrCreateChunkData(World world, ChunkPos pos) {
         ChunkComfortData data = chunks.computeIfAbsent(pos, k -> new ChunkComfortData());
@@ -160,6 +157,7 @@ public class ComfortWorldData extends WorldSavedData {
 
     /** Utility to load or create ComfortWorldData for a world */
     public static ComfortWorldData get(World world) {
+        assert world.getMapStorage() != null;
         ComfortWorldData data = (ComfortWorldData) world.getMapStorage().getOrLoadData(ComfortWorldData.class, DATA_NAME);
         if (data == null) {
             data = new ComfortWorldData();

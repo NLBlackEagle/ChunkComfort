@@ -27,8 +27,6 @@ import java.util.stream.Collectors;
 @Mixin(InventoryEffectRenderer.class)
 public abstract class InventoryEffectRendererMixin {
 
-    private static final Logger LOGGER = LogManager.getLogger("ChunkComfort");
-
     // Filter out hidden potions from Comfort
     @ModifyVariable(
             method = "drawActivePotionEffects",
