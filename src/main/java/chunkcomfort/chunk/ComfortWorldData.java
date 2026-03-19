@@ -1,7 +1,7 @@
 package chunkcomfort.chunk;
 
 import chunkcomfort.registry.BlockComfortRegistry;
-import net.minecraft.block.Block;
+import chunkcomfort.registry.FireBlockRegistry;
 import net.minecraft.entity.Entity;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
@@ -12,12 +12,18 @@ import net.minecraft.world.storage.WorldSavedData;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ComfortWorldData extends WorldSavedData {
 
     private final Map<ChunkPos, ChunkComfortData> chunks = new HashMap<>();
 
     public static final String DATA_NAME = "chunk_comfort";
+
+    public ComfortWorldData(String name) {
+        super(name);
+
+    }
 
     public ComfortWorldData() {
         super(DATA_NAME);
@@ -29,7 +35,7 @@ public class ComfortWorldData extends WorldSavedData {
 
         // If never scanned → scan now (once)
         if (!data.initialized) {
-            recalcChunk(world, pos);
+            recalcChunkWithFire(world, pos);
             return chunks.get(pos); // get updated data
         }
 
@@ -47,53 +53,47 @@ public class ComfortWorldData extends WorldSavedData {
      * Recalculate the comfort for a specific chunk.
      * This will scan all blocks in the chunk and update the ChunkComfortData.
      */
-    public void recalcChunk(World world, ChunkPos chunkPos) {
+    public void recalcChunkWithFire(World world, ChunkPos chunkPos) {
         ChunkComfortData data = new ChunkComfortData();
+        int minY = 0;
+        int maxY = world.getHeight() - 1;
+        AtomicBoolean fireFound = new AtomicBoolean(false);
 
-        BlockPos.MutableBlockPos scanPos = new BlockPos.MutableBlockPos();
-        int startX = chunkPos.x * 16;
-        int startZ = chunkPos.z * 16;
-
-        for (int x = 0; x < 16; x++) {
-            for (int z = 0; z < 16; z++) {
-                for (int y = 0; y < world.getHeight(); y++) {
-                    scanPos.setPos(startX + x, y, startZ + z);
-                    Block block = world.getBlockState(scanPos).getBlock();
-
-                    if (BlockComfortRegistry.isComfortBlock(block)) {
-                        String group = BlockComfortRegistry.getGroup(block);
-                        int value = BlockComfortRegistry.getValue(block);
-
-                        data.groupTotals.put(
-                                group,
-                                data.groupTotals.getOrDefault(group, 0) + value
-                        );
-                    }
+        try {
+            // Scan all blocks once
+            ChunkScanner.scanChunk(world, chunkPos, minY, maxY, (pos, block) -> {
+                // Comfort blocks
+                if (BlockComfortRegistry.isComfortBlock(block)) {
+                    String group = BlockComfortRegistry.getGroup(block);
+                    int value = BlockComfortRegistry.getValue(block);
+                    data.groupTotals.put(group, data.groupTotals.getOrDefault(group, 0) + value);
                 }
-            }
+
+                // Fire blocks
+                if (!fireFound.get() && FireBlockRegistry.isFireBlock(block)) {
+                    fireFound.set(true);
+                    throw new ChunkScanner.StopScanException(); // early exit if fire found
+                }
+            });
+        } catch (ChunkScanner.StopScanException e) {
+            // This is expected — stop scanning when fire is found
         }
 
+        // Entities
         for (Entity entity : world.loadedEntityList) {
             BlockPos ePos = entity.getPosition();
-
             if ((ePos.getX() >> 4) == chunkPos.x && (ePos.getZ() >> 4) == chunkPos.z) {
-
                 BlockComfortRegistry.ComfortEntry entry = BlockComfortRegistry.getEntityEntry(entity);
-
                 if (entry != null) {
-                    data.groupTotals.put(
-                            entry.group,
-                            data.groupTotals.getOrDefault(entry.group, 0) + entry.value
-                    );
+                    data.groupTotals.put(entry.group, data.groupTotals.getOrDefault(entry.group, 0) + entry.value);
                 }
             }
         }
 
-        data.totalComfort = data.groupTotals.values().stream()
-                .mapToInt(Integer::intValue)
-                .sum();
-
-        data.initialized = true; // 👈 IMPORTANT
+        data.totalComfort = data.groupTotals.values().stream().mapToInt(Integer::intValue).sum();
+        data.firePresent = fireFound.get();
+        data.initialized = true;
+        data.lastRecalcTick = world.getTotalWorldTime();
 
         setChunkData(chunkPos, data);
     }

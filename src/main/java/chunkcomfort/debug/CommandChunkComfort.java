@@ -193,7 +193,7 @@ public class CommandChunkComfort extends CommandBase {
                 for (int dx = -radius; dx <= radius; dx++) {
                     for (int dz = -radius; dz <= radius; dz++) {
                         ChunkPos pos = new ChunkPos(center.x + dx, center.z + dz);
-                        ComfortWorldData.get(world).recalcChunk(world, pos);
+                        ComfortWorldData.get(world).recalcChunkWithFire(world, pos);
                     }
                 }
 

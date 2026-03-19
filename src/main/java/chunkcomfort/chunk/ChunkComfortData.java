@@ -4,42 +4,26 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ChunkComfortData {
-    public final Map<String, Integer> groupTotals = new HashMap<String, Integer>();
-
-    // New cached fields
-    public int totalComfort = 0;     // total of all groups, before group limits
-
+    public final Map<String, Integer> groupTotals = new HashMap<>();
+    public int totalComfort = 0;
     public boolean initialized;
 
+    public long lastRecalcTick = -1;
+
+    // Fire caching
+    public boolean firePresent = false;
+    public long lastFireScanTick = -1;
 
     public void addComfort(String group, int value) {
-        if (groupTotals.containsKey(group)) {
-            groupTotals.put(group, groupTotals.get(group) + value);
-        } else {
-            groupTotals.put(group, value);
-        }
-
-        // update cached total
+        groupTotals.put(group, groupTotals.getOrDefault(group, 0) + value);
         totalComfort += value;
     }
 
     public void removeComfort(String group, int value) {
-        if (groupTotals.containsKey(group)) {
-            int newValue = groupTotals.get(group) - value;
-            if (newValue <= 0) {
-                groupTotals.remove(group);
-            } else {
-                groupTotals.put(group, newValue);
-            }
-
-            // update cached total
-            totalComfort -= value;
-            if (totalComfort < 0) totalComfort = 0; // safety check
-        }
-    }
-
-    // Yahoo, easy getter I don't use but perhaps YOU need it! So here you go!
-    public int getComfort(String group) {
-        return groupTotals.getOrDefault(group, 0);
+        if (!groupTotals.containsKey(group)) return;
+        int newValue = groupTotals.get(group) - value;
+        if (newValue <= 0) groupTotals.remove(group);
+        else groupTotals.put(group, newValue);
+        totalComfort = Math.max(0, totalComfort - value);
     }
 }

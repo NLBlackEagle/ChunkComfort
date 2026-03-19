@@ -130,7 +130,9 @@ public class PlayerComfortManager {
         PotionEffect current = player.getActivePotionEffect(PotionRegistry.COMFORT);
         int duration = 600; // ticks
 
-        if (current == null || current.getAmplifier() != tierIndex || current.getDuration() < 200) {
+
+        if (current == null || current.getAmplifier() != tierIndex || current.getDuration() < 220) {
+            player.removePotionEffect(PotionRegistry.COMFORT);
             player.addPotionEffect(new PotionEffect(PotionRegistry.COMFORT, duration, tierIndex, false, true));
         }
     }

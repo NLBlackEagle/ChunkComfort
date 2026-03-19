@@ -49,26 +49,16 @@ public class AreaComfortCalculator {
      */
     public static int calculateComfortActivation(World world, EntityPlayer player) {
         int comfortActive = 0;
-        int requiredConditions = 0;
-
         BlockPos playerPos = player.getPosition();
 
-        // Determine required conditions
-        if (ForgeConfigHandler.server.requireShelter) requiredConditions++;
-        if (ForgeConfigHandler.server.minLightLevel > 0) requiredConditions++;
-        if (ForgeConfigHandler.server.requireFire) requiredConditions++;
-
-        // Shelter requirement
+        // Step 1: Shelter check
         boolean shelterOk = false;
         if (ForgeConfigHandler.server.requireShelter && !world.canSeeSky(playerPos.up())) {
             comfortActive++;
             shelterOk = true;
         }
 
-        // Early exit: if all conditions already met, no need to scan further
-        if (comfortActive >= requiredConditions) return comfortActive;
-
-        // Minimum light requirement
+        // Step 2: Light check
         boolean lightOk = false;
         int light = world.getLight(playerPos);
         if (ForgeConfigHandler.server.minLightLevel > 0 && light >= ForgeConfigHandler.server.minLightLevel) {
@@ -76,16 +66,28 @@ public class AreaComfortCalculator {
             lightOk = true;
         }
 
-        // Early exit: if all conditions already met
-        if (comfortActive >= requiredConditions) return comfortActive;
+        // Step 3: Fire check (only if fire is required and at least shelter or light contributed)
+        if (ForgeConfigHandler.server.requireFire && (shelterOk || lightOk)) {
+            int radius = getRadius();
+            int verticalRange = ForgeConfigHandler.server.fireScanVerticalRange;
+            int minY = Math.max(0, playerPos.getY() - verticalRange);
+            int maxY = Math.min(world.getHeight() - 1, playerPos.getY() + verticalRange);
 
-        // Fire requirement — only scan if it can contribute
-        if (ForgeConfigHandler.server.requireFire) {
-            // Early skip if neither shelter nor light contributes
-            if (shelterOk || lightOk) {
-                if (isFirePresent(world, playerPos)) {
-                    comfortActive++;
-                }
+            try {
+                boolean fireFound = ChunkScanner.anyBlockMatches(
+                        world,
+                        playerPos,
+                        radius,
+                        minY,
+                        maxY,
+                        FireBlockRegistry::isFireBlock
+                );
+
+                if (fireFound) comfortActive++;
+
+            } catch (ChunkScanner.StopScanException e) {
+                // early exit already handled in anyBlockMatches
+                comfortActive++;
             }
         }
 
@@ -96,62 +98,36 @@ public class AreaComfortCalculator {
      * Live fire scan around player within chunk radius.
      */
     public static boolean isFirePresent(World world, BlockPos playerPos) {
-        // Early exit if fire requirement is disabled
         if (!ForgeConfigHandler.server.requireFire) return false;
 
-        // Early exit: check if shelter and light conditions already fail
         boolean shelterOk = !ForgeConfigHandler.server.requireShelter || !world.canSeeSky(playerPos.up());
         int light = world.getLight(playerPos);
         boolean lightOk = ForgeConfigHandler.server.minLightLevel <= 0 || light >= ForgeConfigHandler.server.minLightLevel;
-
-        // If shelter or light conditions are not met, fire won't help
         if (!shelterOk && !lightOk) return false;
 
-        int radius = getRadius();
-        int verticalRange = ForgeConfigHandler.server.fireScanVerticalRange;
+        ChunkPos chunkPos = new ChunkPos(playerPos);
+        ComfortWorldData worldData = ComfortWorldData.get(world);
+        ChunkComfortData data = worldData.getOrCreateChunkData(world, chunkPos);
 
-        BlockPos.MutableBlockPos scanPos = new BlockPos.MutableBlockPos();
-        int playerChunkX = playerPos.getX() >> 4;
-        int playerChunkZ = playerPos.getZ() >> 4;
-
-        outerLoop:
-        for (int dx = -radius; dx <= radius; dx++) {
-            for (int dz = -radius; dz <= radius; dz++) {
-                ChunkPos chunkPos = new ChunkPos(playerChunkX + dx, playerChunkZ + dz);
-                int startX = chunkPos.x * 16;
-                int startZ = chunkPos.z * 16;
-                int minY = Math.max(0, playerPos.getY() - verticalRange);
-                int maxY = Math.min(world.getHeight() - 1, playerPos.getY() + verticalRange);
-
-                for (int x = 0; x < 16; x++) {
-                    for (int z = 0; z < 16; z++) {
-                        for (int y = maxY; y >= minY; y--) {
-                            scanPos.setPos(startX + x, y, startZ + z);
-                            Block block = world.getBlockState(scanPos).getBlock();
-                            if (block.isAir(world.getBlockState(scanPos), world, scanPos)) continue;
-                            if (FireBlockRegistry.isFireBlock(block)) {
-                                return true; // fire found
-                            }
-                        }
-                    }
-                }
-            }
+        // Self-healing: recalc with fire if uninitialized
+        if (!data.initialized) {
+            worldData.recalcChunkWithFire(world, chunkPos);
+            data = worldData.getOrCreateChunkData(world, chunkPos);
         }
 
-        return false; // no fire found
+        return data.firePresent;
     }
 
     /**
      * Calculate total comfort for the player using cached group totals.
      */
     public static int calculatePlayerComfort(EntityPlayer player) {
-        ChunkPos center = new ChunkPos(player.getPosition());
+        World world = player.world;
+        BlockPos playerPos = player.getPosition();
+        int radius = getRadius();
 
-        int comfortActive = calculateComfortActivation(
-                player.world,
-                player
-        );
-
+        // Step 1: Check activation conditions first (shelter, light, fire)
+        int comfortActive = calculateComfortActivation(world, player);
         int requiredConditions = 0;
         if (ForgeConfigHandler.server.requireShelter) requiredConditions++;
         if (ForgeConfigHandler.server.minLightLevel > 0) requiredConditions++;
@@ -164,16 +140,25 @@ public class AreaComfortCalculator {
             return 0;
         }
 
-        int radius = getRadius();
-
+        // Step 2: Sum cached chunk comfort data, self-heal if missing/uninitialized
         Map<String, Integer> summedGroups = new HashMap<>();
-        ComfortWorldData worldData = ComfortWorldData.get(player.world);
+        ComfortWorldData worldData = ComfortWorldData.get(world);
+
+        int centerChunkX = playerPos.getX() >> 4;
+        int centerChunkZ = playerPos.getZ() >> 4;
 
         for (int dx = -radius; dx <= radius; dx++) {
             for (int dz = -radius; dz <= radius; dz++) {
-                ChunkPos pos = new ChunkPos(center.x + dx, center.z + dz);
-                ChunkComfortData data = worldData.getOrCreateChunkData(player.world, pos);
+                ChunkPos chunkPos = new ChunkPos(centerChunkX + dx, centerChunkZ + dz);
+                ChunkComfortData data = worldData.getChunkData(chunkPos);
 
+                // Self-heal: recalc if not initialized
+                if (!data.initialized) {
+                    worldData.recalcChunkWithFire(world, chunkPos);
+                    data = worldData.getChunkData(chunkPos);
+                }
+
+                // Aggregate groups
                 for (Map.Entry<String, Integer> entry : data.groupTotals.entrySet()) {
                     summedGroups.put(
                             entry.getKey(),
@@ -183,6 +168,7 @@ public class AreaComfortCalculator {
             }
         }
 
+        // Step 3: Apply group limits
         int totalComfort = 0;
         for (Map.Entry<String, Integer> entry : summedGroups.entrySet()) {
             String group = entry.getKey();
@@ -191,11 +177,8 @@ public class AreaComfortCalculator {
             totalComfort += Math.min(value, limit);
         }
 
-        String biomeName = player.world
-                .getBiome(player.getPosition())
-                .getRegistryName()
-                .toString();
-
+        // Step 4: Add biome modifier
+        String biomeName = world.getBiome(playerPos).getRegistryName().toString();
         int biomeModifier = BiomeComfortRegistry.getBiomeModifier(biomeName);
         totalComfort += biomeModifier;
 
