@@ -6,6 +6,7 @@ import chunkcomfort.chunk.AreaComfortCalculator;
 import chunkcomfort.player.PlayerComfortManager;
 import chunkcomfort.registry.BiomeComfortRegistry;
 import chunkcomfort.registry.BlockComfortRegistry;
+import chunkcomfort.registry.EntityComfortRegistry;
 import chunkcomfort.registry.FireBlockRegistry;
 import net.minecraftforge.common.config.Config;
 import net.minecraftforge.common.config.ConfigManager;
@@ -154,6 +155,7 @@ public class ForgeConfigHandler {
 
     public static void reloadRegistries() {
         BlockComfortRegistry.reload(server.blockComfortEntries);
+        EntityComfortRegistry.reload(server.blockComfortEntries);
         FireBlockRegistry.reload(server.fireBlocks);
         PlayerComfortManager.reloadConfig();
         BiomeComfortRegistry.reload(server.biomeComfortModifiers);

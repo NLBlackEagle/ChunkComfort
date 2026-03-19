@@ -1,6 +1,7 @@
 package chunkcomfort.chunk;
 
 import chunkcomfort.registry.BlockComfortRegistry;
+import chunkcomfort.registry.EntityComfortRegistry;
 import net.minecraft.block.Block;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.math.BlockPos;
@@ -13,10 +14,9 @@ public class ChunkUpdateManager {
     public static void onBlockPlaced(World world, BlockPos pos, Block block) {
         ChunkComfortData data = ComfortWorldData.get(world).getChunkData(posToChunkPos(pos));
 
-        BlockComfortRegistry.ComfortEntry entry = BlockComfortRegistry.BLOCK_ENTRIES.get(block);
+        BlockComfortRegistry.ComfortEntry entry = BlockComfortRegistry.getBlockEntry(block);
         if (entry != null) {
-            int appliedValue = Math.min(entry.value, entry.limit);
-            data.addComfort(entry.group, appliedValue);
+            data.addComfort(entry.group, entry.value);
         }
 
         ComfortWorldData.get(world).setChunkData(posToChunkPos(pos), data);
@@ -26,10 +26,9 @@ public class ChunkUpdateManager {
     public static void onBlockBroken(World world, BlockPos pos, Block block) {
         ChunkComfortData data = ComfortWorldData.get(world).getChunkData(posToChunkPos(pos));
 
-        BlockComfortRegistry.ComfortEntry entry = BlockComfortRegistry.BLOCK_ENTRIES.get(block);
+        BlockComfortRegistry.ComfortEntry entry = BlockComfortRegistry.getBlockEntry(block);
         if (entry != null) {
-            int appliedValue = Math.min(entry.value, entry.limit);
-            data.removeComfort(entry.group, appliedValue);
+            data.removeComfort(entry.group, entry.value);
         }
 
         ComfortWorldData.get(world).setChunkData(posToChunkPos(pos), data);
@@ -39,10 +38,9 @@ public class ChunkUpdateManager {
     public static void onEntityAdded(World world, BlockPos pos, Entity entity) {
         ChunkComfortData data = ComfortWorldData.get(world).getChunkData(posToChunkPos(pos));
 
-        BlockComfortRegistry.ComfortEntry entry = BlockComfortRegistry.getEntityEntry(entity);
+        EntityComfortRegistry.ComfortEntry entry = EntityComfortRegistry.getEntityEntry(entity);
         if (entry != null) {
-            int appliedValue = Math.min(entry.value, entry.limit);
-            data.addComfort(entry.group, appliedValue);
+            data.addComfort(entry.group, entry.value);
         }
 
         ComfortWorldData.get(world).setChunkData(posToChunkPos(pos), data);
@@ -52,12 +50,13 @@ public class ChunkUpdateManager {
     public static void onEntityRemoved(World world, BlockPos pos, Entity entity) {
         ChunkComfortData data = ComfortWorldData.get(world).getChunkData(posToChunkPos(pos));
 
-        BlockComfortRegistry.ComfortEntry entry = BlockComfortRegistry.getEntityEntry(entity);
-        if (entry != null) {
-            int appliedValue = Math.min(entry.value, entry.limit);
-            data.removeComfort(entry.group, appliedValue);
-        }
+        System.out.println("Removing entity: " + entity);
 
+        EntityComfortRegistry.ComfortEntry entry = EntityComfortRegistry.getEntityEntry(entity);
+        if (entry != null) {
+            data.removeComfort(entry.group, entry.value);
+            System.out.println("Removed entity: " + entity + ", entry=" + entry);
+        }
 
         ComfortWorldData.get(world).setChunkData(posToChunkPos(pos), data);
     }

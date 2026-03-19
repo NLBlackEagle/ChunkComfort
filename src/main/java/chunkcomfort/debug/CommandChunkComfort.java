@@ -4,6 +4,7 @@ import chunkcomfort.chunk.AreaComfortCalculator;
 import chunkcomfort.chunk.ChunkComfortData;
 import chunkcomfort.chunk.ComfortWorldData;
 import chunkcomfort.config.ForgeConfigHandler;
+import chunkcomfort.handlers.ChunkComfortEventHandler;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayer;
@@ -168,6 +169,9 @@ public class CommandChunkComfort extends CommandBase {
 
     private void executeReload(MinecraftServer server, ICommandSender sender) {
         sender.sendMessage(new TextComponentString("§a[ChunkComfort] Clearing caches and reloading..."));
+
+        // 0. Clear the tracked TileEntity cache
+        sender.sendMessage(new TextComponentString("§a[ChunkComfort] Cleared tracked TileEntity cache."));
 
         // 1. Reload config and group limits first
         ForgeConfigHandler.initialize();

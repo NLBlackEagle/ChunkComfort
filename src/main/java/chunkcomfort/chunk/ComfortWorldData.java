@@ -1,6 +1,7 @@
 package chunkcomfort.chunk;
 
 import chunkcomfort.registry.BlockComfortRegistry;
+import chunkcomfort.registry.EntityComfortRegistry;
 import chunkcomfort.registry.FireBlockRegistry;
 import net.minecraft.entity.Entity;
 import net.minecraft.nbt.NBTTagCompound;
@@ -83,7 +84,7 @@ public class ComfortWorldData extends WorldSavedData {
         for (Entity entity : world.loadedEntityList) {
             BlockPos ePos = entity.getPosition();
             if ((ePos.getX() >> 4) == chunkPos.x && (ePos.getZ() >> 4) == chunkPos.z) {
-                BlockComfortRegistry.ComfortEntry entry = BlockComfortRegistry.getEntityEntry(entity);
+                EntityComfortRegistry.ComfortEntry entry = EntityComfortRegistry.getEntityEntry(entity);
                 if (entry != null) {
                     data.groupTotals.put(entry.group, data.groupTotals.getOrDefault(entry.group, 0) + entry.value);
                 }

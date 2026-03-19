@@ -1,68 +1,19 @@
 package chunkcomfort.registry;
 
 import net.minecraft.block.Block;
-import net.minecraft.entity.Entity;
-import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.fml.common.registry.ForgeRegistries;
-
 import java.util.*;
 
 public class BlockComfortRegistry {
 
     // Config-driven blocks
-    public static final Map<Block, ComfortEntry> BLOCK_ENTRIES = new HashMap<>();
-
-    // Config-driven entities
-    private static final Map<Class<? extends Entity>, ComfortEntry> ENTITY_ENTRIES = new HashMap<>();
-
-    // Quick cache for fast entity checks
-    private static final Set<Class<? extends Entity>> COMFORT_ENTITY_CLASSES = new HashSet<>();
+    private static final Map<Block, ComfortEntry> BLOCK_ENTRIES = new HashMap<>();
 
     /**
-     * Get the comfort entry for an entity
-     */
-    private static final Map<Class<?>, ComfortEntry> ENTITY_RESOLVED_CACHE = new HashMap<>();
-
-    public static ComfortEntry getEntityEntry(Entity entity) {
-        Class<?> clazz = entity.getClass();
-
-        // Check resolved cache first
-        if (ENTITY_RESOLVED_CACHE.containsKey(clazz)) {
-            return ENTITY_RESOLVED_CACHE.get(clazz);
-        }
-
-        // Check comfort classes
-        for (Class<? extends Entity> comfortClass : COMFORT_ENTITY_CLASSES) {
-            if (comfortClass.isAssignableFrom(clazz)) {
-                ComfortEntry entry = ENTITY_ENTRIES.get(comfortClass);
-                ENTITY_RESOLVED_CACHE.put(clazz, entry);
-                return entry;
-            }
-        }
-
-        // Not a comfort entity
-        ENTITY_RESOLVED_CACHE.put(clazz, null);
-        return null;
-    }
-
-    /**
-     * Quick check: is this entity a comfort entity?
-     * Optimized to skip non-comfort entities in events like LivingDeathEvent
-     */
-    public static boolean isComfortEntity(Entity entity) {
-        return getEntityEntry(entity) != null;
-    }
-
-    /**
-     * Reload the registry from config entries
-     * Each entry: <block_or_entity_id>,<value>,<group>
+     * Reload block comfort entries from config
+     * Each entry: <block_id>,<value>,<group>,<limit>
      */
     public static void reload(String[] entries) {
         BLOCK_ENTRIES.clear();
-        ENTITY_ENTRIES.clear();
-        COMFORT_ENTITY_CLASSES.clear();
-        ENTITY_RESOLVED_CACHE.clear();
-
         if (entries == null) return;
 
         for (String line : entries) {
@@ -81,51 +32,33 @@ public class BlockComfortRegistry {
                 value = 0;
             }
 
-            // Default limit = value
             int limit = value;
-            // Optional: parse limit from fourth part if present
             if (parts.length >= 4) {
                 try {
                     limit = Integer.parseInt(parts[3]);
-                } catch (NumberFormatException ignored) {
-                }
+                } catch (NumberFormatException ignored) {}
             }
 
-            // Try to resolve as block
             Block block = Block.getBlockFromName(id);
             if (block != null) {
                 BLOCK_ENTRIES.put(block, new ComfortEntry(value, group, limit));
-                continue;
-            }
-
-            // Try to resolve as entity
-            ResourceLocation rl = new ResourceLocation(id);
-            if (ForgeRegistries.ENTITIES.containsKey(rl)) {
-                Class<? extends Entity> entityClass = Objects.requireNonNull(ForgeRegistries.ENTITIES.getValue(rl)).getEntityClass();
-                ENTITY_ENTRIES.put(entityClass, new ComfortEntry(value, group, limit));
-                COMFORT_ENTITY_CLASSES.add(entityClass);
             }
         }
     }
 
-    /**
-     * Quick check: is this block a comfort block?
-     */
     public static boolean isComfortBlock(Block block) {
         return BLOCK_ENTRIES.containsKey(block);
     }
 
-    /**
-     * Get the group of a comfort block
-     */
+    public static ComfortEntry getBlockEntry(Block block) {
+        return BLOCK_ENTRIES.get(block);
+    }
+
     public static String getGroup(Block block) {
         ComfortEntry entry = BLOCK_ENTRIES.get(block);
         return entry != null ? entry.group : null;
     }
 
-    /**
-     * Get the value of a comfort block
-     */
     public static int getValue(Block block) {
         ComfortEntry entry = BLOCK_ENTRIES.get(block);
         return entry != null ? entry.value : 0;
@@ -137,7 +70,7 @@ public class BlockComfortRegistry {
     public static class ComfortEntry {
         public final int value;
         public final String group;
-        public final int limit; // new
+        public final int limit;
 
         public ComfortEntry(int value, String group, int limit) {
             this.value = value;
