@@ -4,7 +4,6 @@ import chunkcomfort.config.ForgeConfigHandler;
 import chunkcomfort.registry.BiomeComfortRegistry;
 import chunkcomfort.registry.FireBlockRegistry;
 import chunkcomfort.registry.PotionRegistry;
-import net.minecraft.block.Block;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
