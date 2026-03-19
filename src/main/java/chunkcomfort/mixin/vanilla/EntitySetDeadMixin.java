@@ -4,6 +4,8 @@ import chunkcomfort.chunk.ChunkUpdateManager;
 import chunkcomfort.registry.EntityComfortRegistry;
 import chunkcomfort.registry.EntityComfortRegistry.ComfortEntry;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -19,6 +21,9 @@ public abstract class EntitySetDeadMixin {
         World world = entity.world;
 
         if (world.isRemote) return; // only server side
+
+        if (entity instanceof EntityLivingBase) return; // skip mobs/animals
+        if (entity instanceof EntityPlayer) return; // skip players
 
         // Check if this entity is a comfort entity
         if (!EntityComfortRegistry.isComfortEntity(entity)) return;
