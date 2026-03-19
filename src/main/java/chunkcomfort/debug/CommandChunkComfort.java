@@ -58,7 +58,6 @@ public class CommandChunkComfort extends CommandBase {
 
         int radius = AreaComfortCalculator.getRadius();
         int diameter = radius * 2 + 1;
-        int chunkCount = diameter * diameter;
 
         int comfortActive = AreaComfortCalculator.calculateComfortActivation(
                 player.world,

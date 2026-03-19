@@ -32,10 +32,9 @@ public abstract class InventoryEffectRendererMixin {
             ordinal = 0
     )
     private Collection<PotionEffect> filterHiddenPotions(Collection<PotionEffect> effects) {
-        Collection<PotionEffect> visible = effects.stream()
+        return effects.stream()
                 .filter(effect -> !(effect instanceof ICanBeHidden && ((ICanBeHidden) effect).chunkcomfort$isHidden()))
                 .collect(Collectors.toList());
-        return visible;
     }
 
     @Inject(

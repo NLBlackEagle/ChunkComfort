@@ -11,6 +11,7 @@ import net.minecraft.world.World;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 public class AreaComfortCalculator {
 
@@ -177,7 +178,7 @@ public class AreaComfortCalculator {
         }
 
         // Step 4: Add biome modifier
-        String biomeName = world.getBiome(playerPos).getRegistryName().toString();
+        String biomeName = Objects.requireNonNull(world.getBiome(playerPos).getRegistryName()).toString();
         int biomeModifier = BiomeComfortRegistry.getBiomeModifier(biomeName);
         totalComfort += biomeModifier;
 

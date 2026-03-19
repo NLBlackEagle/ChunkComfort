@@ -12,7 +12,6 @@ public class ChunkComfortData {
 
     // Fire caching
     public boolean firePresent = false;
-    public long lastFireScanTick = -1;
 
     public void addComfort(String group, int value) {
         groupTotals.put(group, groupTotals.getOrDefault(group, 0) + value);

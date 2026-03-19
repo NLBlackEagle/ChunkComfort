@@ -39,7 +39,6 @@ public class ChunkScanner {
         int centerChunkX = center.getX() >> 4;
         int centerChunkZ = center.getZ() >> 4;
 
-        outerLoop:
         for (int dx = -radius; dx <= radius; dx++) {
             for (int dz = -radius; dz <= radius; dz++) {
                 ChunkPos chunkPos = new ChunkPos(centerChunkX + dx, centerChunkZ + dz);

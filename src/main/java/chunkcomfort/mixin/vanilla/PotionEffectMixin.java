@@ -35,7 +35,7 @@ public class PotionEffectMixin implements ICanBeHidden {
     }
 
     // Read hidden flag from NBT (static factory method)
-    @Inject(method = "readCustomPotionEffectFromNBT", at = @At("RETURN"), cancellable = true)
+    @Inject(method = "readCustomPotionEffectFromNBT", at = @At("RETURN"))
     private static void chunkcomfort$readHiddenNBT(NBTTagCompound nbt, CallbackInfoReturnable<PotionEffect> cir) {
         PotionEffect effect = cir.getReturnValue();
         if (effect != null && nbt.hasKey("chunkcomfort$hidden")) {
