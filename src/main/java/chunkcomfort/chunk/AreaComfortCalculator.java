@@ -192,6 +192,7 @@ public class AreaComfortCalculator {
     }
 
     public static void addLivingEntityComfort(World world, BlockPos center, int radius, Map<String, Integer> summedGroups) {
+
         AxisAlignedBB box = getAxisAlignedBB(world, center, radius);
 
         List<Entity> entities = world.getEntitiesWithinAABB(Entity.class, box);
@@ -237,21 +238,6 @@ public class AreaComfortCalculator {
                 center.getX() + blockRadius,
                 maxY,
                 center.getZ() + blockRadius
-        );
-        return box;
-    }
-
-    private static AxisAlignedBB getAxisAlignedBB(BlockPos center, int radius) {
-        int blockRadius = (radius * 16) + 8; // match chunk scan area
-
-        int verticalRange = ForgeConfigHandler.server.fireScanVerticalRange;
-        AxisAlignedBB box = new AxisAlignedBB(
-                center.getX() - blockRadius,
-                center.getY() - verticalRange,
-                center.getZ() - verticalRange,
-                center.getX() + blockRadius,
-                center.getY() + verticalRange,
-                center.getZ() + verticalRange
         );
         return box;
     }
