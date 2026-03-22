@@ -192,22 +192,7 @@ public class AreaComfortCalculator {
     }
 
     public static void addLivingEntityComfort(World world, BlockPos center, int radius, Map<String, Integer> summedGroups) {
-        int blockRadius = (radius * 16) + 8; // horizontal scan radius
-        int verticalRange = ForgeConfigHandler.server.fireScanVerticalRange;
-
-        // Clamp Y coordinates to world limits (0..world height - 1)
-        int minY = Math.max(0, center.getY() - verticalRange);
-        int maxY = Math.min(world.getHeight() - 1, center.getY() + verticalRange);
-
-        // Create bounding box
-        AxisAlignedBB box = new AxisAlignedBB(
-                center.getX() - blockRadius,
-                minY,
-                center.getZ() - blockRadius,
-                center.getX() + blockRadius,
-                maxY,
-                center.getZ() + blockRadius
-        );
+        AxisAlignedBB box = getAxisAlignedBB(world, center, radius);
 
         List<Entity> entities = world.getEntitiesWithinAABB(Entity.class, box);
 
@@ -234,6 +219,26 @@ public class AreaComfortCalculator {
 
             entityCount.put(id, count + 1);
         }
+    }
+
+    private static AxisAlignedBB getAxisAlignedBB(World world, BlockPos center, int radius) {
+        int blockRadius = (radius * 16) + 8; // horizontal scan radius
+        int verticalRange = ForgeConfigHandler.server.fireScanVerticalRange;
+
+        // Clamp Y coordinates to world limits (0..world height - 1)
+        int minY = Math.max(0, center.getY() - verticalRange);
+        int maxY = Math.min(world.getHeight() - 1, center.getY() + verticalRange);
+
+        // Create bounding box
+        AxisAlignedBB box = new AxisAlignedBB(
+                center.getX() - blockRadius,
+                minY,
+                center.getZ() - blockRadius,
+                center.getX() + blockRadius,
+                maxY,
+                center.getZ() + blockRadius
+        );
+        return box;
     }
 
     private static AxisAlignedBB getAxisAlignedBB(BlockPos center, int radius) {
