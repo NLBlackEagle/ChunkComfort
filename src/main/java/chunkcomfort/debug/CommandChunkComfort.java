@@ -2,6 +2,7 @@ package chunkcomfort.debug;
 
 import chunkcomfort.chunk.AreaComfortCalculator;
 import chunkcomfort.chunk.ChunkComfortData;
+import chunkcomfort.chunk.ComfortRequirementCheck;
 import chunkcomfort.chunk.ComfortWorldData;
 import chunkcomfort.config.ForgeConfigHandler;
 import chunkcomfort.handlers.ChunkComfortEventHandler;
@@ -84,7 +85,7 @@ public class CommandChunkComfort extends CommandBase {
         }
 
         if (ForgeConfigHandler.server.requireFire) {
-            if (!AreaComfortCalculator.isFirePresent(player.world, player.getPosition())) {
+            if (ComfortRequirementCheck.getRequirementsPresent(player.world, player.getPosition()).fireOk) {
                 status.append("No fire. ");
             }
         }

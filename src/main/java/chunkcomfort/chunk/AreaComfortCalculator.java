@@ -1,10 +1,7 @@
 package chunkcomfort.chunk;
 
 import chunkcomfort.config.ForgeConfigHandler;
-import chunkcomfort.registry.BiomeComfortRegistry;
-import chunkcomfort.registry.FireBlockRegistry;
-import chunkcomfort.registry.LivingComfortRegistry;
-import chunkcomfort.registry.PotionRegistry;
+import chunkcomfort.registry.*;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
 import net.minecraft.entity.player.EntityPlayer;
@@ -54,74 +51,15 @@ public class AreaComfortCalculator {
      * Check activation conditions: shelter + light + fire.
      */
     public static int calculateComfortActivation(World world, EntityPlayer player) {
-        int comfortActive = 0;
-        BlockPos playerPos = player.getPosition();
+        BlockPos pos = player.getPosition();
+        ComfortRequirements reqs = ComfortRequirementCheck.getRequirementsPresent(world, pos);
 
-        // Step 1: Shelter check
-        boolean shelterOk = false;
-        if (ForgeConfigHandler.server.requireShelter && !world.canSeeSky(playerPos.up())) {
-            comfortActive++;
-            shelterOk = true;
-        }
+        int comfort = 0;
+        if (reqs.shelterOk) comfort++;
+        if (reqs.lightOk) comfort++;
+        if (reqs.fireOk) comfort++;
 
-        // Step 2: Light check
-        boolean lightOk = false;
-        int light = world.getLight(playerPos);
-        if (ForgeConfigHandler.server.minLightLevel > 0 && light >= ForgeConfigHandler.server.minLightLevel) {
-            comfortActive++;
-            lightOk = true;
-        }
-
-        // Step 3: Fire check (only if fire is required and at least shelter or light contributed)
-        if (ForgeConfigHandler.server.requireFire && (shelterOk || lightOk)) {
-            int radius = getRadius();
-            int verticalRange = ForgeConfigHandler.server.fireScanVerticalRange;
-            int minY = Math.max(0, playerPos.getY() - verticalRange);
-            int maxY = Math.min(world.getHeight() - 1, playerPos.getY() + verticalRange);
-
-            try {
-                boolean fireFound = ChunkScanner.anyBlockMatches(
-                        world,
-                        playerPos,
-                        radius,
-                        minY,
-                        maxY,
-                        FireBlockRegistry::isFireBlock
-                );
-
-                if (fireFound) comfortActive++;
-
-            } catch (ChunkScanner.StopScanException e) {
-                // early exit already handled in anyBlockMatches
-                comfortActive++;
-            }
-        }
-
-        return comfortActive;
-    }
-
-    /**
-     * Live fire scan around player within chunk radius.
-     */
-    public static boolean isFirePresent(World world, BlockPos playerPos) {
-        if (!ForgeConfigHandler.server.requireFire) return false;
-
-        boolean shelterOk = !ForgeConfigHandler.server.requireShelter || !world.canSeeSky(playerPos.up());
-        int light = world.getLight(playerPos);
-        boolean lightOk = ForgeConfigHandler.server.minLightLevel <= 0 || light >= ForgeConfigHandler.server.minLightLevel;
-        if (!shelterOk && !lightOk) return false;
-
-        ChunkPos chunkPos = new ChunkPos(playerPos);
-        ComfortWorldData worldData = ComfortWorldData.get(world);
-        ChunkComfortData data = worldData.getOrCreateChunkData(world, chunkPos);
-
-        // Self-healing: recalc with fire if uninitialized
-        if (!data.initialized) {
-            worldData.recalcChunkWithFire(world, chunkPos);
-            data = worldData.getOrCreateChunkData(world, chunkPos);
-        }
-
-        return data.firePresent;
+        return comfort;
     }
 
     /**
