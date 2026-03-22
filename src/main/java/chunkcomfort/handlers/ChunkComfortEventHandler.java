@@ -40,29 +40,6 @@ public class ChunkComfortEventHandler {
     }
 
     @SubscribeEvent
-    public void onLivingEntitySpawn(EntityJoinWorldEvent event) {
-        Entity entity = event.getEntity();
-        World world = entity.world;
-
-        if (world.isRemote) return;
-        if (!(entity instanceof EntityLivingBase)) return;
-        if (!EntityComfortRegistry.isComfortEntity(entity)) return;
-
-        ChunkUpdateManager.onEntityAdded(world, entity.getPosition(), entity);
-    }
-
-    @SubscribeEvent
-    public void onLivingEntityDeath(LivingDeathEvent event) {
-        EntityLivingBase entity = event.getEntityLiving();
-        World world = entity.world;
-
-        if (world.isRemote) return;
-        if (!EntityComfortRegistry.isComfortEntity(entity)) return;
-
-        ChunkUpdateManager.onEntityRemoved(world, entity.getPosition(), entity);
-    }
-
-    @SubscribeEvent
     public void onNonLivingEntitySpawn(EntityJoinWorldEvent event) {
         Entity entity = event.getEntity();
         World world = entity.world;

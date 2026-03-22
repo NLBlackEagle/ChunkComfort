@@ -3,13 +3,19 @@ package chunkcomfort.chunk;
 import chunkcomfort.config.ForgeConfigHandler;
 import chunkcomfort.registry.BiomeComfortRegistry;
 import chunkcomfort.registry.FireBlockRegistry;
+import chunkcomfort.registry.LivingComfortRegistry;
 import chunkcomfort.registry.PotionRegistry;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityList;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -140,7 +146,7 @@ public class AreaComfortCalculator {
             return 0;
         }
 
-        // Step 2: Sum cached chunk comfort data, self-heal if missing/uninitialized
+        // Step 2: Sum cached chunk comfort data
         Map<String, Integer> summedGroups = new HashMap<>();
         ComfortWorldData worldData = ComfortWorldData.get(world);
 
@@ -152,13 +158,11 @@ public class AreaComfortCalculator {
                 ChunkPos chunkPos = new ChunkPos(centerChunkX + dx, centerChunkZ + dz);
                 ChunkComfortData data = worldData.getChunkData(chunkPos);
 
-                // Self-heal: recalc if not initialized
                 if (!data.initialized) {
                     worldData.recalcChunkWithFire(world, chunkPos);
                     data = worldData.getChunkData(chunkPos);
                 }
 
-                // Aggregate groups
                 for (Map.Entry<String, Integer> entry : data.groupTotals.entrySet()) {
                     summedGroups.put(
                             entry.getKey(),
@@ -167,6 +171,8 @@ public class AreaComfortCalculator {
                 }
             }
         }
+
+        AreaComfortCalculator.addLivingEntityComfort(world, playerPos, radius, summedGroups);
 
         // Step 3: Apply group limits
         int totalComfort = 0;
@@ -183,6 +189,66 @@ public class AreaComfortCalculator {
         totalComfort += biomeModifier;
 
         return Math.max(totalComfort, 0);
+    }
+
+    public static void addLivingEntityComfort(World world, BlockPos center, int radius, Map<String, Integer> summedGroups) {
+        int blockRadius = (radius * 16) + 8; // horizontal scan radius
+        int verticalRange = ForgeConfigHandler.server.fireScanVerticalRange;
+
+        // Clamp Y coordinates to world limits (0..world height - 1)
+        int minY = Math.max(0, center.getY() - verticalRange);
+        int maxY = Math.min(world.getHeight() - 1, center.getY() + verticalRange);
+
+        // Create bounding box
+        AxisAlignedBB box = new AxisAlignedBB(
+                center.getX() - blockRadius,
+                minY,
+                center.getZ() - blockRadius,
+                center.getX() + blockRadius,
+                maxY,
+                center.getZ() + blockRadius
+        );
+
+        List<Entity> entities = world.getEntitiesWithinAABB(Entity.class, box);
+
+        // Track how many times each entity type contributes
+        Map<ResourceLocation, Integer> entityCount = new HashMap<>();
+
+        for (Entity entity : entities) {
+            if (!LivingComfortRegistry.isComfortEntity(entity)) continue;
+
+            LivingComfortRegistry.LivingComfortEntry entry = LivingComfortRegistry.getEntry(entity);
+            if (entry == null) continue;
+
+            // 1. Get the ResourceLocation in 1.12.2
+            ResourceLocation id = EntityList.getKey(entity);
+            if (id == null) continue;
+
+            int count = entityCount.getOrDefault(id, 0);
+            if (count >= entry.limit) continue; // enforce per-entity limit
+
+            summedGroups.put(
+                    entry.group,
+                    summedGroups.getOrDefault(entry.group, 0) + entry.value
+            );
+
+            entityCount.put(id, count + 1);
+        }
+    }
+
+    private static AxisAlignedBB getAxisAlignedBB(BlockPos center, int radius) {
+        int blockRadius = (radius * 16) + 8; // match chunk scan area
+
+        int verticalRange = ForgeConfigHandler.server.fireScanVerticalRange;
+        AxisAlignedBB box = new AxisAlignedBB(
+                center.getX() - blockRadius,
+                center.getY() - verticalRange,
+                center.getZ() - verticalRange,
+                center.getX() + blockRadius,
+                center.getY() + verticalRange,
+                center.getZ() + verticalRange
+        );
+        return box;
     }
 
     public static int getGroupLimit(String group) {

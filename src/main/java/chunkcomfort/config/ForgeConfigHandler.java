@@ -4,10 +4,7 @@ package chunkcomfort.config;
 import chunkcomfort.ChunkComfort;
 import chunkcomfort.chunk.AreaComfortCalculator;
 import chunkcomfort.player.PlayerComfortManager;
-import chunkcomfort.registry.BiomeComfortRegistry;
-import chunkcomfort.registry.BlockComfortRegistry;
-import chunkcomfort.registry.EntityComfortRegistry;
-import chunkcomfort.registry.FireBlockRegistry;
+import chunkcomfort.registry.*;
 import net.minecraftforge.common.config.Config;
 import net.minecraftforge.common.config.ConfigManager;
 import net.minecraftforge.fml.client.event.ConfigChangedEvent;
@@ -69,7 +66,7 @@ public class ForgeConfigHandler {
         public int comfortCheckInterval = 20;
 
         @Config.Comment({
-                "Block comfort entries",
+                "Block Comfort Entries",
                 "Format: <block>,<value>,<group>,<block_limit>",
                 "Example: minecraft:crafting_table,10,workstation,10",
                 "This will make it so you can add up to 10 crafting_tables each giving 10 points,",
@@ -107,6 +104,17 @@ public class ForgeConfigHandler {
         };
 
         @Config.Comment({
+                "Living Comfort Entries",
+                "Format: <entity>,<value>,<group>,<entity_limit>",
+        })
+        @Config.Name("Living Comfort Entries")
+        public String[] livingComfortEntries = new String[]{
+                // Furniture (cheap/low points)
+                "minecraft:ocelot,5,pets,2",
+                "minecraft:parrot,2,pets,3"
+        };
+
+        @Config.Comment({
                 "Maximum allowed points per comfort group",
                 "Format: <group>,<limit>",
                 "Example: furniture,10"
@@ -117,7 +125,8 @@ public class ForgeConfigHandler {
                 "workstation,50",
                 "enchanting,25",
                 "luxury,167",
-                "lightsources,20"
+                "lightsources,20",
+                "pets,15"
         };
 
 
@@ -156,6 +165,7 @@ public class ForgeConfigHandler {
     public static void reloadRegistries() {
         BlockComfortRegistry.reload(server.blockComfortEntries);
         EntityComfortRegistry.reload(server.blockComfortEntries);
+        LivingComfortRegistry.reload(server.livingComfortEntries);
         FireBlockRegistry.reload(server.fireBlocks);
         PlayerComfortManager.reloadConfig();
         BiomeComfortRegistry.reload(server.biomeComfortModifiers);

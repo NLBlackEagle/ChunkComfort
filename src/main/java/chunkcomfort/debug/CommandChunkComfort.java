@@ -141,6 +141,8 @@ public class CommandChunkComfort extends CommandBase {
             }
         }
 
+        AreaComfortCalculator.addLivingEntityComfort(player.world, player.getPosition(), radius, summedGroups);
+
         int totalComfort = 0;
         StringBuilder totalGroupDisplay = new StringBuilder();
 
