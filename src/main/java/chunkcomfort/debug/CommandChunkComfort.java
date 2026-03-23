@@ -204,7 +204,7 @@ public class CommandChunkComfort extends CommandBase {
 
             String id = entry.entityId.toString();
             groupContents.computeIfAbsent(entry.group, k -> new HashMap<>())
-                    .merge(id, entry.value, Integer::sum);
+                    .merge(id, 1, Integer::sum);
             groupTotals.merge(entry.group, entry.value, Integer::sum);
         }
 
