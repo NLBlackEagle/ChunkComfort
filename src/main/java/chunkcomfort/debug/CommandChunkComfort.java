@@ -247,8 +247,13 @@ public class CommandChunkComfort extends CommandBase {
                         .append(", ");
             }
 
+            // Trim trailing comma
+            if (contentDisplay.length() > 2) {
+                contentDisplay.setLength(contentDisplay.length() - 2);
+            }
+
             sender.sendMessage(new TextComponentString(
-                    group + ", " +
+                    group + ": " +
                             groupPoints + "/" + groupLimit +
                             " | " +
                             contentDisplay
