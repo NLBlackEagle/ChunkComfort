@@ -1,5 +1,7 @@
-package chunkcomfort.chunk;
+package chunkcomfort.handlers;
 
+import chunkcomfort.chunk.AreaComfortCalculator;
+import chunkcomfort.chunk.PlayerChunkComfortCache;
 import chunkcomfort.network.NetworkHandler;
 import chunkcomfort.network.SpawnParticlePacket;
 import chunkcomfort.registry.BlockComfortRegistry;
