@@ -4,6 +4,7 @@ import chunkcomfort.chunk.AreaComfortCalculator;
 import chunkcomfort.chunk.PlayerChunkComfortCache;
 import chunkcomfort.config.ForgeConfigHandler;
 import chunkcomfort.registry.BlockComfortRegistry;
+import chunkcomfort.registry.LivingComfortRegistry;
 import net.minecraft.block.Block;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemBlock;
@@ -44,15 +45,13 @@ public class ChunkComfortClientTooltipHandler {
         EntityPlayer player = event.getEntityPlayer();
         if (player == null) return;
 
-        // Step 1: Get registry info
+        // Step 1: Get block info
         int pointsPerBlock = BlockComfortRegistry.getValue(block);
-        int blockLimit = 0;
         String groupName = BlockComfortRegistry.getGroup(block);
 
+        int blockLimit = 0;
         BlockComfortRegistry.ComfortEntry entry = BlockComfortRegistry.getBlockEntry(block);
-        if (entry != null) {
-            blockLimit = entry.limit;
-        }
+        if (entry != null) blockLimit = entry.limit;
 
         // Step 2: Get player cache
         PlayerChunkComfortCache cache = AreaComfortCalculator.getCache(player);
@@ -60,12 +59,15 @@ public class ChunkComfortClientTooltipHandler {
         // Step 3: Read counts from cache
         int amountIn3x3 = cache.blockCounts.getOrDefault(block, 0);
         int groupPoints = cache.groupTotals.getOrDefault(groupName, 0);
-        int groupPointsLimit = BlockComfortRegistry.getGroupLimit(groupName);
 
-        // Step 4: Add info to tooltip
+        // Step 4: Compute combined group limit (block + living entities)
+        int livingLimit = LivingComfortRegistry.getGroupLimit(groupName);
+        int totalGroupLimit = blockLimit + livingLimit;
+
+        // Step 5: Add info to tooltip
         List<String> tooltip = event.getToolTip();
         tooltip.add("§eComfort Info:");
-        tooltip.add(String.format("§aBlockpoints: %d  Limit: %d/%d", pointsPerBlock, amountIn3x3, blockLimit));
-        tooltip.add(String.format("§bGroup: %s  Points: %d/%d", groupName, groupPoints, groupPointsLimit));
+        tooltip.add(String.format("§aBlock points: %d  Limit: %d/%d", pointsPerBlock, amountIn3x3, blockLimit));
+        tooltip.add(String.format("§bGroup: %s  Points: %d/%d", groupName, groupPoints, totalGroupLimit));
     }
 }

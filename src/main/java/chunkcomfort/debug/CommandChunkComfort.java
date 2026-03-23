@@ -7,6 +7,7 @@ import chunkcomfort.chunk.ComfortWorldData;
 import chunkcomfort.config.ForgeConfigHandler;
 import chunkcomfort.handlers.ChunkComfortEventHandler;
 import chunkcomfort.registry.BlockComfortRegistry;
+import chunkcomfort.registry.LivingComfortRegistry;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayer;
@@ -55,17 +56,16 @@ public class CommandChunkComfort extends CommandBase {
         EntityPlayer player = (EntityPlayer) sender.getCommandSenderEntity();
         if (player == null) return;
 
+        Map<String, Integer> summedGroups = new HashMap<>();
+
         BlockPos pos = player.getPosition();
         int playerChunkX = pos.getX() >> 4;
         int playerChunkZ = pos.getZ() >> 4;
 
         int radius = AreaComfortCalculator.getRadius();
         int diameter = radius * 2 + 1;
-
-        int comfortActive = AreaComfortCalculator.calculateComfortActivation(
-                player.world,
-                player
-        );
+        int comfortActive = AreaComfortCalculator.calculateComfortActivation(player.world, player);
+        int playerLight = player.world.getLight(pos);
 
         sender.sendMessage(new TextComponentString("Comfort Activation Score: " + comfortActive));
 
@@ -79,9 +79,7 @@ public class CommandChunkComfort extends CommandBase {
             status.append("No shelter. ");
         }
 
-        int playerLight = player.world.getLight(pos);
-        if (ForgeConfigHandler.server.minLightLevel > 0 &&
-                playerLight < ForgeConfigHandler.server.minLightLevel) {
+        if (ForgeConfigHandler.server.minLightLevel > 0 && playerLight < ForgeConfigHandler.server.minLightLevel) {
             status.append("Too dark. ");
         }
 
@@ -100,8 +98,10 @@ public class CommandChunkComfort extends CommandBase {
                 "Chunk Comfort Info (" + diameter + "x" + diameter + ", with group limits applied):"
         ));
 
-        Map<String, Integer> summedGroups = new HashMap<>();
+        // Step 1: Add living entity comfort to summedGroups first
+        AreaComfortCalculator.addLivingEntityComfort(player.world, player.getPosition(), radius, summedGroups);
 
+        // Step 2: Add block comfort from chunks
         for (int dx = -radius; dx <= radius; dx++) {
             for (int dz = -radius; dz <= radius; dz++) {
 
@@ -112,13 +112,22 @@ public class CommandChunkComfort extends CommandBase {
                         .get(player.world)
                         .getChunkData(new ChunkPos(chunkX, chunkZ));
 
+                if (!data.initialized) continue;
+
                 int chunkRawTotal = 0;
                 StringBuilder chunkGroupDisplay = new StringBuilder();
 
                 for (Map.Entry<String, Integer> entry : data.groupTotals.entrySet()) {
-
                     String group = entry.getKey();
                     int value = entry.getValue();
+
+                    // Add to summedGroups
+                    summedGroups.put(group, summedGroups.getOrDefault(group, 0) + value);
+
+                    // Show per-chunk totals with combined limits
+                    int blockLimit = BlockComfortRegistry.getGroupLimit(group);
+                    int livingLimit = LivingComfortRegistry.getGroupLimit(group);
+                    int totalLimit = blockLimit + livingLimit;
 
                     chunkRawTotal += value;
 
@@ -126,43 +135,38 @@ public class CommandChunkComfort extends CommandBase {
                             .append(": ")
                             .append(value)
                             .append("/")
-                            .append(BlockComfortRegistry.getGroupLimit(group))
+                            .append(totalLimit)
                             .append("  ");
-
-                    summedGroups.put(group,
-                            summedGroups.getOrDefault(group, 0) + value);
                 }
 
                 sender.sendMessage(new TextComponentString(
                         "Chunk [" + chunkX + "," + chunkZ + "] Comfort: " +
                                 chunkRawTotal +
-                                (chunkGroupDisplay.length() > 0
-                                        ? " | " + chunkGroupDisplay
-                                        : "")
+                                (chunkGroupDisplay.length() > 0 ? " | " + chunkGroupDisplay : "")
                 ));
             }
         }
 
-        AreaComfortCalculator.addLivingEntityComfort(player.world, player.getPosition(), radius, summedGroups);
-
+        // Step 3: Calculate total comfort applying combined limits
         int totalComfort = 0;
         StringBuilder totalGroupDisplay = new StringBuilder();
 
         for (Map.Entry<String, Integer> entry : summedGroups.entrySet()) {
-
             String group = entry.getKey();
             int value = entry.getValue();
-            int limit = BlockComfortRegistry.getGroupLimit(group);
 
-            int applied = Math.min(value, limit);
+            int blockLimit = BlockComfortRegistry.getGroupLimit(group);
+            int livingLimit = LivingComfortRegistry.getGroupLimit(group);
+            int totalLimit = blockLimit + livingLimit;
 
+            int applied = Math.min(value, totalLimit);
             totalComfort += applied;
 
             totalGroupDisplay.append(group)
                     .append(": ")
                     .append(applied)
                     .append("/")
-                    .append(limit)
+                    .append(totalLimit)
                     .append("  ");
         }
 

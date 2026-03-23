@@ -58,4 +58,14 @@ public class LivingComfortRegistry {
     public static boolean isComfortEntity(Entity entity) {
         return getEntry(entity) != null;
     }
+
+    public static int getGroupLimit(String groupName) {
+        int totalLimit = 0;
+        for (LivingComfortEntry entry : ENTITY_MAP.values()) {
+            if (entry.group.equals(groupName)) {
+                totalLimit += entry.limit;
+            }
+        }
+        return totalLimit;
+    }
 }

@@ -114,13 +114,19 @@ public class AreaComfortCalculator {
         // Step 2b: Add living entity comfort to cache
         addLivingEntityComfort(world, playerPos, radius, cache.groupTotals);
 
+
         // Step 3: Apply group limits using cached group totals
         int totalComfort = 0;
         for (Map.Entry<String, Integer> entry : cache.groupTotals.entrySet()) {
             String group = entry.getKey();
             int value = entry.getValue();
-            int limit = BlockComfortRegistry.getGroupLimit(group);
-            totalComfort += Math.min(value, limit);
+
+            // Combine block + living entity limits
+            int blockLimit = BlockComfortRegistry.getGroupLimit(group);
+            int livingLimit = LivingComfortRegistry.getGroupLimit(group);
+            int totalLimit = blockLimit + livingLimit;
+
+            totalComfort += Math.min(value, totalLimit);
         }
 
         // Step 4: Add biome modifier
@@ -143,12 +149,18 @@ public class AreaComfortCalculator {
         for (Entity entity : entities) {
             if (!LivingComfortRegistry.isComfortEntity(entity)) continue;
 
+            System.out.println("Entity " + entity + " = ComfortEntity");
+
             LivingComfortRegistry.LivingComfortEntry entry = LivingComfortRegistry.getEntry(entity);
             if (entry == null) continue;
+
+            System.out.println("Entry is valid");
 
             // 1. Get the ResourceLocation in 1.12.2
             ResourceLocation id = EntityList.getKey(entity);
             if (id == null) continue;
+
+            System.out.println("ID is valid");
 
             int count = entityCount.getOrDefault(id, 0);
             if (count >= entry.limit) continue; // enforce per-entity limit
@@ -159,6 +171,7 @@ public class AreaComfortCalculator {
             );
 
             entityCount.put(id, count + 1);
+            System.out.println("ID " + id + " has count " + count);
         }
     }
 
