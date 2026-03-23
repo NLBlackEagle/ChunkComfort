@@ -16,7 +16,6 @@ import java.util.*;
 public class AreaComfortCalculator {
 
     private static final Map<String, Integer> GROUP_LIMITS = new HashMap<>();
-
     private static final Map<UUID, PlayerChunkComfortCache> PLAYER_CACHES = new HashMap<>();
 
     public static PlayerChunkComfortCache getCache(EntityPlayer player) {
@@ -50,9 +49,6 @@ public class AreaComfortCalculator {
         }
     }
 
-    /**
-     * Check activation conditions: shelter + light + fire.
-     */
     public static int calculateComfortActivation(World world, EntityPlayer player) {
         BlockPos pos = player.getPosition();
         ComfortRequirements reqs = ComfortRequirementCheck.getRequirementsPresent(world, pos);
@@ -65,15 +61,11 @@ public class AreaComfortCalculator {
         return comfort;
     }
 
-    /**
-     * Calculate total comfort for the player using cached group totals.
-     */
     public static int calculatePlayerComfort(EntityPlayer player) {
         World world = player.world;
         BlockPos playerPos = player.getPosition();
         int radius = getRadius();
 
-        // Step 1: Check activation conditions first (shelter, light, fire)
         int comfortActive = calculateComfortActivation(world, player);
         int requiredConditions = 0;
         if (ForgeConfigHandler.server.requireShelter) requiredConditions++;
@@ -87,12 +79,11 @@ public class AreaComfortCalculator {
             return 0;
         }
 
-        // Step 2: Populate player cache from chunks
         ComfortWorldData worldData = ComfortWorldData.get(world);
         int centerChunkX = playerPos.getX() >> 4;
         int centerChunkZ = playerPos.getZ() >> 4;
 
-        PlayerChunkComfortCache cache = AreaComfortCalculator.getCache(player);
+        PlayerChunkComfortCache cache = getCache(player);
         cache.clear();
 
         for (int dx = -radius; dx <= radius; dx++) {
@@ -105,23 +96,18 @@ public class AreaComfortCalculator {
                     data = worldData.getChunkData(chunkPos);
                 }
 
-                // **Populate cache**
-                data.blockCounts.forEach((block, count) -> {cache.addBlockCount(block, count);});
-                data.groupTotals.forEach((group, total) -> cache.addGroupTotal(group, total));
+                data.blockCounts.forEach(cache::addBlockCount);
+                data.groupTotals.forEach(cache::addGroupTotal);
             }
         }
 
-        // Step 2b: Add living entity comfort to cache
         addLivingEntityComfort(world, playerPos, radius, cache.groupTotals);
 
-
-        // Step 3: Apply group limits using cached group totals
         int totalComfort = 0;
         for (Map.Entry<String, Integer> entry : cache.groupTotals.entrySet()) {
             String group = entry.getKey();
             int value = entry.getValue();
 
-            // Combine block + living entity limits
             int blockLimit = BlockComfortRegistry.getGroupLimit(group);
             int livingLimit = LivingComfortRegistry.getGroupLimit(group);
             int totalLimit = blockLimit + livingLimit;
@@ -129,7 +115,6 @@ public class AreaComfortCalculator {
             totalComfort += Math.min(value, totalLimit);
         }
 
-        // Step 4: Add biome modifier
         String biomeName = Objects.requireNonNull(world.getBiome(playerPos).getRegistryName()).toString();
         int biomeModifier = BiomeComfortRegistry.getBiomeModifier(biomeName);
         totalComfort += biomeModifier;
@@ -138,62 +123,38 @@ public class AreaComfortCalculator {
     }
 
     public static void addLivingEntityComfort(World world, BlockPos center, int radius, Map<String, Integer> summedGroups) {
-
         AxisAlignedBB box = getAxisAlignedBB(world, center, radius);
-
         List<Entity> entities = world.getEntitiesWithinAABB(Entity.class, box);
 
-        // Track how many times each entity type contributes
         Map<ResourceLocation, Integer> entityCount = new HashMap<>();
 
         for (Entity entity : entities) {
             if (!LivingComfortRegistry.isComfortEntity(entity)) continue;
 
-            System.out.println("Entity " + entity + " = ComfortEntity");
-
             LivingComfortRegistry.LivingComfortEntry entry = LivingComfortRegistry.getEntry(entity);
             if (entry == null) continue;
 
-            System.out.println("Entry is valid");
-
-            // 1. Get the ResourceLocation in 1.12.2
             ResourceLocation id = EntityList.getKey(entity);
             if (id == null) continue;
 
-            System.out.println("ID is valid");
-
             int count = entityCount.getOrDefault(id, 0);
-            if (count >= entry.limit) continue; // enforce per-entity limit
+            if (count >= entry.limit) continue;
 
-            summedGroups.put(
-                    entry.group,
-                    summedGroups.getOrDefault(entry.group, 0) + entry.value
-            );
-
+            summedGroups.put(entry.group, summedGroups.getOrDefault(entry.group, 0) + entry.value);
             entityCount.put(id, count + 1);
-            System.out.println("ID " + id + " has count " + count);
         }
     }
 
     private static AxisAlignedBB getAxisAlignedBB(World world, BlockPos center, int radius) {
-        int blockRadius = (radius * 16) + 8; // horizontal scan radius
+        int blockRadius = (radius * 16) + 8;
         int verticalRange = ForgeConfigHandler.server.fireScanVerticalRange;
 
-        // Clamp Y coordinates to world limits (0..world height - 1)
         int minY = Math.max(0, center.getY() - verticalRange);
         int maxY = Math.min(world.getHeight() - 1, center.getY() + verticalRange);
 
-        // Create bounding box
-        AxisAlignedBB box = new AxisAlignedBB(
-                center.getX() - blockRadius,
-                minY,
-                center.getZ() - blockRadius,
-                center.getX() + blockRadius,
-                maxY,
-                center.getZ() + blockRadius
+        return new AxisAlignedBB(
+                center.getX() - blockRadius, minY, center.getZ() - blockRadius,
+                center.getX() + blockRadius, maxY, center.getZ() + blockRadius
         );
-        return box;
     }
-
-
 }
