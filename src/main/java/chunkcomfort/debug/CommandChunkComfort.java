@@ -56,16 +56,14 @@ public class CommandChunkComfort extends CommandBase {
         EntityPlayer player = (EntityPlayer) sender.getCommandSenderEntity();
         if (player == null) return;
 
-        Map<String, Integer> summedGroups = new HashMap<>();
-
         BlockPos pos = player.getPosition();
         int playerChunkX = pos.getX() >> 4;
         int playerChunkZ = pos.getZ() >> 4;
 
         int radius = AreaComfortCalculator.getRadius();
         int diameter = radius * 2 + 1;
+
         int comfortActive = AreaComfortCalculator.calculateComfortActivation(player.world, player);
-        int playerLight = player.world.getLight(pos);
 
         sender.sendMessage(new TextComponentString("Comfort Activation Score: " + comfortActive));
 
@@ -79,12 +77,13 @@ public class CommandChunkComfort extends CommandBase {
             status.append("No shelter. ");
         }
 
+        int playerLight = player.world.getLight(pos);
         if (ForgeConfigHandler.server.minLightLevel > 0 && playerLight < ForgeConfigHandler.server.minLightLevel) {
             status.append("Too dark. ");
         }
 
         if (ForgeConfigHandler.server.requireFire) {
-            if (ComfortRequirementCheck.getRequirementsPresent(player.world, player.getPosition()).fireOk) {
+            if (!ComfortRequirementCheck.getRequirementsPresent(player.world, pos).fireOk) {
                 status.append("No fire. ");
             }
         }
@@ -95,16 +94,17 @@ public class CommandChunkComfort extends CommandBase {
         }
 
         sender.sendMessage(new TextComponentString(
-                "Chunk Comfort Info (" + diameter + "x" + diameter + ", with group limits applied):"
+                "Chunk Comfort Info (" + diameter + "x" + diameter + " chunks, global group limits applied):"
         ));
 
-        // Step 1: Add living entity comfort to summedGroups first
-        AreaComfortCalculator.addLivingEntityComfort(player.world, player.getPosition(), radius, summedGroups);
+        Map<String, Integer> summedGroups = new HashMap<>();
 
-        // Step 2: Add block comfort from chunks
+        // Step 1: Add living entity comfort first
+        AreaComfortCalculator.addLivingEntityComfort(player.world, pos, radius, summedGroups);
+
+        // Step 2: Iterate through each chunk
         for (int dx = -radius; dx <= radius; dx++) {
             for (int dz = -radius; dz <= radius; dz++) {
-
                 int chunkX = playerChunkX + dx;
                 int chunkZ = playerChunkZ + dz;
 
@@ -114,40 +114,38 @@ public class CommandChunkComfort extends CommandBase {
 
                 if (!data.initialized) continue;
 
-                int chunkRawTotal = 0;
+                int chunkTotal = 0;
                 StringBuilder chunkGroupDisplay = new StringBuilder();
 
                 for (Map.Entry<String, Integer> entry : data.groupTotals.entrySet()) {
                     String group = entry.getKey();
                     int value = entry.getValue();
 
-                    // Add to summedGroups
+                    // Add to total summed groups
                     summedGroups.put(group, summedGroups.getOrDefault(group, 0) + value);
 
-                    // Show per-chunk totals with combined limits
-                    int blockLimit = BlockComfortRegistry.getGroupLimit(group);
-                    int livingLimit = LivingComfortRegistry.getGroupLimit(group);
-                    int totalLimit = blockLimit + livingLimit;
+                    chunkTotal += value;
 
-                    chunkRawTotal += value;
+                    // Use global group limit from config
+                    int globalLimit = getGlobalGroupLimit(group);
 
                     chunkGroupDisplay.append(group)
                             .append(": ")
                             .append(value)
                             .append("/")
-                            .append(totalLimit)
+                            .append(globalLimit)
                             .append("  ");
                 }
 
                 sender.sendMessage(new TextComponentString(
                         "Chunk [" + chunkX + "," + chunkZ + "] Comfort: " +
-                                chunkRawTotal +
+                                chunkTotal +
                                 (chunkGroupDisplay.length() > 0 ? " | " + chunkGroupDisplay : "")
                 ));
             }
         }
 
-        // Step 3: Calculate total comfort applying combined limits
+        // Step 3: Display total comfort respecting global limits
         int totalComfort = 0;
         StringBuilder totalGroupDisplay = new StringBuilder();
 
@@ -155,24 +153,37 @@ public class CommandChunkComfort extends CommandBase {
             String group = entry.getKey();
             int value = entry.getValue();
 
-            int blockLimit = BlockComfortRegistry.getGroupLimit(group);
-            int livingLimit = LivingComfortRegistry.getGroupLimit(group);
-            int totalLimit = blockLimit + livingLimit;
-
-            int applied = Math.min(value, totalLimit);
+            int globalLimit = getGlobalGroupLimit(group);
+            int applied = Math.min(value, globalLimit);
             totalComfort += applied;
 
             totalGroupDisplay.append(group)
                     .append(": ")
                     .append(applied)
                     .append("/")
-                    .append(totalLimit)
+                    .append(globalLimit)
                     .append("  ");
         }
 
         sender.sendMessage(new TextComponentString("-------------------"));
         sender.sendMessage(new TextComponentString("Total Comfort: " + totalComfort));
         sender.sendMessage(new TextComponentString("Group breakdown: " + totalGroupDisplay));
+    }
+
+    /**
+     * Helper to get global group limit from Forge config
+     */
+    private int getGlobalGroupLimit(String groupName) {
+        if (groupName == null || groupName.isEmpty()) return 0;
+        for (String s : ForgeConfigHandler.server.groupLimits) {
+            String[] split = s.split(",");
+            if (split.length == 2 && split[0].equals(groupName)) {
+                try {
+                    return Integer.parseInt(split[1]);
+                } catch (NumberFormatException ignored) {}
+            }
+        }
+        return Integer.MAX_VALUE; // fallback if not configured
     }
 
     private void executeReload(MinecraftServer server, ICommandSender sender) {
@@ -220,4 +231,5 @@ public class CommandChunkComfort extends CommandBase {
     public int getRequiredPermissionLevel() {
         return 2; // Only ops/admins
     }
+
 }
