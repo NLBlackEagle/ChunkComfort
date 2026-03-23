@@ -101,7 +101,6 @@ public class CommandChunkComfort extends CommandBase {
 
         // Step 1: Prepare summed groups map
         Map<String, Integer> summedGroups = new HashMap<>();
-        AreaComfortCalculator.addLivingEntityComfort(player.world, pos, radius, summedGroups);
 
         // Step 2: Iterate chunks for per-chunk display
         for (int dx = -radius; dx <= radius; dx++) {
