@@ -1,6 +1,7 @@
 package chunkcomfort.handlers;
 
 import chunkcomfort.chunk.ChunkUpdateManager;
+import chunkcomfort.chunk.ComfortBlockParticleHandler;
 import chunkcomfort.chunk.ComfortWorldData;
 import chunkcomfort.registry.EntityComfortRegistry;
 import net.minecraft.block.Block;
@@ -29,6 +30,7 @@ public class ChunkComfortEventHandler {
         Block block = event.getPlacedBlock().getBlock();
 
         ChunkUpdateManager.onBlockPlaced(world, pos, block);
+        ComfortBlockParticleHandler.trySpawnComfortParticles(world, pos, event.getPlayer(), block, null);
     }
 
     @SubscribeEvent
@@ -53,6 +55,7 @@ public class ChunkComfortEventHandler {
 
         // Add comfort points immediately
         ChunkUpdateManager.onEntityAdded(world, entity.getPosition(), entity);
+        ComfortBlockParticleHandler.trySpawnComfortParticles(world, entity.getPosition(), null, null, entity);
     }
 
 
