@@ -145,7 +145,7 @@ public class AreaComfortCalculator {
         }
     }
 
-    private static AxisAlignedBB getAxisAlignedBB(World world, BlockPos center, int radius) {
+    public static AxisAlignedBB getAxisAlignedBB(World world, BlockPos center, int radius) {
         int blockRadius = (radius * 16) + 8;
         int verticalRange = ForgeConfigHandler.server.fireScanVerticalRange;
 

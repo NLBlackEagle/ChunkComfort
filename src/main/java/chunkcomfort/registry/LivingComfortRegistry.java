@@ -24,7 +24,7 @@ public class LivingComfortRegistry {
         }
     }
 
-    private static final Map<ResourceLocation, LivingComfortEntry> ENTITY_MAP = new HashMap<>();
+    public static final Map<ResourceLocation, LivingComfortEntry> ENTITY_MAP = new HashMap<>();
 
     public static void reload(String[] entries) {
         ENTITY_MAP.clear();

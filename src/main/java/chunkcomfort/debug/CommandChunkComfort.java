@@ -8,10 +8,15 @@ import chunkcomfort.config.ForgeConfigHandler;
 import chunkcomfort.handlers.ChunkComfortEventHandler;
 import chunkcomfort.registry.BlockComfortRegistry;
 import chunkcomfort.registry.LivingComfortRegistry;
+import net.minecraft.block.Block;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.ICommandSender;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityList;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.text.TextComponentString;
@@ -64,9 +69,9 @@ public class CommandChunkComfort extends CommandBase {
         int diameter = radius * 2 + 1;
 
         int comfortActive = AreaComfortCalculator.calculateComfortActivation(player.world, player);
-
         sender.sendMessage(new TextComponentString("Comfort Activation Score: " + comfortActive));
 
+        // Check required conditions
         int requiredConditions = 0;
         if (ForgeConfigHandler.server.requireShelter) requiredConditions++;
         if (ForgeConfigHandler.server.minLightLevel > 0) requiredConditions++;
@@ -76,16 +81,12 @@ public class CommandChunkComfort extends CommandBase {
         if (ForgeConfigHandler.server.requireShelter && player.world.canSeeSky(pos.up())) {
             status.append("No shelter. ");
         }
-
         int playerLight = player.world.getLight(pos);
         if (ForgeConfigHandler.server.minLightLevel > 0 && playerLight < ForgeConfigHandler.server.minLightLevel) {
             status.append("Too dark. ");
         }
-
-        if (ForgeConfigHandler.server.requireFire) {
-            if (!ComfortRequirementCheck.getRequirementsPresent(player.world, pos).fireOk) {
-                status.append("No fire. ");
-            }
+        if (ForgeConfigHandler.server.requireFire && !ComfortRequirementCheck.getRequirementsPresent(player.world, pos).fireOk) {
+            status.append("No fire. ");
         }
 
         if (comfortActive < requiredConditions) {
@@ -97,21 +98,17 @@ public class CommandChunkComfort extends CommandBase {
                 "Chunk Comfort Info (" + diameter + "x" + diameter + " chunks, global group limits applied):"
         ));
 
+        // Step 1: Prepare summed groups map
         Map<String, Integer> summedGroups = new HashMap<>();
-
-        // Step 1: Add living entity comfort first
         AreaComfortCalculator.addLivingEntityComfort(player.world, pos, radius, summedGroups);
 
-        // Step 2: Iterate through each chunk
+        // Step 2: Iterate chunks for per-chunk display
         for (int dx = -radius; dx <= radius; dx++) {
             for (int dz = -radius; dz <= radius; dz++) {
                 int chunkX = playerChunkX + dx;
                 int chunkZ = playerChunkZ + dz;
 
-                ChunkComfortData data = ComfortWorldData
-                        .get(player.world)
-                        .getChunkData(new ChunkPos(chunkX, chunkZ));
-
+                ChunkComfortData data = ComfortWorldData.get(player.world).getChunkData(new ChunkPos(chunkX, chunkZ));
                 if (!data.initialized) continue;
 
                 int chunkTotal = 0;
@@ -121,14 +118,10 @@ public class CommandChunkComfort extends CommandBase {
                     String group = entry.getKey();
                     int value = entry.getValue();
 
-                    // Add to total summed groups
                     summedGroups.put(group, summedGroups.getOrDefault(group, 0) + value);
-
                     chunkTotal += value;
 
-                    // Use global group limit from config
                     int globalLimit = getGlobalGroupLimit(group);
-
                     chunkGroupDisplay.append(group)
                             .append(": ")
                             .append(value)
@@ -145,29 +138,81 @@ public class CommandChunkComfort extends CommandBase {
             }
         }
 
-        // Step 3: Display total comfort respecting global limits
-        int totalComfort = 0;
-        StringBuilder totalGroupDisplay = new StringBuilder();
+        // Add a blank line between chunk info and breakdown
+        sender.sendMessage(new TextComponentString(""));
 
-        for (Map.Entry<String, Integer> entry : summedGroups.entrySet()) {
-            String group = entry.getKey();
-            int value = entry.getValue();
+        // Step 3: Detailed group breakdown per block/entity
+        Map<String, Map<String, Integer>> groupContents = new HashMap<>();
 
-            int globalLimit = getGlobalGroupLimit(group);
-            int applied = Math.min(value, globalLimit);
-            totalComfort += applied;
+        // Blocks from chunks
+        for (int dx = -radius; dx <= radius; dx++) {
+            for (int dz = -radius; dz <= radius; dz++) {
+                int chunkX = playerChunkX + dx;
+                int chunkZ = playerChunkZ + dz;
 
-            totalGroupDisplay.append(group)
-                    .append(": ")
-                    .append(applied)
-                    .append("/")
-                    .append(globalLimit)
-                    .append("  ");
+                ChunkComfortData data = ComfortWorldData.get(player.world).getChunkData(new ChunkPos(chunkX, chunkZ));
+                if (!data.initialized) continue;
+
+                for (Map.Entry<Block, Integer> entry : data.blockCounts.entrySet()) {
+                    Block block = entry.getKey();
+                    int value = entry.getValue();
+                    if (!BlockComfortRegistry.isComfortBlock(block)) continue;
+
+                    String blockName = Block.REGISTRY.getNameForObject(block).toString();
+                    String group = BlockComfortRegistry.getBlockEntry(block).group;
+
+                    groupContents.computeIfAbsent(group, k -> new HashMap<>())
+                            .merge(blockName, value, Integer::sum);
+                }
+            }
+        }
+
+        // Living entities in radius
+        AxisAlignedBB box = AreaComfortCalculator.getAxisAlignedBB(player.world, pos, radius);
+        for (Entity entity : player.world.getEntitiesWithinAABB(Entity.class, box)) {
+            if (!LivingComfortRegistry.isComfortEntity(entity)) continue;
+
+            LivingComfortRegistry.LivingComfortEntry entry = LivingComfortRegistry.getEntry(entity);
+            if (entry == null) continue;
+
+            String id = entry.entityId.toString();
+            groupContents.computeIfAbsent(entry.group, k -> new HashMap<>())
+                    .merge(id, entry.value, Integer::sum);
+        }
+
+        // Display detailed group breakdown
+        sender.sendMessage(new TextComponentString("-------------------"));
+        sender.sendMessage(new TextComponentString("Group Breakdown:"));
+
+        for (Map.Entry<String, Map<String, Integer>> groupEntry : groupContents.entrySet()) {
+            String group = groupEntry.getKey();
+            Map<String, Integer> content = groupEntry.getValue();
+
+            StringBuilder contentDisplay = new StringBuilder();
+            for (Map.Entry<String, Integer> e : content.entrySet()) {
+                String name = e.getKey();
+                int count = e.getValue();
+                int max = 0;
+
+                // Block?
+                Block block = Block.getBlockFromName(name);
+                if (block != null && BlockComfortRegistry.isComfortBlock(block)) {
+                    max = BlockComfortRegistry.getBlockEntry(block).limit;
+                } else {
+                    // Living entity
+                    ResourceLocation id = new ResourceLocation(name);
+                    LivingComfortRegistry.LivingComfortEntry livingEntry = LivingComfortRegistry.ENTITY_MAP.get(id);
+                    if (livingEntry != null) max = livingEntry.limit;
+                }
+
+                int displayCount = Math.min(count, max);
+                contentDisplay.append(name).append(" ").append(displayCount).append("/").append(max).append(", ");
+            }
+
+            sender.sendMessage(new TextComponentString(group + ": " + contentDisplay));
         }
 
         sender.sendMessage(new TextComponentString("-------------------"));
-        sender.sendMessage(new TextComponentString("Total Comfort: " + totalComfort));
-        sender.sendMessage(new TextComponentString("Group breakdown: " + totalGroupDisplay));
     }
 
     /**
