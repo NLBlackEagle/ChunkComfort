@@ -13,6 +13,7 @@ import net.minecraft.command.CommandBase;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
+import net.minecraft.entity.item.EntityArmorStand;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ResourceLocation;
@@ -170,10 +171,11 @@ public class CommandChunkComfort extends CommandBase {
         // Living entities in radius
         AxisAlignedBB box = AreaComfortCalculator.getAxisAlignedBB(player.world, pos, radius);
         for (Entity entity : player.world.getEntitiesWithinAABB(Entity.class, box)) {
-            if (!LivingComfortRegistry.isComfortEntity(entity)) continue;
+            // Allow armor stands to pass even if they are not registered as "comfort entities"
+            if (!LivingComfortRegistry.isComfortEntity(entity) && !(entity instanceof EntityArmorStand)) continue;
 
             LivingComfortRegistry.LivingComfortEntry entry = LivingComfortRegistry.getEntry(entity);
-            if (entry == null) continue;
+            if (entry == null) continue; // skip if no registry entry exists
 
             String id = entry.entityId.toString();
             groupContents.computeIfAbsent(entry.group, k -> new HashMap<>())
