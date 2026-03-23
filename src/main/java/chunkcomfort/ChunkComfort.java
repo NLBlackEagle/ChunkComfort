@@ -4,6 +4,7 @@ import chunkcomfort.config.ForgeConfigHandler;
 import chunkcomfort.debug.CommandChunkComfort;
 import chunkcomfort.handlers.ChunkComfortClientTooltipHandler;
 import chunkcomfort.handlers.ChunkComfortEventHandler;
+import chunkcomfort.handlers.ComfortBlockParticleHandler;
 import chunkcomfort.network.NetworkHandler;
 import chunkcomfort.registry.PotionRegistry;
 import net.minecraftforge.common.MinecraftForge;
@@ -40,6 +41,7 @@ public class ChunkComfort {
 
         // Register event handler for block place/break updates
         MinecraftForge.EVENT_BUS.register(new ChunkComfortEventHandler());
+        MinecraftForge.EVENT_BUS.register(new ComfortBlockParticleHandler());
 
         // Tooltip handler / overlay
         if (event.getSide().isClient()) {
