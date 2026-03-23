@@ -39,35 +39,35 @@ public class ChunkComfortClientTooltipHandler {
         Block block = ((ItemBlock) stack.getItem()).getBlock();
         String blockRegistryName = block.getRegistryName().toString();
 
-        // Only show tooltip if the block is in the configured comfort entries
+        // Only for configured comfort blocks
         if (!CONFIGURED_COMFORT_BLOCKS.contains(blockRegistryName)) return;
 
-        EntityPlayer player = event.getEntityPlayer();
-        if (player == null) return;
-
-        // Step 1: Get block info
-        int pointsPerBlock = BlockComfortRegistry.getValue(block);
-        String groupName = BlockComfortRegistry.getGroup(block);
-
-        int blockLimit = 0;
-        BlockComfortRegistry.ComfortEntry entry = BlockComfortRegistry.getBlockEntry(block);
-        if (entry != null) blockLimit = entry.limit;
-
-        // Step 2: Get player cache
-        PlayerChunkComfortCache cache = AreaComfortCalculator.getCache(player);
-
-        // Step 3: Read counts from cache
-        int amountIn3x3 = cache.blockCounts.getOrDefault(block, 0);
-        int groupPoints = cache.groupTotals.getOrDefault(groupName, 0);
-
-        // Step 4: Compute combined group limit (block + living entities)
-        int livingLimit = LivingComfortRegistry.getGroupLimit(groupName);
-        int totalGroupLimit = blockLimit + livingLimit;
-
-        // Step 5: Add info to tooltip
         List<String> tooltip = event.getToolTip();
-        tooltip.add("§eComfort Info:");
-        tooltip.add(String.format("§aBlock points: %d  Limit: %d/%d", pointsPerBlock, amountIn3x3, blockLimit));
-        tooltip.add(String.format("§bGroup: %s  Points: %d/%d", groupName, groupPoints, totalGroupLimit));
+
+        // Always add static info so JEI search sees it
+        if (!tooltip.contains("§eComfort Info:")) {
+            tooltip.add("§eComfort Info:");
+        }
+
+        // Only add dynamic counts if player exists (in-world)
+        EntityPlayer player = event.getEntityPlayer();
+        if (player != null) {
+            PlayerChunkComfortCache cache = AreaComfortCalculator.getCache(player);
+
+            int pointsPerBlock = BlockComfortRegistry.getValue(block);
+            String groupName = BlockComfortRegistry.getGroup(block);
+
+            int blockLimit = 0;
+            BlockComfortRegistry.ComfortEntry entry = BlockComfortRegistry.getBlockEntry(block);
+            if (entry != null) blockLimit = entry.limit;
+
+            int amountIn3x3 = cache.blockCounts.getOrDefault(block, 0);
+            int groupPoints = cache.groupTotals.getOrDefault(groupName, 0);
+            int livingLimit = LivingComfortRegistry.getGroupLimit(groupName);
+            int totalGroupLimit = blockLimit + livingLimit;
+
+            tooltip.add(String.format("§aBlock points: %d  Limit: %d/%d", pointsPerBlock, amountIn3x3, blockLimit));
+            tooltip.add(String.format("§bGroup: %s  Points: %d/%d", groupName, groupPoints, totalGroupLimit));
+        }
     }
 }
