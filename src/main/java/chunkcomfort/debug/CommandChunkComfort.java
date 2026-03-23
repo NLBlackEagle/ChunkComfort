@@ -98,6 +98,9 @@ public class CommandChunkComfort extends CommandBase {
         sender.sendMessage(new TextComponentString(
                 "Chunk Comfort Info (" + diameter + "x" + diameter + " chunks, global group limits applied):"
         ));
+        sender.sendMessage(new TextComponentString(
+                "Syntax: Chunk-Coords, Points | Group, Points/Limit, Group, Points/Limit etc."
+        ));
 
         // Step 1: Prepare summed groups map
         Map<String, Integer> summedGroups = new HashMap<>();
@@ -143,19 +146,29 @@ public class CommandChunkComfort extends CommandBase {
                     String group = entry.getKey();
                     int value = entry.getValue();
 
-                    chunkTotal += value;
-
                     int globalLimit = getGlobalGroupLimit(group);
-                    chunkGroupDisplay.append(group)
+
+                    // capped display value
+                    int displayValue = Math.min(value, globalLimit);
+
+                    // color red if over the limit, green otherwise
+                    String color = (value > globalLimit) ? "§c" : "§a";
+
+                    chunkGroupDisplay.append(color)
+                            .append(group)
                             .append(": ")
-                            .append(value)
+                            .append(displayValue)
                             .append("/")
                             .append(globalLimit)
-                            .append("  ");
+                            .append("§r  "); // reset color
+
+                    // only sum capped values for total
+                    chunkTotal += displayValue;
                 }
 
+                // send to chat
                 sender.sendMessage(new TextComponentString(
-                        "Chunk [" + chunkX + "," + chunkZ + "] Comfort: " +
+                        "[" + chunkX + "," + chunkZ + "] " +
                                 chunkTotal +
                                 (chunkGroupDisplay.length() > 0 ? " | " + chunkGroupDisplay : "")
                 ));
@@ -217,8 +230,14 @@ public class CommandChunkComfort extends CommandBase {
             String group = groupEntry.getKey();
             Map<String, Integer> content = groupEntry.getValue();
 
-            int groupPoints = groupTotals.getOrDefault(group, 0);
+            int groupPointsRaw = groupTotals.getOrDefault(group, 0);
             int groupLimit = getGlobalGroupLimit(group);
+
+            // Cap the points for display
+            int groupPointsDisplay = Math.min(groupPointsRaw, groupLimit);
+
+            // Color red if over limit
+            String groupColor = (groupPointsRaw > groupLimit) ? "§c" : "§a";
 
             StringBuilder contentDisplay = new StringBuilder();
 
@@ -253,10 +272,7 @@ public class CommandChunkComfort extends CommandBase {
             }
 
             sender.sendMessage(new TextComponentString(
-                    group + ": " +
-                            groupPoints + "/" + groupLimit +
-                            " | " +
-                            contentDisplay
+                    groupColor + group + ": " + groupPointsDisplay + "/" + groupLimit + "§r | " + contentDisplay
             ));
         }
 
