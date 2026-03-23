@@ -7,6 +7,7 @@ import chunkcomfort.chunk.ComfortWorldData;
 import chunkcomfort.config.ForgeConfigHandler;
 import chunkcomfort.handlers.ChunkComfortEventHandler;
 import chunkcomfort.registry.BlockComfortRegistry;
+import chunkcomfort.registry.EntityComfortRegistry;
 import chunkcomfort.registry.LivingComfortRegistry;
 import net.minecraft.block.Block;
 import net.minecraft.command.CommandBase;
@@ -96,10 +97,10 @@ public class CommandChunkComfort extends CommandBase {
         }
 
         sender.sendMessage(new TextComponentString(
-                "Chunk Comfort Info (" + diameter + "x" + diameter + " chunks, global group limits applied):"
+                "Chunk Comfort Info (" + diameter + "x" + diameter + " chunks):"
         ));
         sender.sendMessage(new TextComponentString(
-                "Syntax: Chunk-Coords, Points | Group, Points, Group, Points, etc."
+                "Syntax: Chunk-Coords, Points | §aGroup, Points, Group, Points,&r etc."
         ));
 
         // Step 1: Prepare summed groups map
@@ -131,7 +132,6 @@ public class CommandChunkComfort extends CommandBase {
                 for (Entity entity : player.world.getEntitiesWithinAABB(Entity.class, chunkBox)) {
 
                     if (!LivingComfortRegistry.isComfortEntity(entity) && !(entity instanceof EntityArmorStand)) continue;
-
                     LivingComfortRegistry.LivingComfortEntry entry = LivingComfortRegistry.getEntry(entity);
                     if (entry == null) continue;
 
@@ -206,17 +206,38 @@ public class CommandChunkComfort extends CommandBase {
 
         // Living entities in radius
         AxisAlignedBB box = AreaComfortCalculator.getAxisAlignedBB(player.world, pos, radius);
+
         for (Entity entity : player.world.getEntitiesWithinAABB(Entity.class, box)) {
-            // Allow armor stands to pass even if they are not registered as "comfort entities"
-            if (!LivingComfortRegistry.isComfortEntity(entity) && !(entity instanceof EntityArmorStand)) continue;
 
-            LivingComfortRegistry.LivingComfortEntry entry = LivingComfortRegistry.getEntry(entity);
-            if (entry == null) continue; // skip if no registry entry exists
+            LivingComfortRegistry.LivingComfortEntry entryLiving = LivingComfortRegistry.getEntry(entity);
 
-            String id = entry.entityId.toString();
-            groupContents.computeIfAbsent(entry.group, k -> new HashMap<>())
+            String id;
+            String group;
+            int value;
+
+            if (entryLiving != null) {
+                // Living entity
+                id = entryLiving.entityId.toString();
+                group = entryLiving.group;
+                value = entryLiving.value;
+
+            } else {
+                // Non-living entity (armor stand, painting, etc.)
+                EntityComfortRegistry.ComfortEntry entryNonLiving = EntityComfortRegistry.getEntityEntry(entity);
+                if (entryNonLiving == null) continue;
+
+                ResourceLocation rl = EntityList.getKey(entity);
+                if (rl == null) continue;
+
+                id = rl.toString();
+                group = entryNonLiving.group;
+                value = entryNonLiving.value;
+            }
+
+            groupContents.computeIfAbsent(group, k -> new HashMap<>())
                     .merge(id, 1, Integer::sum);
-            groupTotals.merge(entry.group, entry.value, Integer::sum);
+
+            groupTotals.merge(group, value, Integer::sum);
         }
 
         // Display detailed group breakdown
@@ -247,31 +268,44 @@ public class CommandChunkComfort extends CommandBase {
                 int itemLimit;
                 String color = "§a"; // default green
 
+                // Try as a block first
                 Block block = Block.getBlockFromName(name);
                 if (block != null && BlockComfortRegistry.isComfortBlock(block)) {
-                    // It's a block
                     BlockComfortRegistry.ComfortEntry blockEntry = BlockComfortRegistry.getBlockEntry(block);
                     itemLimit = blockEntry.limit;
                     displayCount = Math.min(count, itemLimit);
                     if (count > itemLimit) color = "§c"; // red if over hard limit
+
                 } else {
-                    // Assume it's an entity
+                    // Try LivingComfortRegistry (e.g., ocelots, parrots)
                     ResourceLocation id = new ResourceLocation(name);
-                    LivingComfortRegistry.LivingComfortEntry entry = LivingComfortRegistry.ENTITY_MAP.get(id);
-                    if (entry != null) {
-                        itemLimit = entry.limit;
+                    LivingComfortRegistry.LivingComfortEntry livingEntry = LivingComfortRegistry.ENTITY_MAP.get(id);
+
+                    if (livingEntry != null) {
+                        itemLimit = livingEntry.limit;
                         displayCount = Math.min(count, itemLimit);
-                        if (count > itemLimit) color = "§c"; // red if over hard limit
+                        if (count > itemLimit) color = "§c";
+
                     } else {
-                        // Fallback for unknown item/entity
-                        itemLimit = 0;
-                        displayCount = 0;
+                        // Try EntityComfortRegistry (armor stands, paintings, etc.)
+                        EntityComfortRegistry.ComfortEntry entityEntry = EntityComfortRegistry.getEntityEntryFromId(id);
+
+                        if (entityEntry != null) {
+                            itemLimit = entityEntry.limit;
+                            displayCount = Math.min(count, itemLimit);
+                            if (count > itemLimit) color = "§c";
+
+                        } else {
+                            // fallback for unknown
+                            itemLimit = 0;
+                            displayCount = 0;
+                        }
                     }
                 }
 
                 contentDisplay.append(color)
-                        .append(name)
-                        .append(" ")
+                        .append("§9" + name)
+                        .append("§r ")
                         .append(displayCount)
                         .append("/")
                         .append(itemLimit)

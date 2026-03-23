@@ -11,6 +11,7 @@ public class EntityComfortRegistry {
     private static final Map<Class<? extends Entity>, ComfortEntry> ENTITY_ENTRIES = new HashMap<>();
     private static final Set<Class<? extends Entity>> COMFORT_ENTITY_CLASSES = new HashSet<>();
     private static final Map<Class<?>, ComfortEntry> ENTITY_RESOLVED_CACHE = new HashMap<>();
+    private static final Map<ResourceLocation, ComfortEntry> ENTITY_ID_MAP = new HashMap<>();
 
     /** Comfort entry for entities */
     public static class ComfortEntry {
@@ -60,8 +61,13 @@ public class EntityComfortRegistry {
             ResourceLocation rl = new ResourceLocation(id);
             if (ForgeRegistries.ENTITIES.containsKey(rl)) {
                 Class<? extends Entity> clazz = Objects.requireNonNull(ForgeRegistries.ENTITIES.getValue(rl)).getEntityClass();
-                ENTITY_ENTRIES.put(clazz, new ComfortEntry(value, group, limit));
+                ComfortEntry entry = new ComfortEntry(value, group, limit);
+
+                ENTITY_ENTRIES.put(clazz, entry);
                 COMFORT_ENTITY_CLASSES.add(clazz);
+
+
+                ENTITY_ID_MAP.put(rl, entry);
             }
         }
     }
@@ -83,6 +89,13 @@ public class EntityComfortRegistry {
 
         ENTITY_RESOLVED_CACHE.put(clazz, null);
         return null;
+    }
+
+    /**
+     * Get ComfortEntry directly from ResourceLocation ID
+     */
+    public static ComfortEntry getEntityEntryFromId(ResourceLocation id) {
+        return ENTITY_ID_MAP.get(id);
     }
 
     /**
