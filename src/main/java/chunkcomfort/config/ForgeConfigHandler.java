@@ -172,6 +172,7 @@ public class ForgeConfigHandler {
         BiomeComfortRegistry.reload(server.biomeComfortModifiers);
         AreaComfortCalculator.reloadGroupLimits(server.groupLimits);
         ChunkComfortClientTooltipHandler.refreshConfiguredBlocks();
+        ChunkComfortClientTooltipHandler.refreshGroupLimits();
     }
 
     @Mod.EventBusSubscriber(modid = ChunkComfort.MODID)

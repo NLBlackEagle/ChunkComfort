@@ -99,7 +99,7 @@ public class CommandChunkComfort extends CommandBase {
                 "Chunk Comfort Info (" + diameter + "x" + diameter + " chunks, global group limits applied):"
         ));
         sender.sendMessage(new TextComponentString(
-                "Syntax: Chunk-Coords, Points | Group, Points/Limit, Group, Points/Limit etc."
+                "Syntax: Chunk-Coords, Points | Group, Points, Group, Points, etc."
         ));
 
         // Step 1: Prepare summed groups map
@@ -158,8 +158,6 @@ public class CommandChunkComfort extends CommandBase {
                             .append(group)
                             .append(": ")
                             .append(displayValue)
-                            .append("/")
-                            .append(globalLimit)
                             .append("§r  "); // reset color
 
                     // only sum capped values for total
@@ -244,26 +242,40 @@ public class CommandChunkComfort extends CommandBase {
             for (Map.Entry<String, Integer> e : content.entrySet()) {
                 String name = e.getKey();
                 int count = e.getValue();
-                int max = 0;
 
-                // Block?
+                int displayCount;
+                int itemLimit;
+                String color = "§a"; // default green
+
                 Block block = Block.getBlockFromName(name);
                 if (block != null && BlockComfortRegistry.isComfortBlock(block)) {
-                    max = BlockComfortRegistry.getBlockEntry(block).limit;
+                    // It's a block
+                    BlockComfortRegistry.ComfortEntry blockEntry = BlockComfortRegistry.getBlockEntry(block);
+                    itemLimit = blockEntry.limit;
+                    displayCount = Math.min(count, itemLimit);
+                    if (count > itemLimit) color = "§c"; // red if over hard limit
                 } else {
+                    // Assume it's an entity
                     ResourceLocation id = new ResourceLocation(name);
-                    LivingComfortRegistry.LivingComfortEntry livingEntry = LivingComfortRegistry.ENTITY_MAP.get(id);
-                    if (livingEntry != null) max = livingEntry.limit;
+                    LivingComfortRegistry.LivingComfortEntry entry = LivingComfortRegistry.ENTITY_MAP.get(id);
+                    if (entry != null) {
+                        itemLimit = entry.limit;
+                        displayCount = Math.min(count, itemLimit);
+                        if (count > itemLimit) color = "§c"; // red if over hard limit
+                    } else {
+                        // Fallback for unknown item/entity
+                        itemLimit = 0;
+                        displayCount = 0;
+                    }
                 }
 
-                int displayCount = Math.min(count, max);
-
-                contentDisplay.append(name)
+                contentDisplay.append(color)
+                        .append(name)
                         .append(" ")
                         .append(displayCount)
                         .append("/")
-                        .append(max)
-                        .append(", ");
+                        .append(itemLimit)
+                        .append("§r, ");
             }
 
             // Trim trailing comma
@@ -286,9 +298,9 @@ public class CommandChunkComfort extends CommandBase {
         if (groupName == null || groupName.isEmpty()) return 0;
         for (String s : ForgeConfigHandler.server.groupLimits) {
             String[] split = s.split(",");
-            if (split.length == 2 && split[0].equals(groupName)) {
+            if (split.length == 2 && split[0].trim().equalsIgnoreCase(groupName.trim())) {
                 try {
-                    return Integer.parseInt(split[1]);
+                    return Integer.parseInt(split[1].trim());
                 } catch (NumberFormatException ignored) {}
             }
         }
