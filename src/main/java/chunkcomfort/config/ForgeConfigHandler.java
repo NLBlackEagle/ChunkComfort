@@ -111,8 +111,8 @@ public class ForgeConfigHandler {
         @Config.Name("Living Comfort Entries")
         public String[] livingComfortEntries = new String[]{
                 // Furniture (cheap/low points)
-                "minecraft:ocelot,5,pets,2",
-                "minecraft:parrot,2,pets,3"
+                "minecraft:ocelot,2,pets,5",
+                "minecraft:parrot,3,pets,2"
         };
 
         @Config.Comment({
