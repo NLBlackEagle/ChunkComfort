@@ -2,14 +2,16 @@ package chunkcomfort.handlers;
 
 import chunkcomfort.chunk.AreaComfortCalculator;
 import chunkcomfort.chunk.PlayerChunkComfortCache;
+import chunkcomfort.network.NetworkHandler;
+import chunkcomfort.network.SpawnParticlePacket;
 import chunkcomfort.registry.BlockComfortRegistry;
 import net.minecraft.block.Block;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.network.NetworkRegistry;
 
 public class ComfortBlockParticleHandler {
 
@@ -20,7 +22,6 @@ public class ComfortBlockParticleHandler {
         BlockPos pos = event.getPos();
 
         if (!BlockComfortRegistry.isComfortBlock(block)) return; // Only comfort blocks
-        if (world.isRemote) return; // Only run client side
 
         EntityPlayer player = event.getPlayer();
         if (player == null) return;
@@ -41,27 +42,26 @@ public class ComfortBlockParticleHandler {
         boolean underGroupLimit = currentGroupPoints < groupLimit;
 
         if (underBlockLimit && underGroupLimit) {
-            spawnComfortParticles(world, pos);
+            spawnComfortParticlesServer(world, pos);
         }
     }
 
-    private void spawnComfortParticles(World world, BlockPos pos) {
-        for (int i = 0; i < 8; i++) {
-            double x = pos.getX() + 0.2 + world.rand.nextDouble() * 0.6;
-            double y = pos.getY() + 0.2 + world.rand.nextDouble() * 0.6;
-            double z = pos.getZ() + 0.2 + world.rand.nextDouble() * 0.6;
+    /**
+     * Server-side: send a packet to all clients nearby to spawn particles.
+     */
+    private void spawnComfortParticlesServer(World world, BlockPos pos) {
+        if (world.isRemote) return; // Only run on server
 
-            // Motion vector for sparkle
-            double motionX = (world.rand.nextDouble() - 0.5) * 0.1;
-            double motionY = world.rand.nextDouble() * 0.1 + 0.05;
-            double motionZ = (world.rand.nextDouble() - 0.5) * 0.1;
-
-            // SPELL_MOB particle with green color
-            world.spawnParticle(
-                    net.minecraft.util.EnumParticleTypes.SPELL_MOB,
-                    x, y, z,
-                    motionX, motionY, motionZ
-            );
-        }
+        // Send packet to all players within 16 blocks
+        NetworkHandler.INSTANCE.sendToAllAround(
+                new SpawnParticlePacket(pos),
+                new NetworkRegistry.TargetPoint(
+                        world.provider.getDimension(),
+                        pos.getX() + 0.5,
+                        pos.getY() + 0.5,
+                        pos.getZ() + 0.5,
+                        16 // radius in blocks
+                )
+        );
     }
 }
