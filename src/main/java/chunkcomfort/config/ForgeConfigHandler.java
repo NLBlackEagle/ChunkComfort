@@ -3,6 +3,7 @@ package chunkcomfort.config;
 
 import chunkcomfort.ChunkComfort;
 import chunkcomfort.chunk.AreaComfortCalculator;
+import chunkcomfort.handlers.ChunkComfortClientTooltipHandler;
 import chunkcomfort.player.PlayerComfortManager;
 import chunkcomfort.registry.*;
 import net.minecraftforge.common.config.Config;
@@ -169,7 +170,8 @@ public class ForgeConfigHandler {
         FireBlockRegistry.reload(server.fireBlocks);
         PlayerComfortManager.reloadConfig();
         BiomeComfortRegistry.reload(server.biomeComfortModifiers);
-        AreaComfortCalculator.reloadGroupLimits(server.groupLimits); // new hook
+        AreaComfortCalculator.reloadGroupLimits(server.groupLimits);
+        ChunkComfortClientTooltipHandler.refreshConfiguredBlocks();
     }
 
     @Mod.EventBusSubscriber(modid = ChunkComfort.MODID)

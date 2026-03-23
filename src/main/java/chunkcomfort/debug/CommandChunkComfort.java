@@ -6,6 +6,7 @@ import chunkcomfort.chunk.ComfortRequirementCheck;
 import chunkcomfort.chunk.ComfortWorldData;
 import chunkcomfort.config.ForgeConfigHandler;
 import chunkcomfort.handlers.ChunkComfortEventHandler;
+import chunkcomfort.registry.BlockComfortRegistry;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayer;
@@ -125,7 +126,7 @@ public class CommandChunkComfort extends CommandBase {
                             .append(": ")
                             .append(value)
                             .append("/")
-                            .append(AreaComfortCalculator.getGroupLimit(group))
+                            .append(BlockComfortRegistry.getGroupLimit(group))
                             .append("  ");
 
                     summedGroups.put(group,
@@ -151,7 +152,7 @@ public class CommandChunkComfort extends CommandBase {
 
             String group = entry.getKey();
             int value = entry.getValue();
-            int limit = AreaComfortCalculator.getGroupLimit(group);
+            int limit = BlockComfortRegistry.getGroupLimit(group);
 
             int applied = Math.min(value, limit);
 

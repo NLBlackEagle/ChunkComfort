@@ -2,6 +2,7 @@ package chunkcomfort;
 
 import chunkcomfort.config.ForgeConfigHandler;
 import chunkcomfort.debug.CommandChunkComfort;
+import chunkcomfort.handlers.ChunkComfortClientTooltipHandler;
 import chunkcomfort.handlers.ChunkComfortEventHandler;
 import chunkcomfort.network.NetworkHandler;
 import chunkcomfort.registry.PotionRegistry;
@@ -34,13 +35,16 @@ public class ChunkComfort {
 
         // Initialize Forge config
         ForgeConfigHandler.initialize();
-
         NetworkHandler.register();
-
         PotionRegistry.registerPotions();
 
         // Register event handler for block place/break updates
         MinecraftForge.EVENT_BUS.register(new ChunkComfortEventHandler());
+
+        // Tooltip handler / overlay
+        if (event.getSide().isClient()) {
+            MinecraftForge.EVENT_BUS.register(new ChunkComfortClientTooltipHandler());
+        }
 
         LOGGER.info("ChunkComfort preInit complete.");
     }

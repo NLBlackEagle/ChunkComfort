@@ -78,4 +78,16 @@ public class BlockComfortRegistry {
             this.limit = limit;
         }
     }
+
+    public static int getGroupLimit(String groupName) {
+        if (groupName == null || groupName.isEmpty()) return 0;
+
+        int totalLimit = 0;
+        for (ComfortEntry entry : BLOCK_ENTRIES.values()) {
+            if (groupName.equals(entry.group)) {
+                totalLimit += entry.limit;
+            }
+        }
+        return totalLimit;
+    }
 }

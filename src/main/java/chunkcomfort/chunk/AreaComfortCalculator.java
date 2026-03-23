@@ -11,14 +11,17 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 public class AreaComfortCalculator {
 
     private static final Map<String, Integer> GROUP_LIMITS = new HashMap<>();
+
+    private static final Map<UUID, PlayerChunkComfortCache> PLAYER_CACHES = new HashMap<>();
+
+    public static PlayerChunkComfortCache getCache(EntityPlayer player) {
+        return PLAYER_CACHES.computeIfAbsent(player.getUniqueID(), k -> new PlayerChunkComfortCache());
+    }
 
     public static int getRadius() {
         return Math.min(Math.max(ForgeConfigHandler.server.chunkRadius, 0), 3);
@@ -84,12 +87,13 @@ public class AreaComfortCalculator {
             return 0;
         }
 
-        // Step 2: Sum cached chunk comfort data
-        Map<String, Integer> summedGroups = new HashMap<>();
+        // Step 2: Populate player cache from chunks
         ComfortWorldData worldData = ComfortWorldData.get(world);
-
         int centerChunkX = playerPos.getX() >> 4;
         int centerChunkZ = playerPos.getZ() >> 4;
+
+        PlayerChunkComfortCache cache = AreaComfortCalculator.getCache(player);
+        cache.clear();
 
         for (int dx = -radius; dx <= radius; dx++) {
             for (int dz = -radius; dz <= radius; dz++) {
@@ -101,23 +105,24 @@ public class AreaComfortCalculator {
                     data = worldData.getChunkData(chunkPos);
                 }
 
-                for (Map.Entry<String, Integer> entry : data.groupTotals.entrySet()) {
-                    summedGroups.put(
-                            entry.getKey(),
-                            summedGroups.getOrDefault(entry.getKey(), 0) + entry.getValue()
-                    );
-                }
+                // **Populate cache**
+                data.blockCounts.forEach((block, count) -> {
+                    cache.addBlockCount(block, count);
+                    System.out.println("[ChunkComfort DEBUG] Chunk " + chunkPos + " Block: " + block + " Count: " + count);
+                });
+                data.groupTotals.forEach((group, total) -> cache.addGroupTotal(group, total));
             }
         }
 
-        AreaComfortCalculator.addLivingEntityComfort(world, playerPos, radius, summedGroups);
+        // Step 2b: Add living entity comfort to cache
+        addLivingEntityComfort(world, playerPos, radius, cache.groupTotals);
 
-        // Step 3: Apply group limits
+        // Step 3: Apply group limits using cached group totals
         int totalComfort = 0;
-        for (Map.Entry<String, Integer> entry : summedGroups.entrySet()) {
+        for (Map.Entry<String, Integer> entry : cache.groupTotals.entrySet()) {
             String group = entry.getKey();
             int value = entry.getValue();
-            int limit = getGroupLimit(group);
+            int limit = BlockComfortRegistry.getGroupLimit(group);
             totalComfort += Math.min(value, limit);
         }
 
@@ -180,7 +185,5 @@ public class AreaComfortCalculator {
         return box;
     }
 
-    public static int getGroupLimit(String group) {
-        return GROUP_LIMITS.getOrDefault(group, Integer.MAX_VALUE);
-    }
+
 }

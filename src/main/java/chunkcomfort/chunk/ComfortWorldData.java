@@ -63,11 +63,17 @@ public class ComfortWorldData extends WorldSavedData {
         try {
             // Scan all blocks once
             ChunkScanner.scanChunk(world, chunkPos, minY, maxY, (pos, block) -> {
+
                 // Comfort blocks
                 if (BlockComfortRegistry.isComfortBlock(block)) {
                     String group = BlockComfortRegistry.getGroup(block);
                     int value = BlockComfortRegistry.getValue(block);
+
+                    // Update group totals
                     data.groupTotals.put(group, data.groupTotals.getOrDefault(group, 0) + value);
+
+                    // Update block counts (this is new!)
+                    data.blockCounts.put(block, data.blockCounts.getOrDefault(block, 0) + 1);
                 }
 
                 // Fire blocks
@@ -77,7 +83,7 @@ public class ComfortWorldData extends WorldSavedData {
                 }
             });
         } catch (ChunkScanner.StopScanException e) {
-            // This is expected — stop scanning when fire is found
+            // Expected: stop scanning early if fire found
         }
 
         // Entities
@@ -91,11 +97,13 @@ public class ComfortWorldData extends WorldSavedData {
             }
         }
 
+        // Final calculations
         data.totalComfort = data.groupTotals.values().stream().mapToInt(Integer::intValue).sum();
         data.firePresent = fireFound.get();
         data.initialized = true;
         data.lastRecalcTick = world.getTotalWorldTime();
 
+        // Save chunk data
         setChunkData(chunkPos, data);
     }
 
