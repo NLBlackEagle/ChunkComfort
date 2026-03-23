@@ -100,8 +100,9 @@ public class CommandChunkComfort extends CommandBase {
                 "Chunk Comfort Info (" + diameter + "x" + diameter + " chunks):"
         ));
         sender.sendMessage(new TextComponentString(
-                "Syntax: Chunk-Coords, Points | §aGroup, Points, Group, Points,&r etc."
+                "Syntax: Chunk-Coords, Points | §aGroup, Points, Group, Points,§r etc."
         ));
+        sender.sendMessage(new TextComponentString(""));
 
         // Step 1: Prepare summed groups map
         Map<String, Integer> summedGroups = new HashMap<>();
@@ -240,9 +241,27 @@ public class CommandChunkComfort extends CommandBase {
             groupTotals.merge(group, value, Integer::sum);
         }
 
+        // Calculate total comfort (capped by group limits)
+        int totalComfort = 0;
+// Calculate maximum possible comfort (sum of all group limits)
+        int maxComfort = 0;
+
+        for (Map.Entry<String, Integer> entry : groupTotals.entrySet()) {
+            String group = entry.getKey();
+            int value = entry.getValue();
+
+            int groupLimit = getGlobalGroupLimit(group);
+
+            // Capped display value for current chunk
+            totalComfort += Math.min(value, groupLimit);
+
+            // Maximum possible for this group
+            maxComfort += groupLimit;
+        }
+
         // Display detailed group breakdown
         sender.sendMessage(new TextComponentString("-------------------"));
-        sender.sendMessage(new TextComponentString("Group Breakdown:"));
+        sender.sendMessage(new TextComponentString("Group Breakdown: [Total Comfort: " + totalComfort + "/" + maxComfort + "]"));
         sender.sendMessage(new TextComponentString("Syntax: Group, Points, Limit | Entity, Count, Limit"));
 
         for (Map.Entry<String, Map<String, Integer>> groupEntry : groupContents.entrySet()) {
