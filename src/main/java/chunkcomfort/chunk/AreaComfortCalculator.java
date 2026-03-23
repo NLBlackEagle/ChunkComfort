@@ -106,10 +106,7 @@ public class AreaComfortCalculator {
                 }
 
                 // **Populate cache**
-                data.blockCounts.forEach((block, count) -> {
-                    cache.addBlockCount(block, count);
-                    System.out.println("[ChunkComfort DEBUG] Chunk " + chunkPos + " Block: " + block + " Count: " + count);
-                });
+                data.blockCounts.forEach((block, count) -> {cache.addBlockCount(block, count);});
                 data.groupTotals.forEach((group, total) -> cache.addGroupTotal(group, total));
             }
         }

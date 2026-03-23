@@ -6,6 +6,7 @@ import chunkcomfort.registry.EntityComfortRegistry;
 import net.minecraft.block.Block;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.entity.item.EntityArmorStand;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
@@ -45,7 +46,9 @@ public class ChunkComfortEventHandler {
         World world = entity.world;
 
         if (world.isRemote) return; // only server side
-        if (entity instanceof EntityLivingBase) return; // skip living
+        if (entity instanceof EntityLivingBase) {
+            if (!(entity instanceof EntityArmorStand)) return; // skip living
+        }
         if (!EntityComfortRegistry.isComfortEntity(entity)) return; // only comfort entities
 
         // Add comfort points immediately

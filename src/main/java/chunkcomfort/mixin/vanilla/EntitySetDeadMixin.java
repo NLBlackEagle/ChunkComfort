@@ -5,6 +5,7 @@ import chunkcomfort.registry.EntityComfortRegistry;
 import chunkcomfort.registry.EntityComfortRegistry.ComfortEntry;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.entity.item.EntityArmorStand;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
@@ -22,7 +23,7 @@ public abstract class EntitySetDeadMixin {
 
         if (world.isRemote) return; // only server side
 
-        if (entity instanceof EntityLivingBase) return; // skip mobs/animals
+        if (entity instanceof EntityLivingBase && !(entity instanceof EntityArmorStand)) return; // skip mobs/animals
         if (entity instanceof EntityPlayer) return; // skip players
 
         // Check if this entity is a comfort entity
@@ -33,7 +34,5 @@ public abstract class EntitySetDeadMixin {
 
         // Remove its comfort contribution from the chunk
         ChunkUpdateManager.onEntityRemoved(world, entity.getPosition(), entity);
-
-        System.out.println("[ChunkComfort] Comfort entity removed on setDead: " + entity);
     }
 }
