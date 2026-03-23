@@ -63,3 +63,12 @@ public class ChunkComfort {
         event.registerServerCommand(new CommandChunkComfort());
     }
 }
+
+/*
+todo: pets: minecraft:ocelot 2/2, should be <count>/<limit> per 3x3 chunks
+todo: Armorstands/Paintings do not show on breakdown command
+todo: Particle needs to spawn through ComfortBlockParticleHandler on comfort block placed when under limit
+todo: Tooltip needs to be shown for armorstands/paintings and basically any other entity whenever its living or not (also in JEI)
+todo: Petting cats boost comfort level?
+todo: temperature hook, update comfort level if temp is too low/high to "max 0,ComfortLevel - Substract Temp"
+ */
