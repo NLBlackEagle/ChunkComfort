@@ -1,7 +1,7 @@
 package chunkcomfort.handlers;
 
 import chunkcomfort.chunk.ChunkUpdateManager;
-import chunkcomfort.chunk.ComfortBlockParticleHandler;
+import chunkcomfort.chunk.ComfortBlockParticleSpawner;
 import chunkcomfort.chunk.ComfortWorldData;
 import chunkcomfort.registry.EntityComfortRegistry;
 import net.minecraft.block.Block;
@@ -13,12 +13,9 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
-import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
-
-import java.util.*;
 
 public class ChunkComfortEventHandler {
 
@@ -30,7 +27,7 @@ public class ChunkComfortEventHandler {
         Block block = event.getPlacedBlock().getBlock();
 
         ChunkUpdateManager.onBlockPlaced(world, pos, block);
-        ComfortBlockParticleHandler.trySpawnComfortParticles(world, pos, event.getPlayer(), block, null);
+        ComfortBlockParticleSpawner.trySpawnComfortParticles(world, pos, event.getPlayer(), block, null);
     }
 
     @SubscribeEvent
@@ -55,7 +52,7 @@ public class ChunkComfortEventHandler {
 
         // Add comfort points immediately
         ChunkUpdateManager.onEntityAdded(world, entity.getPosition(), entity);
-        ComfortBlockParticleHandler.trySpawnComfortParticles(world, entity.getPosition(), null, null, entity);
+        ComfortBlockParticleSpawner.trySpawnComfortParticles(world, entity.getPosition(), null, null, entity);
     }
 
 
