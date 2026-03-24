@@ -65,8 +65,9 @@ public class ChunkComfort {
 }
 
 /*
-todo: fix the hoverover, it's a bit offset
-todo: give the living entity a tame boolean
+todo: give living entities a match NBT function {CatType:1},{Tame:1b} before they are counted
+      {CatType:1},{Tame:1b} would check {}||{} and {CatType:1,Tame:1b} would check both
+
 todo: Petting cats boost comfort level?
 todo: temperature hook, update comfort level if temp is too low/high to "max 0,ComfortLevel - Substract Temp"
  */
