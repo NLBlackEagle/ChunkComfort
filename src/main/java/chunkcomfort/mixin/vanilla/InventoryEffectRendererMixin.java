@@ -89,12 +89,10 @@ public abstract class InventoryEffectRendererMixin {
             guiTop = creative.getGuiTop();
 
             // Fully dynamic: calculate shift based on first visible potion
-            // Vanilla shifts Creative icons slightly right
             potionX = guiLeft - 124;
             for (PotionEffect effect : visibleEffects) {
                 if (!(effect instanceof ICanBeHidden && ((ICanBeHidden) effect).chunkcomfort$isHidden())) {
-                    // First visible icon defines the shift
-                    potionX = potionX + (effect.getPotion() == PotionRegistry.COMFORT ? 0 : 28);
+                    potionX += (effect.getPotion() == PotionRegistry.COMFORT ? 0 : 28);
                     break;
                 }
             }
@@ -102,14 +100,18 @@ public abstract class InventoryEffectRendererMixin {
             return; // unsupported screen
         }
 
+        // Top-left corner of the potion icon with 10px vertical offset
         potionY = guiTop + 8 + comfortIndex * 33;
 
-        int iconWidth = 140;
-        int iconHeight = 32;
+        // --- Define hover rectangle explicitly ---
+        int hoverX = potionX;           // left edge
+        int hoverY = potionY - 10;      // vertical offset to align exactly
+        int hoverWidth = 120;
+        int hoverHeight = 32;
 
         // Hover check
-        if (mouseX >= potionX && mouseX <= potionX + iconWidth &&
-                mouseY >= potionY && mouseY <= potionY + iconHeight) {
+        if (mouseX >= hoverX && mouseX <= hoverX + hoverWidth &&
+                mouseY >= hoverY && mouseY <= hoverY + hoverHeight) {
 
             List<String> tooltip = new ArrayList<>();
             tooltip.add("Comfort Effects:");
