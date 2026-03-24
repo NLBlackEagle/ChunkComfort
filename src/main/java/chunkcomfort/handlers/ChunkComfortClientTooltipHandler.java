@@ -12,9 +12,6 @@ import net.minecraft.entity.EntityList;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.item.EntityArmorStand;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.item.ItemBanner;
-import net.minecraft.item.ItemBlock;
-import net.minecraft.item.ItemHangingEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
@@ -100,34 +97,65 @@ public class ChunkComfortClientTooltipHandler {
     @SubscribeEvent
     public void onItemTooltip(ItemTooltipEvent event) {
         ItemStack stack = event.getItemStack();
-        if (stack == null) return;
 
         List<String> tooltip = event.getToolTip();
         EntityPlayer player = event.getEntityPlayer();
         PlayerChunkComfortCache cache = player != null ? AreaComfortCalculator.getCache(player) : null;
 
-        String registryName = stack.getItem().getRegistryName().toString();
+        String registryName = Objects.requireNonNull(stack.getItem().getRegistryName()).toString();
+        boolean handledSpawnEgg = false;
 
-        // Check if this item is a configured block or a non-living entity
+        // -------------------
+        // SPAWN EGGS (Living entities only)
+        // -------------------
+        if (stack.getItem() instanceof net.minecraft.item.ItemMonsterPlacer) {
+            ResourceLocation entityID = net.minecraft.item.ItemMonsterPlacer.getNamedIdFrom(stack);
+            if (entityID != null) {
+                LivingComfortRegistry.LivingComfortEntry livingEntry = LivingComfortRegistry.ENTITY_MAP.get(entityID);
+                if (livingEntry == null) return; // Only configured entities
+
+                // JEI header
+                if (!tooltip.contains("§eComfort Info:")) tooltip.add("§eComfort Info:");
+
+                if (player != null) {
+                    Entity entity = EntityList.createEntityByIDFromName(entityID, player.world);
+                    if (entity instanceof EntityLiving) {
+                        int entityCount = cache.entityCounts.getOrDefault(entity.getClass(), 0);
+                        int groupPoints = cache.entityGroupTotals.getOrDefault(livingEntry.group, 0);
+                        int totalGroupLimit = LivingComfortRegistry.getGroupLimit(livingEntry.group);
+
+                        tooltip.add(String.format("§aEntity points: %d  Limit: %d/%d",
+                                livingEntry.value, entityCount, livingEntry.limit));
+                        tooltip.add(String.format("§bGroup: %s  Points: %d/%d",
+                                livingEntry.group, groupPoints, totalGroupLimit));
+                    }
+                }
+
+                handledSpawnEgg = true; // skip generic entity section
+                NON_BLOCK_ENTITIES.add(registryName);
+                ENTITY_ITEM_MAP.put(registryName, EntityList.getClass(entityID));
+            }
+        }
+
+        // -------------------
+        // Generic entity / block handling
+        // -------------------
         boolean isConfiguredBlock = CONFIGURED_COMFORT_BLOCKS.contains(registryName);
         boolean isEntityItem = NON_BLOCK_ENTITIES.contains(registryName);
-
-        // Get registry entry if available
         EntityComfortRegistry.ComfortEntry entityEntry = EntityComfortRegistry.getEntityEntryFromId(new ResourceLocation(registryName));
 
         // Nothing to show? Exit early
         if (!isConfiguredBlock && entityEntry == null && !isEntityItem) return;
 
-        // Static info for JEI
+        // Add JEI header if it wasn’t added yet
         if (!tooltip.contains("§eComfort Info:")) tooltip.add("§eComfort Info:");
 
         if (player == null) return;
 
         // -------------------
-        // Non-living / entity item tooltip (paintings, item frames, armor stands, modded items)
+        // Non-living / generic entity tooltip (skip if spawn egg already handled)
         // -------------------
-        if (entityEntry != null || isEntityItem) {
-            // Use the entity class map or default to ArmorStand for placeholders
+        if (!handledSpawnEgg && (entityEntry != null || isEntityItem)) {
             Class<? extends Entity> entityClass = ENTITY_ITEM_MAP.getOrDefault(registryName, EntityArmorStand.class);
 
             int entityCount = cache.entityCounts.getOrDefault(entityClass, 0);
@@ -148,7 +176,7 @@ public class ChunkComfortClientTooltipHandler {
         }
 
         // -------------------
-        // Block tooltip (furniture, banners, crafting tables, etc.)
+        // Block tooltip
         // -------------------
         if (isConfiguredBlock) {
             Block block = Block.getBlockFromName(registryName);
