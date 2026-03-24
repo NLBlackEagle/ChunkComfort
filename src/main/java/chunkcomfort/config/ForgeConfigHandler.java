@@ -106,12 +106,14 @@ public class ForgeConfigHandler {
 
         @Config.Comment({
                 "Living Comfort Entries",
-                "Format: <entity>,<value>,<group>,<entity_limit>",
+                "Format: <entity>,<value>,<group>,<entity_limit>,<nbt>",
+                "Example: minecraft:ocelot,2,pets,5,{CatType:*,Tame:1b}",
+                "You can use * as wildcard and {},{} checks both strings individually"
         })
         @Config.Name("Living Comfort Entries")
         public String[] livingComfortEntries = new String[]{
-                "minecraft:ocelot,2,pets,5",
-                "minecraft:parrot,3,pets,2"
+                "minecraft:ocelot,2,pets,5,{CatType:*,Tame:1b}",
+                "minecraft:parrot,3,pets,2,{Tame:1b}"
         };
 
         @Config.Comment({
