@@ -4,11 +4,19 @@ import chunkcomfort.chunk.AreaComfortCalculator;
 import chunkcomfort.chunk.PlayerChunkComfortCache;
 import chunkcomfort.config.ForgeConfigHandler;
 import chunkcomfort.registry.BlockComfortRegistry;
+import chunkcomfort.registry.EntityComfortRegistry;
 import chunkcomfort.registry.LivingComfortRegistry;
 import net.minecraft.block.Block;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityList;
+import net.minecraft.entity.EntityLiving;
+import net.minecraft.entity.item.EntityArmorStand;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.ItemBanner;
 import net.minecraft.item.ItemBlock;
+import net.minecraft.item.ItemHangingEntity;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
@@ -47,43 +55,117 @@ public class ChunkComfortClientTooltipHandler {
         }
     }
 
+    // -------------------
+    // NON-BLOCK / ENTITY ITEM DETECTION
+    // -------------------
+    private static final Set<String> NON_BLOCK_ENTITIES = new HashSet<>();
+    private static final Map<String, Class<? extends Entity>> ENTITY_ITEM_MAP = new HashMap<>();
+
+    public static void refreshNonBlockEntities() {
+        NON_BLOCK_ENTITIES.clear();
+        ENTITY_ITEM_MAP.clear();
+
+        for (String entry : ForgeConfigHandler.server.blockComfortEntries) {
+            if (entry == null || entry.isEmpty()) continue;
+
+            String registryName = entry.split(",")[0].trim();
+
+            // Try to get a block first
+            Block block = Block.getBlockFromName(registryName);
+
+            // Only skip it if it is truly a "block" item that should be handled as a block
+            // Banners, etc., will remain in CONFIGURED_COMFORT_BLOCKS and handled there
+            if (block != null) continue;
+
+            // If we get here, treat as a non-block entity (paintings, item frames, armor stands, etc.)
+            NON_BLOCK_ENTITIES.add(registryName);
+
+            // Try to guess the entity class
+            try {
+                ResourceLocation id = new ResourceLocation(registryName);
+                Class<? extends Entity> entityClass = EntityList.getClass(id);
+                if (entityClass != null) {
+                    ENTITY_ITEM_MAP.put(registryName, entityClass);
+                } else {
+                    // fallback placeholder
+                    ENTITY_ITEM_MAP.put(registryName, EntityArmorStand.class);
+                }
+            } catch (Exception e) {
+                // fallback placeholder
+                ENTITY_ITEM_MAP.put(registryName, EntityArmorStand.class);
+            }
+        }
+    }
+
     @SubscribeEvent
     public void onItemTooltip(ItemTooltipEvent event) {
         ItemStack stack = event.getItemStack();
-        if (stack == null || !(stack.getItem() instanceof ItemBlock)) return;
-
-        Block block = ((ItemBlock) stack.getItem()).getBlock();
-        String blockRegistryName = block.getRegistryName().toString();
-
-        // Only for configured comfort blocks
-        if (!CONFIGURED_COMFORT_BLOCKS.contains(blockRegistryName)) return;
+        if (stack == null) return;
 
         List<String> tooltip = event.getToolTip();
+        EntityPlayer player = event.getEntityPlayer();
+        PlayerChunkComfortCache cache = player != null ? AreaComfortCalculator.getCache(player) : null;
 
-        // Always add static info so JEI search sees it
-        if (!tooltip.contains("§eComfort Info:")) {
-            tooltip.add("§eComfort Info:");
+        String registryName = stack.getItem().getRegistryName().toString();
+
+        // Check if this item is a configured block or a non-living entity
+        boolean isConfiguredBlock = CONFIGURED_COMFORT_BLOCKS.contains(registryName);
+        boolean isEntityItem = NON_BLOCK_ENTITIES.contains(registryName);
+
+        // Get registry entry if available
+        EntityComfortRegistry.ComfortEntry entityEntry = EntityComfortRegistry.getEntityEntryFromId(new ResourceLocation(registryName));
+
+        // Nothing to show? Exit early
+        if (!isConfiguredBlock && entityEntry == null && !isEntityItem) return;
+
+        // Static info for JEI
+        if (!tooltip.contains("§eComfort Info:")) tooltip.add("§eComfort Info:");
+
+        if (player == null) return;
+
+        // -------------------
+        // Non-living / entity item tooltip (paintings, item frames, armor stands, modded items)
+        // -------------------
+        if (entityEntry != null || isEntityItem) {
+            // Use the entity class map or default to ArmorStand for placeholders
+            Class<? extends Entity> entityClass = ENTITY_ITEM_MAP.getOrDefault(registryName, EntityArmorStand.class);
+
+            int entityCount = cache.entityCounts.getOrDefault(entityClass, 0);
+            int groupPoints = 0;
+            int totalGroupLimit = 0;
+            int value = 0;
+            String group = "unknown";
+
+            if (entityEntry != null) {
+                value = entityEntry.value;
+                group = entityEntry.group;
+                groupPoints = cache.entityGroupTotals.getOrDefault(group, 0);
+                totalGroupLimit = GROUP_LIMITS.getOrDefault(group, 0);
+            }
+
+            tooltip.add(String.format("§aEntity points: %d  Limit: %d/%d", value, entityCount, entityEntry != null ? entityEntry.limit : 0));
+            tooltip.add(String.format("§bGroup: %s  Points: %d/%d", group, groupPoints, totalGroupLimit));
         }
 
-        // Only add dynamic counts if player exists (in-world)
-        EntityPlayer player = event.getEntityPlayer();
-        if (player != null) {
-            PlayerChunkComfortCache cache = AreaComfortCalculator.getCache(player);
+        // -------------------
+        // Block tooltip (furniture, banners, crafting tables, etc.)
+        // -------------------
+        if (isConfiguredBlock) {
+            Block block = Block.getBlockFromName(registryName);
+            if (block != null) {
+                int pointsPerBlock = BlockComfortRegistry.getValue(block);
+                String groupName = BlockComfortRegistry.getGroup(block);
+                int blockLimit = 0;
+                BlockComfortRegistry.ComfortEntry entry = BlockComfortRegistry.getBlockEntry(block);
+                if (entry != null) blockLimit = entry.limit;
 
-            int pointsPerBlock = BlockComfortRegistry.getValue(block);
-            String groupName = BlockComfortRegistry.getGroup(block);
+                int amountIn3x3 = cache.blockCounts.getOrDefault(block, 0);
+                int groupPoints = cache.groupTotals.getOrDefault(groupName, 0);
+                int totalGroupLimit = GROUP_LIMITS.getOrDefault(groupName, 0);
 
-            int blockLimit = 0;
-            BlockComfortRegistry.ComfortEntry entry = BlockComfortRegistry.getBlockEntry(block);
-            if (entry != null) blockLimit = entry.limit;
-
-            int amountIn3x3 = cache.blockCounts.getOrDefault(block, 0);
-            int groupPoints = cache.groupTotals.getOrDefault(groupName, 0);
-            int totalGroupLimit = GROUP_LIMITS.getOrDefault(groupName, 0);
-
-
-            tooltip.add(String.format("§aBlock points: %d  Limit: %d/%d", pointsPerBlock, amountIn3x3, blockLimit));
-            tooltip.add(String.format("§bGroup: %s  Points: %d/%d", groupName, groupPoints, totalGroupLimit));
+                tooltip.add(String.format("§aBlock points: %d  Limit: %d/%d", pointsPerBlock, amountIn3x3, blockLimit));
+                tooltip.add(String.format("§bGroup: %s  Points: %d/%d", groupName, groupPoints, totalGroupLimit));
+            }
         }
     }
 }

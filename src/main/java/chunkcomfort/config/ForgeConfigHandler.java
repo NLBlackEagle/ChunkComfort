@@ -110,7 +110,6 @@ public class ForgeConfigHandler {
         })
         @Config.Name("Living Comfort Entries")
         public String[] livingComfortEntries = new String[]{
-                // Furniture (cheap/low points)
                 "minecraft:ocelot,2,pets,5",
                 "minecraft:parrot,3,pets,2"
         };
@@ -173,6 +172,7 @@ public class ForgeConfigHandler {
         AreaComfortCalculator.reloadGroupLimits(server.groupLimits);
         ChunkComfortClientTooltipHandler.refreshConfiguredBlocks();
         ChunkComfortClientTooltipHandler.refreshGroupLimits();
+        ChunkComfortClientTooltipHandler.refreshNonBlockEntities();
     }
 
     @Mod.EventBusSubscriber(modid = ChunkComfort.MODID)

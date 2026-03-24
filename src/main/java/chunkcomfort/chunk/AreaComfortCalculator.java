@@ -4,6 +4,8 @@ import chunkcomfort.config.ForgeConfigHandler;
 import chunkcomfort.registry.*;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
+import net.minecraft.entity.EntityLiving;
+import net.minecraft.entity.item.EntityArmorStand;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.AxisAlignedBB;
@@ -101,7 +103,7 @@ public class AreaComfortCalculator {
             }
         }
 
-        addLivingEntityComfort(world, playerPos, radius, cache.groupTotals);
+        addLivingEntityComfort(world, playerPos, radius, cache.groupTotals, cache);
 
         int totalComfort = 0;
         for (Map.Entry<String, Integer> entry : cache.groupTotals.entrySet()) {
@@ -122,26 +124,64 @@ public class AreaComfortCalculator {
         return Math.max(totalComfort, 0);
     }
 
-    public static void addLivingEntityComfort(World world, BlockPos center, int radius, Map<String, Integer> summedGroups) {
+    public static void addLivingEntityComfort(World world, BlockPos center, int radius, Map<String, Integer> summedGroups, PlayerChunkComfortCache cache) {
         AxisAlignedBB box = getAxisAlignedBB(world, center, radius);
         List<Entity> entities = world.getEntitiesWithinAABB(Entity.class, box);
 
-        Map<ResourceLocation, Integer> entityCount = new HashMap<>();
+        // Temporary counters to enforce per-entity limits
+        Map<ResourceLocation, Integer> livingCount = new HashMap<>();
+        Map<Class<? extends Entity>, Integer> nonLivingCount = new HashMap<>();
 
         for (Entity entity : entities) {
-            if (!LivingComfortRegistry.isComfortEntity(entity)) continue;
+            // -----------------------------
+            // Living entities (ocelots, parrots, horses, etc.)
+            // -----------------------------
+            if (entity instanceof EntityLiving && !(entity instanceof EntityArmorStand)) {
+                if (!LivingComfortRegistry.isComfortEntity(entity)) continue;
 
-            LivingComfortRegistry.LivingComfortEntry entry = LivingComfortRegistry.getEntry(entity);
-            if (entry == null) continue;
+                LivingComfortRegistry.LivingComfortEntry entry = LivingComfortRegistry.getEntry(entity);
+                if (entry == null) continue;
 
-            ResourceLocation id = EntityList.getKey(entity);
-            if (id == null) continue;
+                ResourceLocation id = EntityList.getKey(entity);
+                if (id == null) continue;
 
-            int count = entityCount.getOrDefault(id, 0);
-            if (count >= entry.limit) continue;
+                int count = livingCount.getOrDefault(id, 0);
+                if (count >= entry.limit) continue;
 
-            summedGroups.put(entry.group, summedGroups.getOrDefault(entry.group, 0) + entry.value);
-            entityCount.put(id, count + 1);
+                // Update group sums
+                summedGroups.put(entry.group, summedGroups.getOrDefault(entry.group, 0) + entry.value);
+                livingCount.put(id, count + 1);
+
+                // Update player cache
+                if (cache != null) {
+                    cache.addEntityCount(entity.getClass(), 1);
+                    cache.addEntityGroupTotal(entry.group, entry.value);
+                }
+            }
+            // -----------------------------
+            // Non-living / block-like entities (armor stands, paintings, modded entities)
+            // -----------------------------
+            else if (!(entity instanceof EntityLiving) || entity instanceof EntityArmorStand) {
+                Class<? extends Entity> clazz = entity.getClass();
+
+                if (!EntityComfortRegistry.isComfortEntity(entity)) continue;
+
+                EntityComfortRegistry.ComfortEntry entry = EntityComfortRegistry.getEntityEntry(entity);
+                if (entry == null) continue;
+
+                int count = nonLivingCount.getOrDefault(clazz, 0);
+                if (count >= entry.limit) continue;
+
+                // Update group sums
+                summedGroups.put(entry.group, summedGroups.getOrDefault(entry.group, 0) + entry.value);
+                nonLivingCount.put(clazz, count + 1);
+
+                // Update player cache
+                if (cache != null) {
+                    cache.addEntityCount(clazz, 1);
+                    cache.addEntityGroupTotal(entry.group, entry.value);
+                }
+            }
         }
     }
 

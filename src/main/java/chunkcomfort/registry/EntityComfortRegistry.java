@@ -33,6 +33,8 @@ public class EntityComfortRegistry {
         ENTITY_ENTRIES.clear();
         COMFORT_ENTITY_CLASSES.clear();
         ENTITY_RESOLVED_CACHE.clear();
+        ENTITY_ID_MAP.clear();
+
         if (entries == null) return;
 
         for (String line : entries) {
@@ -41,12 +43,12 @@ public class EntityComfortRegistry {
             String[] parts = line.split(",");
             if (parts.length < 3) continue;
 
-            String id = parts[0];
+            String id = parts[0].trim();
             int value;
-            String group = parts[2];
+            String group = parts[2].trim();
 
             try {
-                value = Integer.parseInt(parts[1]);
+                value = Integer.parseInt(parts[1].trim());
             } catch (NumberFormatException e) {
                 value = 0;
             }
@@ -54,19 +56,35 @@ public class EntityComfortRegistry {
             int limit = value;
             if (parts.length >= 4) {
                 try {
-                    limit = Integer.parseInt(parts[3]);
+                    limit = Integer.parseInt(parts[3].trim());
                 } catch (NumberFormatException ignored) {}
             }
 
             ResourceLocation rl = new ResourceLocation(id);
-            if (ForgeRegistries.ENTITIES.containsKey(rl)) {
-                Class<? extends Entity> clazz = Objects.requireNonNull(ForgeRegistries.ENTITIES.getValue(rl)).getEntityClass();
-                ComfortEntry entry = new ComfortEntry(value, group, limit);
+            Class<? extends Entity> clazz = null;
 
+            // First try ForgeRegistries
+            if (ForgeRegistries.ENTITIES.containsKey(rl)) {
+                clazz = Objects.requireNonNull(ForgeRegistries.ENTITIES.getValue(rl)).getEntityClass();
+            } else {
+                // Fallback for vanilla non-living entities
+                switch (id) {
+                    case "minecraft:armor_stand":
+                        clazz = net.minecraft.entity.item.EntityArmorStand.class;
+                        break;
+                    case "minecraft:painting":
+                        clazz = net.minecraft.entity.item.EntityPainting.class;
+                        break;
+                    case "minecraft:item_frame":
+                        clazz = net.minecraft.entity.item.EntityItemFrame.class;
+                        break;
+                }
+            }
+
+            if (clazz != null) {
+                ComfortEntry entry = new ComfortEntry(value, group, limit);
                 ENTITY_ENTRIES.put(clazz, entry);
                 COMFORT_ENTITY_CLASSES.add(clazz);
-
-
                 ENTITY_ID_MAP.put(rl, entry);
             }
         }
