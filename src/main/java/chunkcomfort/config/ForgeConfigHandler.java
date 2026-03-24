@@ -109,7 +109,7 @@ public class ForgeConfigHandler {
                 "Format: <entity>,<value>,<group>,<entity_limit>,<optional_nbt>",
                 "Example: minecraft:ocelot,2,pets,5,{CatType:*,Tame:1b}",
                 "Example: minecraft:parrot,2,birds,5",
-                "You can use * as wildcard and {},{} checks both strings individually"
+                "You can use * as wildcard and {},{} checks both strings individually, no NBT {} = no nbt check"
         })
         @Config.Name("Living Comfort Entries")
         public String[] livingComfortEntries = new String[]{
