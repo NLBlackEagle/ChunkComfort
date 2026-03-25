@@ -81,6 +81,11 @@ public class PlayerComfortManager {
     public static void applyComfortEffects(EntityPlayer player) {
         int comfort = AreaComfortCalculator.calculatePlayerComfort(player);
 
+        // --- DEBUG OUTPUT ---
+        LOGGER.info("Player {} comfort level: {}", player.getName(), comfort);
+        System.out.println("Player " + player.getName() + " comfort level: " + comfort);
+        // -------------------
+
         ComfortTier activeTier = null;
         int tierIndex = 0;
 

@@ -47,6 +47,10 @@ public class PlayerChunkComfortCache {
         entityGroupTotals.put(group, entityGroupTotals.getOrDefault(group, 0) + total);
     }
 
+    public int getEntityCount(Class<? extends Entity> clazz) {
+        return entityCounts.getOrDefault(clazz, 0);
+    }
+
     /** Remove a block count (for broken blocks) */
     public void removeBlockCount(Block block, int count) {
         int current = blockCounts.getOrDefault(block, 0);

@@ -124,7 +124,8 @@ public class AreaComfortCalculator {
         return Math.max(totalComfort, 0);
     }
 
-    public static void addLivingEntityComfort(World world, BlockPos center, int radius, Map<String, Integer> summedGroups, PlayerChunkComfortCache cache) {
+    public static void addLivingEntityComfort(World world, BlockPos center, int radius,
+                                              Map<String, Integer> summedGroups, PlayerChunkComfortCache cache) {
         AxisAlignedBB box = getAxisAlignedBB(world, center, radius);
         List<Entity> entities = world.getEntitiesWithinAABB(Entity.class, box);
 
@@ -137,10 +138,10 @@ public class AreaComfortCalculator {
             // Living entities (ocelots, parrots, horses, etc.)
             // -----------------------------
             if (entity instanceof EntityLiving && !(entity instanceof EntityArmorStand)) {
-                if (!LivingComfortRegistry.isComfortEntity(entity)) continue;
 
-                LivingComfortRegistry.LivingComfortEntry entry = LivingComfortRegistry.getEntry(entity);
-                if (entry == null) continue;
+                // Get the registry entry (includes NBT matching)
+                LivingComfortRegistry.LivingComfortEntry entry = LivingComfortRegistry.getMatchingEntry(entity);
+                if (entry == null) continue; // Skip unconfigured or NBT-mismatch
 
                 ResourceLocation id = EntityList.getKey(entity);
                 if (id == null) continue;
@@ -149,7 +150,7 @@ public class AreaComfortCalculator {
                 if (count >= entry.limit) continue;
 
                 // Update group sums
-                summedGroups.put(entry.group, summedGroups.getOrDefault(entry.group, 0) + entry.value);
+                summedGroups.merge(entry.group, entry.value, Integer::sum);
                 livingCount.put(id, count + 1);
 
                 // Update player cache
@@ -161,7 +162,7 @@ public class AreaComfortCalculator {
             // -----------------------------
             // Non-living / block-like entities (armor stands, paintings, modded entities)
             // -----------------------------
-            else if (!(entity instanceof EntityLiving) || entity instanceof EntityArmorStand) {
+            else {
                 Class<? extends Entity> clazz = entity.getClass();
 
                 if (!EntityComfortRegistry.isComfortEntity(entity)) continue;
@@ -172,11 +173,11 @@ public class AreaComfortCalculator {
                 int count = nonLivingCount.getOrDefault(clazz, 0);
                 if (count >= entry.limit) continue;
 
-                // Update group sums
-                summedGroups.put(entry.group, summedGroups.getOrDefault(entry.group, 0) + entry.value);
+                if (cache != null && cache.getEntityCount(clazz) >= 0) continue;
+
+                summedGroups.merge(entry.group, entry.value, Integer::sum);
                 nonLivingCount.put(clazz, count + 1);
 
-                // Update player cache
                 if (cache != null) {
                     cache.addEntityCount(clazz, 1);
                     cache.addEntityGroupTotal(entry.group, entry.value);
