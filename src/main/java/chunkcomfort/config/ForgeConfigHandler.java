@@ -107,14 +107,14 @@ public class ForgeConfigHandler {
         @Config.Comment({
                 "Living Comfort Entries",
                 "Format: <entity>,<value>,<group>,<entity_limit>,<optional_nbt>",
-                "Example: minecraft:ocelot,2,pets,5,{CatType:*,Tame:1b}",
+                "Example: minecraft:ocelot,2,pets,5,{CatType:*,OwnerUUID:*}",
                 "Example: minecraft:parrot,2,birds,5",
                 "You can use * as wildcard and {},{} checks both strings individually, no NBT {} = no nbt check"
         })
         @Config.Name("Living Comfort Entries")
         public String[] livingComfortEntries = new String[]{
-                "minecraft:ocelot,5,pets,2,{CatType:*,Tame:1b}",
-                "minecraft:parrot,2,pets,3,{Tame:1b}"
+                "minecraft:ocelot,5,pets,2,{CatType:*,OwnerUUID:*}",
+                "minecraft:parrot,2,pets,3,{OwnerUUID:*}"
         };
 
         @Config.Comment({

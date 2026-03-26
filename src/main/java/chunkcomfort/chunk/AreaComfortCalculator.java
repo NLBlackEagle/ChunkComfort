@@ -105,10 +105,15 @@ public class AreaComfortCalculator {
 
         addLivingEntityComfort(world, playerPos, radius, cache);
 
+        // --- Combine block and entity group totals ---
+        Set<String> allGroups = new HashSet<>();
+        allGroups.addAll(cache.groupTotals.keySet());
+        allGroups.addAll(cache.entityGroupTotals.keySet());
+
         int totalComfort = 0;
-        for (Map.Entry<String, Integer> entry : cache.groupTotals.entrySet()) {
-            String group = entry.getKey();
-            int value = entry.getValue();
+        for (String group : allGroups) {
+            int value = cache.groupTotals.getOrDefault(group, 0)
+                    + cache.entityGroupTotals.getOrDefault(group, 0);
 
             int blockLimit = BlockComfortRegistry.getGroupLimit(group);
             int livingLimit = LivingComfortRegistry.getGroupLimit(group);
@@ -138,15 +143,15 @@ public class AreaComfortCalculator {
             // -----------------------------
             if (entity instanceof EntityLiving && !(entity instanceof EntityArmorStand)) {
                 LivingComfortRegistry.LivingComfortEntry entry = LivingComfortRegistry.getMatchingEntry(entity);
-                if (entry == null) continue;
-
                 ResourceLocation id = EntityList.getKey(entity);
-                if (id == null) continue;
+
+                if (entry == null || id == null) continue;
 
                 int count = livingCount.getOrDefault(id, 0);
                 if (count >= entry.limit) continue;
 
-                if (cache.getEntityCount(entity.getClass()) >= entry.limit) continue;
+                int cacheCount = cache.getEntityCount(entity.getClass());
+                if (cacheCount >= entry.limit) continue;
 
                 cache.addEntityCount(entity.getClass(), 1);
                 cache.addEntityGroupTotal(entry.group, entry.value);
