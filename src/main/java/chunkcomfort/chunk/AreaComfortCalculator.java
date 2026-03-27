@@ -6,6 +6,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.item.EntityArmorStand;
+import net.minecraft.entity.item.EntityPainting;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.AxisAlignedBB;
@@ -137,9 +138,12 @@ public class AreaComfortCalculator {
         Map<ResourceLocation, Integer> livingCount = new HashMap<>();
         Map<Class<? extends Entity>, Integer> nonLivingCount = new HashMap<>();
 
+        // Set to track which paintings we've already counted this tick
+        Set<UUID> countedPaintings = new HashSet<>();
+
         for (Entity entity : entities) {
             // -----------------------------
-            // Living entities
+            // Living entities (excluding armor stands)
             // -----------------------------
             if (entity instanceof EntityLiving && !(entity instanceof EntityArmorStand)) {
                 LivingComfortRegistry.LivingComfortEntry entry = LivingComfortRegistry.getMatchingEntry(entity);
@@ -168,6 +172,14 @@ public class AreaComfortCalculator {
                 if (entry == null) continue;
 
                 Class<? extends Entity> clazz = entity.getClass();
+
+                // Handle multiblock paintings by UUID
+                if (entity instanceof EntityPainting) {
+                    UUID paintingId = entity.getUniqueID();
+                    if (countedPaintings.contains(paintingId)) continue; // already counted
+                    countedPaintings.add(paintingId);
+                }
+
                 int count = nonLivingCount.getOrDefault(clazz, 0);
                 if (count >= entry.limit) continue;
 
