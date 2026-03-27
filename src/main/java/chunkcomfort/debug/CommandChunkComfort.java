@@ -201,9 +201,11 @@ public class CommandChunkComfort extends CommandBase {
             // --- Living entities ---
             LivingComfortRegistry.LivingComfortEntry livingEntry = LivingComfortRegistry.getEntry(entity);
             if (livingEntry != null) {
-                points = livingEntry.value;
-                group = livingEntry.group;
-                id = livingEntry.entityId.toString();
+                if (LivingComfortRegistry.getMatchingEntry(entity) != null) {
+                    points = livingEntry.value;
+                    group = livingEntry.group;
+                    id = livingEntry.entityId.toString();
+                }
             } else {
                 // --- Non-living entities ---
                 EntityComfortRegistry.ComfortEntry entityEntry = EntityComfortRegistry.getEntityEntry(entity);
