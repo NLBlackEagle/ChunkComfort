@@ -60,6 +60,7 @@ dependencies {
 
     compileOnly fg.deobf("curse.maven:dynsurroundhuds-${dynsurroundhuds_version}")
     compileOnly fg.deobf("curse.maven:rustic-${rustic_version}")
+    compileOnly fg.deobf("curse.maven:simpledifficulty-${simpledifficulty_version}")
 }
 
 mixin {

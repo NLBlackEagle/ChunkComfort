@@ -20,6 +20,24 @@ public class ForgeConfigHandler {
 
     public static class ServerConfig {
 
+        @Config.Comment("Enable temperature as a comfort requirement (true/false).")
+        @Config.Name("Enable SimpleDifficulty Temperature Comfort Requirement")
+        public boolean enableTemperatureComfort = true;
+
+        @Config.Comment({
+                "Minimum player temperature (inclusive) required for comfort activation.",
+                "Negative values = colder than default, positive = warmer than default",
+                "Defaults are set to Hypothermia -1.0 and Hyperthermia 1.0"
+        })
+        @Config.Name("Minimum Comfort Temperature")
+        public double minComfortTemperature = -1.0;
+
+        @Config.Comment({
+                "Maximum player temperature (inclusive) allowed for comfort activation."
+        })
+        @Config.Name("Maximum Comfort Temperature")
+        public double maxComfortTemperature = 1.0;
+
         @Config.Comment({
                 "Set this to true if you do not want wine from the mod rustic to have a effect on hidden potions",
                 "and the comfort"

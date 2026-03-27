@@ -1,14 +1,17 @@
 package chunkcomfort.chunk;
 
 import chunkcomfort.config.ForgeConfigHandler;
+import chunkcomfort.integration.simpledifficulty.SimpleDifficultyIntegration;
+import chunkcomfort.integration.simpledifficulty.SimpleDifficultyTemperatureBridge;
 import chunkcomfort.registry.ComfortRequirements;
 import chunkcomfort.registry.FireBlockRegistry;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
 public class ComfortRequirementCheck {
 
-    public static ComfortRequirements getRequirementsPresent(World world, BlockPos pos) {
+    public static ComfortRequirements getRequirementsPresent(World world, BlockPos pos, EntityPlayer player) {
         // Shelter check
         boolean shelterOk = !ForgeConfigHandler.server.requireShelter || !world.canSeeSky(pos.up());
 
@@ -38,7 +41,14 @@ public class ComfortRequirementCheck {
             }
         }
 
-        return new ComfortRequirements(shelterOk, lightOk, fireOk);
+        boolean temperatureOk = true; // default true if disabled
+        if (ForgeConfigHandler.server.enableTemperatureComfort && SimpleDifficultyIntegration.LOADED) {
+            double temp = SimpleDifficultyTemperatureBridge.getTemperatureLevel(player);
+            temperatureOk = temp >= ForgeConfigHandler.server.minComfortTemperature
+                    && temp <= ForgeConfigHandler.server.maxComfortTemperature;
+        }
+
+        return new ComfortRequirements(shelterOk, lightOk, fireOk, temperatureOk);
     }
 
     private static int getRadius() {

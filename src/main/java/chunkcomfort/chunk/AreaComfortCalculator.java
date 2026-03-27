@@ -56,12 +56,13 @@ public class AreaComfortCalculator {
 
     public static int calculateComfortActivation(World world, EntityPlayer player) {
         BlockPos pos = player.getPosition();
-        ComfortRequirements reqs = ComfortRequirementCheck.getRequirementsPresent(world, pos);
+        ComfortRequirements reqs = ComfortRequirementCheck.getRequirementsPresent(world, pos, player);
 
         int comfort = 0;
         if (reqs.shelterOk) comfort++;
         if (reqs.lightOk) comfort++;
         if (reqs.fireOk) comfort++;
+        if (reqs.temperatureOk) comfort++;
 
         return comfort;
     }
@@ -76,6 +77,7 @@ public class AreaComfortCalculator {
         if (ForgeConfigHandler.server.requireShelter) requiredConditions++;
         if (ForgeConfigHandler.server.minLightLevel > 0) requiredConditions++;
         if (ForgeConfigHandler.server.requireFire) requiredConditions++;
+        if (ForgeConfigHandler.server.enableTemperatureComfort) requiredConditions++;
 
         if (comfortActive < requiredConditions) {
             if (PotionRegistry.COMFORT != null) {

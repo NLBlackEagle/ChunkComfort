@@ -118,16 +118,20 @@ public class CommandChunkComfort extends CommandBase {
         if (ForgeConfigHandler.server.requireShelter) requiredConditions++;
         if (ForgeConfigHandler.server.minLightLevel > 0) requiredConditions++;
         if (ForgeConfigHandler.server.requireFire) requiredConditions++;
+        if (ForgeConfigHandler.server.enableTemperatureComfort) requiredConditions++;
 
         StringBuilder status = new StringBuilder();
         BlockPos pos = player.getPosition();
+        int playerLight = player.world.getLight(pos);
+
         if (ForgeConfigHandler.server.requireShelter && player.world.canSeeSky(pos.up()))
             status.append("No shelter. ");
-        int playerLight = player.world.getLight(pos);
         if (ForgeConfigHandler.server.minLightLevel > 0 && playerLight < ForgeConfigHandler.server.minLightLevel)
             status.append("Too dark. ");
-        if (ForgeConfigHandler.server.requireFire && !ComfortRequirementCheck.getRequirementsPresent(player.world, pos).fireOk)
+        if (ForgeConfigHandler.server.requireFire && !ComfortRequirementCheck.getRequirementsPresent(player.world, pos, player).fireOk)
             status.append("No fire. ");
+        if (ForgeConfigHandler.server.enableTemperatureComfort && !ComfortRequirementCheck.getRequirementsPresent(player.world, pos, player).temperatureOk)
+            status.append("Too cold/hot ");
 
         if (comfortActive < requiredConditions) {
             sender.sendMessage(new TextComponentString("Comfort system inactive: " + status));
