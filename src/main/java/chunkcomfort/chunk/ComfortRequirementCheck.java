@@ -42,13 +42,14 @@ public class ComfortRequirementCheck {
         }
 
         boolean temperatureOk = true; // default true if disabled
+        double playerTemp = 0.0;
         if (ForgeConfigHandler.server.enableTemperatureComfort && SimpleDifficultyIntegration.LOADED) {
-            double temp = SimpleDifficultyTemperatureBridge.getTemperatureLevel(player);
-            temperatureOk = temp >= ForgeConfigHandler.server.minComfortTemperature
-                    && temp <= ForgeConfigHandler.server.maxComfortTemperature;
+            playerTemp = SimpleDifficultyTemperatureBridge.getTemperatureLevel(player);
+            temperatureOk = playerTemp >= ForgeConfigHandler.server.minComfortTemperature
+                    && playerTemp <= ForgeConfigHandler.server.maxComfortTemperature;
         }
 
-        return new ComfortRequirements(shelterOk, lightOk, fireOk, temperatureOk);
+        return new ComfortRequirements(shelterOk, lightOk, fireOk, temperatureOk, playerTemp);
     }
 
     private static int getRadius() {

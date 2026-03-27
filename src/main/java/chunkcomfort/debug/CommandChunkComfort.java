@@ -6,6 +6,7 @@ import chunkcomfort.chunk.ComfortRequirementCheck;
 import chunkcomfort.chunk.ComfortWorldData;
 import chunkcomfort.config.ForgeConfigHandler;
 import chunkcomfort.registry.BlockComfortRegistry;
+import chunkcomfort.registry.ComfortRequirements;
 import chunkcomfort.registry.EntityComfortRegistry;
 import chunkcomfort.registry.LivingComfortRegistry;
 import net.minecraft.block.Block;
@@ -63,7 +64,6 @@ public class CommandChunkComfort extends CommandBase {
         int radius = AreaComfortCalculator.getRadius();
 
         int comfortActive = AreaComfortCalculator.calculateComfortActivation(player.world, player);
-        sendComfortActivationScore(sender, comfortActive);
 
         if (!checkRequiredConditions(sender, player, comfortActive)) return;
 
@@ -75,6 +75,7 @@ public class CommandChunkComfort extends CommandBase {
         Map<ChunkPos, Map<String,Integer>> chunkGroupPoints =
                 buildGroupData(player, player.getPosition(), radius, groupTotals, groupContents, countedPaintings);
 
+        displayComfortActivationDetails(sender, player);
         displayPerChunkInfo(sender, player.getPosition(), radius, chunkGroupPoints);
         displayGroupBreakdown(sender, groupTotals, groupContents);
     }
@@ -109,9 +110,6 @@ public class CommandChunkComfort extends CommandBase {
     }
 
     // ---------------- Core Helpers (Computation) ----------------
-    private void sendComfortActivationScore(ICommandSender sender, int comfortActive) {
-        sender.sendMessage(new TextComponentString("Comfort Activation Score: " + comfortActive));
-    }
 
     private boolean checkRequiredConditions(ICommandSender sender, EntityPlayer player, int comfortActive) {
         int requiredConditions = 0;
@@ -238,6 +236,60 @@ public class CommandChunkComfort extends CommandBase {
     }
 
     // ---------------- Display Helpers ----------------
+
+    private void displayComfortActivationDetails(ICommandSender sender, EntityPlayer player) {
+        BlockPos pos = player.getPosition();
+        ComfortRequirements reqs =
+                ComfortRequirementCheck.getRequirementsPresent(player.world, pos, player);
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("-------------------\n");
+        sb.append("Comfort Activation:\n");
+
+        // Shelter
+        if (ForgeConfigHandler.server.requireShelter) {
+            sb.append("Shelter Required: true");
+            if (reqs.shelterOk) sb.append(" Shelter Found: true\n");
+            else sb.append(" Shelter Found: false\n");
+        }
+
+        // Light
+        if (ForgeConfigHandler.server.minLightLevel > 0) {
+            int light = player.world.getLight(pos);
+            sb.append("Light Level Required: ").append(ForgeConfigHandler.server.minLightLevel);
+            if (light >= ForgeConfigHandler.server.minLightLevel)
+                sb.append(" Light Level: ").append(light).append("\n");
+            else sb.append("\n"); // too dark, no need to show player light
+        }
+
+        // Fire
+        if (ForgeConfigHandler.server.requireFire) {
+            sb.append("Fire Required: true");
+            if (reqs.fireOk) sb.append(" Fire Found: true\n");
+            else sb.append("\n"); // no fire found
+        }
+
+        // Temperature
+        if (ForgeConfigHandler.server.enableTemperatureComfort) {
+            sb.append("Temperature Required: true");
+            if (reqs.temperatureOk) {
+                sb.append(" Comfort Temp: ")
+                        .append(ForgeConfigHandler.server.minComfortTemperature)
+                        .append(" to ")
+                        .append(ForgeConfigHandler.server.maxComfortTemperature)
+                        .append(" Player Temp: ")
+                        .append(reqs.playerTemperature)
+                        .append("\n");
+            } else {
+                sb.append("\n"); // too cold/hot, don't show exact temp
+            }
+        }
+
+        sb.append("-------------------");
+
+        sender.sendMessage(new TextComponentString(sb.toString()));
+    }
+
     private void displayPerChunkInfo(ICommandSender sender,
                                      BlockPos pos,
                                      int radius,
@@ -272,7 +324,6 @@ public class CommandChunkComfort extends CommandBase {
                 ));
             }
 
-        sender.sendMessage(new TextComponentString(""));
     }
 
     private void displayGroupBreakdown(ICommandSender sender,
