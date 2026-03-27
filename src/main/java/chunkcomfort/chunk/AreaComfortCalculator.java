@@ -18,6 +18,8 @@ import java.util.*;
 
 public class AreaComfortCalculator {
 
+    private static final boolean DEBUG_COMFORT = false;
+
     private static final Map<String, Integer> GROUP_LIMITS = new HashMap<>();
     private static final Map<UUID, PlayerChunkComfortCache> PLAYER_CACHES = new HashMap<>();
 
@@ -127,7 +129,11 @@ public class AreaComfortCalculator {
         int biomeModifier = BiomeComfortRegistry.getBiomeModifier(biomeName);
         totalComfort += biomeModifier;
 
-        return Math.max(totalComfort, 0);
+        int finalComfort = Math.max(totalComfort, 0);
+
+        debugComfortBreakdown(player, cache, allGroups, biomeModifier, finalComfort);
+
+        return finalComfort;
     }
 
     public static void addLivingEntityComfort(World world, BlockPos center, int radius,
@@ -162,9 +168,15 @@ public class AreaComfortCalculator {
 
                 livingCount.put(id, count + 1);
             }
+            /*
+
             // -----------------------------
             // Non-living / block-like entities
             // -----------------------------
+
+            I rather not remove this just in case but this probably is not required.
+
+
             else {
                 if (!EntityComfortRegistry.isComfortEntity(entity)) continue;
 
@@ -190,6 +202,8 @@ public class AreaComfortCalculator {
 
                 nonLivingCount.put(clazz, count + 1);
             }
+
+             */
         }
     }
 
@@ -204,5 +218,44 @@ public class AreaComfortCalculator {
                 center.getX() - blockRadius, minY, center.getZ() - blockRadius,
                 center.getX() + blockRadius, maxY, center.getZ() + blockRadius
         );
+    }
+
+    private static void debugComfortBreakdown(
+            EntityPlayer player,
+            PlayerChunkComfortCache cache,
+            Set<String> allGroups,
+            int biomeModifier,
+            int totalComfort) {
+
+        if (!DEBUG_COMFORT) return;
+
+        System.out.println("======================================");
+        System.out.println("[ComfortDebug] Player: " + player.getName());
+        System.out.println("[ComfortDebug] TotalComfort: " + totalComfort);
+
+        for (String group : allGroups) {
+
+            int blockValue = cache.groupTotals.getOrDefault(group, 0);
+            int entityValue = cache.entityGroupTotals.getOrDefault(group, 0);
+            int combined = blockValue + entityValue;
+
+            int blockLimit = BlockComfortRegistry.getGroupLimit(group);
+            int livingLimit = LivingComfortRegistry.getGroupLimit(group);
+            int totalLimit = blockLimit + livingLimit;
+
+            int applied = Math.min(combined, totalLimit);
+
+            System.out.println(
+                    "[ComfortDebug] Group: " + group +
+                            " blocks=" + blockValue +
+                            " entities=" + entityValue +
+                            " total=" + combined +
+                            " limit=" + totalLimit +
+                            " applied=" + applied
+            );
+        }
+
+        System.out.println("[ComfortDebug] BiomeModifier: " + biomeModifier);
+        System.out.println("======================================");
     }
 }
