@@ -68,6 +68,7 @@ public class LivingComfortRegistry {
 
         final Type type;
         final Object value;
+        boolean negate = false; // <-- add this field
 
         NBTCondition(Type type, Object value) {
             this.type = type;
@@ -117,31 +118,36 @@ public class LivingComfortRegistry {
         }
 
         raw = raw.trim();
-        if (raw.startsWith("{") && raw.endsWith("}")) {
-            raw = raw.substring(1, raw.length() - 1);
-        }
+        String[] splitGroups = raw.split("\\},\\{"); // OR groups
 
-        String[] splitGroups = raw.split("\\},\\{");
         for (String groupStr : splitGroups) {
-            groupStr = groupStr.replace("{", "").replace("}", "").trim();
-
+            groupStr = groupStr.replaceAll("^\\{", "").replaceAll("\\}$", "").trim();
             if (groupStr.isEmpty()) {
                 groups.add(Collections.emptyMap());
                 continue;
             }
 
             Map<String, NBTCondition> group = new HashMap<>();
-            String[] parts = groupStr.split("\\s*,\\s*");
+            String[] parts = groupStr.split("\\s*,\\s*"); // AND conditions
 
             for (String part : parts) {
+                boolean negate = false;
+
+                if (part.startsWith("!")) {
+                    negate = true;
+                    part = part.substring(1).trim();
+                }
+
                 String[] kv = part.split(":", 2);
                 if (kv.length != 2) continue;
 
-                // safer: trim quotes and spaces from key and value
-                String key = kv[0].trim().replaceAll("^\"|\"$", "");
-                String value = kv[1].trim().replaceAll("^\"|\"$", "");
+                String key = kv[0].trim().replaceAll("^\"|\"|'|'$", "");
+                String value = kv[1].trim().replaceAll("^\"|\"|'|'$", "");
 
-                group.put(key, parseCondition(value));
+                NBTCondition cond = parseCondition(value);
+                cond.negate = negate;
+
+                group.put(key, cond);
             }
 
             groups.add(group);
@@ -192,11 +198,13 @@ public class LivingComfortRegistry {
             String key = entry.getKey();
             NBTCondition cond = entry.getValue();
 
-            if (!nbt.hasKey(key)) return false;
+            boolean exists = nbt.hasKey(key);
+            boolean valueMatches = exists && cond.type != NBTCondition.Type.WILDCARD && matchesValue(nbt, key, cond);
+            boolean match = (exists && valueMatches) || cond.type == NBTCondition.Type.WILDCARD;
 
-            if (cond.type != NBTCondition.Type.WILDCARD) {
-                if (!matchesValue(nbt, key, cond)) return false;
-            }
+            if (cond.negate) match = !match; // handle ! prefix
+
+            if (!match) return false; // AND logic for all keys in this group
         }
         return true;
     }
@@ -205,7 +213,16 @@ public class LivingComfortRegistry {
         switch (cond.type) {
             case BYTE: return nbt.getByte(key) == (byte) cond.value;
             case INT: return nbt.getInteger(key) == (int) cond.value;
-            case STRING: return cond.value.equals(nbt.getString(key));
+            case STRING: {
+                String actual = nbt.getString(key);
+                String expected = (String) cond.value;
+                if ("*".equals(expected)) return true; // single * wildcard
+                if (expected.contains("*")) {
+                    String regex = expected.replace("*", ".*");
+                    return actual.matches(regex);
+                }
+                return expected.equals(actual);
+            }
             default: return true;
         }
     }
@@ -227,7 +244,7 @@ public class LivingComfortRegistry {
 
         NBTTagCompound nbt = new NBTTagCompound();
         entity.writeToNBTOptional(nbt);
-
+        
         return entry.matches(nbt) ? entry : null;
     }
 

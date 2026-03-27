@@ -109,12 +109,14 @@ public class ForgeConfigHandler {
                 "Format: <entity>,<value>,<group>,<entity_limit>,<optional_nbt>",
                 "Example: minecraft:ocelot,2,pets,5,{CatType:*,OwnerUUID:*}",
                 "Example: minecraft:parrot,2,birds,5",
-                "You can use * as wildcard and {},{} checks both strings individually, no NBT {} = no nbt check"
+                "Rules: * is wildcard, {},{} equals {} or {}, a singular {} = no nbt check",
+                "{!CatType:1} means it can't have CatType1, {OwnerUUID:'*-*'} will check for - in the OwnerUUID",
+                "{OwnerUUID:'*-*'} basically means tamed for practically all entities including modded ones."
         })
         @Config.Name("Living Comfort Entries")
         public String[] livingComfortEntries = new String[]{
-                "minecraft:ocelot,5,pets,2,{CatType:*,OwnerUUID:*}",
-                "minecraft:parrot,2,pets,3,{OwnerUUID:*}"
+                "minecraft:ocelot,5,pets,2,{!CatType:1,OwnerUUID:'*-*'}",
+                "minecraft:parrot,2,pets,3,{OwnerUUID:'*-*'}"
         };
 
         @Config.Comment({
