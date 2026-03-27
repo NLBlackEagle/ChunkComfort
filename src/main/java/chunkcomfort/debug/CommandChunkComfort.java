@@ -330,12 +330,13 @@ public class CommandChunkComfort extends CommandBase {
                                        Map<String,Integer> groupTotals,
                                        Map<String,Map<String,Integer>> groupContents) {
 
-        int totalComfort = 0, maxComfort = 0;
+        int totalComfort = 0;
         for (Map.Entry<String,Integer> entry : groupTotals.entrySet()) {
             int limit = getGlobalGroupLimit(entry.getKey());
             totalComfort += Math.min(entry.getValue(), limit);
-            maxComfort += limit;
         }
+
+        int maxComfort = calculateMaxComfort();
 
         sender.sendMessage(new TextComponentString("-------------------"));
         sender.sendMessage(new TextComponentString("Group Breakdown: [Total Comfort: " + totalComfort + "/" + maxComfort + "]"));
@@ -404,5 +405,18 @@ public class CommandChunkComfort extends CommandBase {
             }
         }
         return Integer.MAX_VALUE;
+    }
+
+    private int calculateMaxComfort() {
+        int maxComfort = 0;
+        for (String s : ForgeConfigHandler.server.groupLimits) {
+            String[] split = s.split(",");
+            if (split.length == 2) {
+                try {
+                    maxComfort += Integer.parseInt(split[1].trim());
+                } catch (NumberFormatException ignored) {}
+            }
+        }
+        return maxComfort;
     }
 }

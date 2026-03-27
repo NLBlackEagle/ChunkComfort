@@ -65,7 +65,5 @@ public class ChunkComfort {
 }
 
 /*
-todo: temperature hook, make temperature a base requirement for comfort when enabled"
-todo: TotalComfort/MaxComfort does not have a proper maxcomfort, I will make a new method for this.
 todo: Petting cats boost comfort level?
  */
