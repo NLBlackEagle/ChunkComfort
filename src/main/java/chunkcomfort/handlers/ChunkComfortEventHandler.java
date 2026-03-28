@@ -1,21 +1,28 @@
 package chunkcomfort.handlers;
 
-import chunkcomfort.chunk.ChunkUpdateManager;
-import chunkcomfort.chunk.ComfortBlockParticleSpawner;
-import chunkcomfort.chunk.ComfortWorldData;
+import chunkcomfort.chunk.*;
 import chunkcomfort.registry.EntityComfortRegistry;
+import chunkcomfort.registry.PettingComfortRegistry;
 import net.minecraft.block.Block;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityList;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.item.EntityArmorStand;
+import net.minecraft.entity.passive.EntityTameable;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
+import net.minecraftforge.event.entity.living.LivingHurtEvent;
+import net.minecraftforge.event.entity.player.AttackEntityEvent;
+import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
+
+import java.util.Map;
+import java.util.UUID;
 
 public class ChunkComfortEventHandler {
 
@@ -75,5 +82,49 @@ public class ChunkComfortEventHandler {
         ChunkPos pos = new ChunkPos(event.player.getPosition());
         ComfortWorldData.get(event.player.world).getChunkData(pos);
         // this triggers self-healing if the chunk cache is empty
+    }
+
+    @SubscribeEvent
+    public void onEntityAttacked(AttackEntityEvent event) {
+
+
+        Entity entity = event.getTarget();
+        EntityPlayer player = (EntityPlayer) event.getEntity();
+
+        String entityId = EntityList.getKey(entity).toString();
+        PettingComfortData entry = PettingComfortRegistry.getEntry(entityId);
+        if (entry == null) return; // Not configured for petting
+
+
+        // --- Tamed / owner checks ---
+        if (entry.tamed && !(entity instanceof EntityTameable)) return;
+        if (entry.ownerOnly && entity instanceof EntityTameable) {
+            if (!((EntityTameable) entity).isOwner(player)) return;
+        }
+
+        if (player.isSneaking()) {
+            event.setCanceled(true);
+        }
+
+        // --- Minimal comfort requirements ---
+        if (entry.requiresComfortActivation && !ComfortRequirementCheck.isComfortActive(player)) return;
+
+
+        // --- Cooldown check ---
+        if (!PettingComfortManager.canPet(player, entity, entry)) return;
+
+        // --- Max pettable enforcement per entity ---
+        PlayerChunkComfortCache cache = PlayerChunkComfortCache.get(player);
+        long now = System.currentTimeMillis();
+
+        // Count active boosts for this player
+        long activeCount = cache.tempComforts.values().stream()
+                .filter(boost -> boost.expireTime > now)
+                .count();
+
+        if (activeCount >= entry.maxPettable) return; // max active boosts reached
+
+        // --- Apply the petting boost ---
+        PettingComfortManager.applyPettingBoost(player, entity, entry);
     }
 }

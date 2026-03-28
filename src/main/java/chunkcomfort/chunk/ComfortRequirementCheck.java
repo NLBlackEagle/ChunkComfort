@@ -52,6 +52,13 @@ public class ComfortRequirementCheck {
         return new ComfortRequirements(shelterOk, lightOk, fireOk, temperatureOk, playerTemp);
     }
 
+    public static boolean isComfortActive(EntityPlayer player) {
+        BlockPos pos = player.getPosition();
+        ComfortRequirements reqs = getRequirementsPresent(player.world, pos, player);
+
+        return reqs.shelterOk && reqs.lightOk && reqs.fireOk && reqs.temperatureOk;
+    }
+
     private static int getRadius() {
         return ForgeConfigHandler.server.chunkRadius;
     }

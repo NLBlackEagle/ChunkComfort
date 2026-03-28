@@ -65,5 +65,5 @@ public class ChunkComfort {
 }
 
 /*
-todo: Petting cats boost comfort level?
+todo: banners do not count towards comfort points yet
  */

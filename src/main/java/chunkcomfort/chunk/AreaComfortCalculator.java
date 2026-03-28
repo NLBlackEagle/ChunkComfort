@@ -93,6 +93,7 @@ public class AreaComfortCalculator {
         PlayerChunkComfortCache cache = getCache(player);
         cache.clear();
 
+        // Collect block and group totals from nearby chunks
         for (int dx = -radius; dx <= radius; dx++) {
             for (int dz = -radius; dz <= radius; dz++) {
                 ChunkPos chunkPos = new ChunkPos(centerChunkX + dx, centerChunkZ + dz);
@@ -127,9 +128,13 @@ public class AreaComfortCalculator {
             totalComfort += Math.min(value, totalLimit);
         }
 
+        // --- Include biome modifier ---
         String biomeName = Objects.requireNonNull(world.getBiome(playerPos).getRegistryName()).toString();
         int biomeModifier = BiomeComfortRegistry.getBiomeModifier(biomeName);
         totalComfort += biomeModifier;
+
+        // --- Include temporary petting boosts ---
+        totalComfort += cache.getTemporaryComfort();
 
         int finalComfort = Math.max(totalComfort, 0);
 

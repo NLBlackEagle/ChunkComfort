@@ -20,6 +20,9 @@ public class ForgeConfigHandler {
 
     public static class ServerConfig {
 
+
+
+
         @Config.Comment("Enable temperature as a comfort requirement (true/false).")
         @Config.Name("Enable SimpleDifficulty Temperature Comfort Requirement")
         public boolean enableTemperatureComfort = true;
@@ -123,7 +126,7 @@ public class ForgeConfigHandler {
         };
 
         @Config.Comment({
-                "Living Comfort Entries",
+                "Have living entities wander around your base to boost comfort!",
                 "Format: <entity>,<value>,<group>,<entity_limit>,<optional_nbt>",
                 "Example: minecraft:ocelot,2,pets,5,{CatType:*,OwnerUUID:*}",
                 "Example: minecraft:parrot,2,birds,5",
@@ -134,7 +137,24 @@ public class ForgeConfigHandler {
         @Config.Name("Living Comfort Entries")
         public String[] livingComfortEntries = new String[]{
                 "minecraft:ocelot,5,pets,2,{!CatType:1,OwnerUUID:'*-*'}",
-                "minecraft:parrot,2,pets,3,{OwnerUUID:'*-*'}"
+                "minecraft:parrot,2,pets,3,{OwnerUUID:'*-*'}",
+                "minecraft:ocelot,2,legendary_pet,3,{CustomName:'Skully',OwnerUUID:'*-*'},{CustomName:'Dilly',OwnerUUID:'*-*'}",
+                "minecraft:parrot,10,legendary,3,{CustomName:'NLBlackEagle',OwnerUUID:'*-*'}"
+        };
+
+        @Config.Comment({
+                "Pet a entity to gain a temporary comfort boost.",
+                "Format: <entity>,<comfort_boost>,<entities_pettable>,<boost_seconds>,<boost_cooldown>,<tamed>,<owner_only>,<requires_comfort_activation>",
+                "Example: minecraft:ocelot,2,3,pets,60,360,true,true,true",
+                "This would boost the owner comfort by 2 points for 1 minute if all minimal comfort requirements are met",
+                "such as fire, shelter, etc. The ocelot must be tamed by said owner which can pet the ocelot every 300 seconds.",
+                "In this case 3 different ocelots can be petted for a maximum boost of 6 comfort points",
+                "It is recommended to keep <entities_pettable> the same as <entity_limit> from Living Comfort Entries"
+        })
+        @Config.Name("Comfort Petting Entries")
+        public String[] pettingComfortEntries = new String[]{
+                "minecraft:ocelot,5,2,300,600,true,true,true",
+                "minecraft:parrot,1,3,300,1200,true,true,true"
         };
 
         @Config.Comment({
@@ -149,7 +169,9 @@ public class ForgeConfigHandler {
                 "enchanting,25",
                 "luxury,167",
                 "lightsources,20",
-                "pets,15"
+                "pets,15",
+                "legendary,1",
+                "legendary_pet,1"
         };
 
 
@@ -193,6 +215,8 @@ public class ForgeConfigHandler {
         PlayerComfortManager.reloadConfig();
         BiomeComfortRegistry.reload(server.biomeComfortModifiers);
         AreaComfortCalculator.reloadGroupLimits(server.groupLimits);
+        PettingComfortRegistry.loadFromConfig(server.pettingComfortEntries);
+
         ChunkComfortClientTooltipHandler.refreshConfiguredBlocks();
         ChunkComfortClientTooltipHandler.refreshGroupLimits();
         ChunkComfortClientTooltipHandler.refreshNonBlockEntities();

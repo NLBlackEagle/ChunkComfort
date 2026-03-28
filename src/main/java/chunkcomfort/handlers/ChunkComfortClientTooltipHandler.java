@@ -1,11 +1,13 @@
 package chunkcomfort.handlers;
 
 import chunkcomfort.chunk.AreaComfortCalculator;
+import chunkcomfort.chunk.PettingComfortData;
 import chunkcomfort.chunk.PlayerChunkComfortCache;
 import chunkcomfort.config.ForgeConfigHandler;
 import chunkcomfort.registry.BlockComfortRegistry;
 import chunkcomfort.registry.EntityComfortRegistry;
 import chunkcomfort.registry.LivingComfortRegistry;
+import chunkcomfort.registry.PettingComfortRegistry;
 import net.minecraft.block.Block;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
@@ -114,6 +116,8 @@ public class ChunkComfortClientTooltipHandler {
                 LivingComfortRegistry.LivingComfortEntry livingEntry = LivingComfortRegistry.ENTITY_MAP.get(entityID);
                 if (livingEntry == null) return; // Only configured entities
 
+                PettingComfortData petEntry = PettingComfortRegistry.getEntry(entityID.toString());
+
                 // JEI header
                 if (!tooltip.contains("§eComfort Info:")) tooltip.add("§eComfort Info:");
 
@@ -124,10 +128,15 @@ public class ChunkComfortClientTooltipHandler {
                         int groupPoints = cache.entityGroupTotals.getOrDefault(livingEntry.group, 0);
                         int totalGroupLimit = LivingComfortRegistry.getGroupLimit(livingEntry.group);
 
+
                         tooltip.add(String.format("§aEntity points: %d  Limit: %d/%d",
                                 livingEntry.value, entityCount, livingEntry.limit));
                         tooltip.add(String.format("§bGroup: %s  Points: %d/%d",
                                 livingEntry.group, groupPoints, totalGroupLimit));
+
+                        if (petEntry != null) {
+                            tooltip.add("§d§oShift + Left Click to pet your pet!");
+                        }
                     }
                 }
 
@@ -144,6 +153,7 @@ public class ChunkComfortClientTooltipHandler {
         boolean isEntityItem = NON_BLOCK_ENTITIES.contains(registryName);
         EntityComfortRegistry.ComfortEntry entityEntry = EntityComfortRegistry.getEntityEntryFromId(new ResourceLocation(registryName));
 
+
         // Nothing to show? Exit early
         if (!isConfiguredBlock && entityEntry == null && !isEntityItem) return;
 
@@ -157,6 +167,9 @@ public class ChunkComfortClientTooltipHandler {
         // -------------------
         if (!handledSpawnEgg && (entityEntry != null || isEntityItem)) {
             Class<? extends Entity> entityClass = ENTITY_ITEM_MAP.getOrDefault(registryName, EntityArmorStand.class);
+
+            ResourceLocation entityId = new ResourceLocation(registryName);
+            PettingComfortData petEntry = PettingComfortRegistry.getEntry(entityId.toString());
 
             int entityCount = cache.entityCounts.getOrDefault(entityClass, 0);
             int groupPoints = 0;
@@ -173,6 +186,9 @@ public class ChunkComfortClientTooltipHandler {
 
             tooltip.add(String.format("§aEntity points: %d  Limit: %d/%d", value, entityCount, entityEntry != null ? entityEntry.limit : 0));
             tooltip.add(String.format("§bGroup: %s  Points: %d/%d", group, groupPoints, totalGroupLimit));
+
+            //add a tooltip: shift + left click to pet your pet! here if entity is in: pettingComfortEntries list then
+
         }
 
         // -------------------
