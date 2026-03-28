@@ -65,5 +65,5 @@ public class ChunkComfort {
 }
 
 /*
-todo: banners do not count towards comfort points yet
+todo: make minecraft:banner count both minecraft:wall_banner and minecraft:standing_banner
  */
