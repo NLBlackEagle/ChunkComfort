@@ -20,26 +20,7 @@ public class ForgeConfigHandler {
 
     public static class ServerConfig {
 
-
-
-
-        @Config.Comment("Enable temperature as a comfort requirement (true/false).")
-        @Config.Name("Enable SimpleDifficulty Temperature Comfort Requirement")
-        public boolean enableTemperatureComfort = true;
-
-        @Config.Comment({
-                "Minimum player temperature (inclusive) required for comfort activation.",
-                "Negative values = colder than default, positive = warmer than default",
-                "Defaults are set to Hypothermia -1.0 and Hyperthermia 1.0"
-        })
-        @Config.Name("Minimum Comfort Temperature")
-        public double minComfortTemperature = -1.0;
-
-        @Config.Comment({
-                "Maximum player temperature (inclusive) allowed for comfort activation."
-        })
-        @Config.Name("Maximum Comfort Temperature")
-        public double maxComfortTemperature = 1.0;
+        //Global Settings
 
         @Config.Comment({
                 "Set this to true if you do not want wine from the mod rustic to have a effect on hidden potions",
@@ -86,6 +67,41 @@ public class ForgeConfigHandler {
         })
         @Config.RangeInt(min = 20, max = 2000)
         public int comfortCheckInterval = 20;
+
+        @Config.Comment("Enable temperature as a comfort requirement (true/false).")
+        @Config.Name("Enable SimpleDifficulty Temperature Comfort Requirement")
+        public boolean enableTemperatureComfort = true;
+
+        @Config.Comment({
+                "Minimum player temperature (inclusive) required for comfort activation.",
+                "Negative values = colder than default, positive = warmer than default",
+                "Defaults are set to Hypothermia -1.0 and Hyperthermia 1.0"
+        })
+        @Config.Name("Minimum Comfort Temperature")
+        public double minComfortTemperature = -1.0;
+
+        @Config.Comment({
+                "Maximum player temperature (inclusive) allowed for comfort activation."
+        })
+        @Config.Name("Maximum Comfort Temperature")
+        public double maxComfortTemperature = 1.0;
+
+        //Comfort Entries
+
+        @Config.Comment("Blocks that count as fire sources")
+        @Config.Name("Fire Blocks")
+        public String[] fireBlocks = new String[]{
+                "minecraft:fire"
+        };
+
+        @Config.Comment({
+                "Biome comfort modifiers",
+                "Format: <biome>,<modifier>",
+                "Example: minecraft:plains,5  or  minecraft:desert,-3"
+        })
+        @Config.Name("Biome Comfort Modifiers")
+        public String[] biomeComfortModifiers = new String[]{};
+
 
         @Config.Comment({
                 "Block Comfort Entries",
@@ -174,21 +190,6 @@ public class ForgeConfigHandler {
                 "legendary_pet,1"
         };
 
-
-        @Config.Comment("Blocks that count as fire sources")
-        @Config.Name("Fire Blocks")
-        public String[] fireBlocks = new String[]{
-                "minecraft:fire"
-        };
-
-        @Config.Comment({
-                "Biome comfort modifiers",
-                "Format: <biome>,<modifier>",
-                "Example: minecraft:plains,5  or  minecraft:desert,-3"
-        })
-        @Config.Name("Biome Comfort Modifiers")
-        public String[] biomeComfortModifiers = new String[]{};
-
         @Config.Comment({
                 "Comfort tier effects",
                 "Format: <comfort>,[[<potion>,<amplifier>],[<potion>,<amplifier>]]",
@@ -208,15 +209,17 @@ public class ForgeConfigHandler {
     }
 
     public static void reloadRegistries() {
+        FireBlockRegistry.reload(server.fireBlocks);
         BlockComfortRegistry.reload(server.blockComfortEntries);
         EntityComfortRegistry.reload(server.blockComfortEntries);
-        LivingComfortRegistry.reload(server.livingComfortEntries);
-        FireBlockRegistry.reload(server.fireBlocks);
-        PlayerComfortManager.reloadConfig();
-        BiomeComfortRegistry.reload(server.biomeComfortModifiers);
         AreaComfortCalculator.reloadGroupLimits(server.groupLimits);
+        LivingComfortRegistry.reload(server.livingComfortEntries);
         PettingComfortRegistry.loadFromConfig(server.pettingComfortEntries);
+        BiomeComfortRegistry.reload(server.biomeComfortModifiers);
 
+
+
+        PlayerComfortManager.reloadConfig();
         ChunkComfortClientTooltipHandler.refreshConfiguredBlocks();
         ChunkComfortClientTooltipHandler.refreshGroupLimits();
         ChunkComfortClientTooltipHandler.refreshNonBlockEntities();
