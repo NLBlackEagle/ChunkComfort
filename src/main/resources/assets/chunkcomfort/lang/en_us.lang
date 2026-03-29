@@ -3,7 +3,8 @@ chunkcomfort.effects.comfort=Comfort
 
 # Headers and general Tooltips
 tooltip.chunkcomfort.header=§eComfort Info:
-tooltip.chunkcomfort.fire=§6A warm and comfy fire, used to establish a comfort zone.
+tooltip.chunkcomfort.fireblocks=§6A warm and comfy fire, key to creating a warm, lit and sheltered comfort zone.
+tooltip.chunkcomfort.firestarters=§6Used to create a warm and comfy fire establishing a warm, lit and sheltered comfort zone.
 
 # Entity Tooltips (Such as spawneggs and Banners)
 tooltip.chunkcomfort.entity.line1=§aEntity points: %d  Limit: %d/%d

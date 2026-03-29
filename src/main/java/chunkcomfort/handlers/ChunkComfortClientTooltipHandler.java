@@ -28,6 +28,7 @@ public class ChunkComfortClientTooltipHandler {
     private static final Set<String> CONFIGURED_COMFORT_BLOCKS = new HashSet<>();
     private static final Map<String, Integer> GROUP_LIMITS = new HashMap<>();
     private static final Set<String> FIRE_BLOCKS = new HashSet<>();
+    private static final Set<String> FIRE_SOURCE_ITEMS = new HashSet<>();
 
     /** Call this if the config is reloaded */
     public static void refreshConfiguredBlocks() {
@@ -36,6 +37,17 @@ public class ChunkComfortClientTooltipHandler {
             if (entry == null || entry.isEmpty()) continue;
             String blockName = entry.split(",")[0]; // extract <block> from <block>,<value>,<group>,<limit>
             CONFIGURED_COMFORT_BLOCKS.add(blockName);
+        }
+    }
+
+    public static void refreshFireSourceItems() {
+        FIRE_SOURCE_ITEMS.clear();
+
+        if (!ForgeConfigHandler.server.requireFire) return;
+
+        for (String entry : ForgeConfigHandler.server.fireSourceItems) {
+            if (entry == null || entry.trim().isEmpty()) continue;
+            FIRE_SOURCE_ITEMS.add(entry.trim());
         }
     }
 
@@ -162,21 +174,33 @@ public class ChunkComfortClientTooltipHandler {
         boolean isConfiguredBlock = CONFIGURED_COMFORT_BLOCKS.contains(registryName);
         boolean isEntityItem = NON_BLOCK_ENTITIES.contains(registryName);
         boolean isFireBlock = FIRE_BLOCKS.contains(registryName);
+        boolean isFireSourceItem = FIRE_SOURCE_ITEMS.contains(registryName);
         EntityComfortRegistry.ComfortEntry entityEntry = EntityComfortRegistry.getEntityEntryFromId(new ResourceLocation(registryName));
 
 
         // Nothing to show? Exit early
-        if (!isConfiguredBlock && entityEntry == null && !isEntityItem && !isFireBlock) return;
+        if (!isConfiguredBlock && entityEntry == null && !isEntityItem && !isFireBlock && !isFireSourceItem) return;
 
         // Add JEI header if it wasn’t added yet
         String header = I18n.format("tooltip.chunkcomfort.header");
         if (!tooltip.contains(header)) tooltip.add(header);
 
         // -------------------
-        // Fire tooltip
+        // Fire Starter tooltip
         // -------------------
-        String fireLine = I18n.format("tooltip.chunkcomfort.fire");
-        if (!tooltip.contains(fireLine)) tooltip.add(fireLine);
+        String fireItem = I18n.format("tooltip.chunkcomfort.firestarters");
+        if ((isFireSourceItem) && (!tooltip.contains(fireItem))) {
+            tooltip.add(fireItem);
+        }
+
+        // -------------------
+        // Fire Block tooltip
+        // -------------------
+        String fireBlock = I18n.format("tooltip.chunkcomfort.fireblocks");
+        if ((isFireBlock) && (!tooltip.contains(fireBlock))) {
+            tooltip.add(fireBlock);
+        }
+
 
         if (player == null) return;
 

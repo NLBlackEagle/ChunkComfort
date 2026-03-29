@@ -94,6 +94,13 @@ public class ForgeConfigHandler {
                 "minecraft:fire"
         };
 
+        @Config.Comment("Items that count as fire starters")
+        @Config.Name("Fire Source Items")
+        public String[] fireSourceItems = new String[] {
+                "minecraft:flint_and_steel",
+                "minecraft:fire_charge"
+        };
+
         @Config.Comment({
                 "Biome comfort modifiers",
                 "Format: <biome>,<modifier>",
@@ -210,6 +217,7 @@ public class ForgeConfigHandler {
 
     public static void reloadRegistries() {
         FireBlockRegistry.reload(server.fireBlocks);
+        FireBlockRegistry.reload(server.fireSourceItems);
         BlockComfortRegistry.reload(server.blockComfortEntries);
         EntityComfortRegistry.reload(server.blockComfortEntries);
         AreaComfortCalculator.reloadGroupLimits(server.groupLimits);
@@ -220,6 +228,7 @@ public class ForgeConfigHandler {
 
 
         PlayerComfortManager.reloadConfig();
+        ChunkComfortClientTooltipHandler.refreshFireSourceItems();
         ChunkComfortClientTooltipHandler.refreshFireBlocks();
         ChunkComfortClientTooltipHandler.refreshConfiguredBlocks();
         ChunkComfortClientTooltipHandler.refreshGroupLimits();
