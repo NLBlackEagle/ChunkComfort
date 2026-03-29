@@ -220,6 +220,7 @@ public class ForgeConfigHandler {
 
 
         PlayerComfortManager.reloadConfig();
+        ChunkComfortClientTooltipHandler.refreshFireBlocks();
         ChunkComfortClientTooltipHandler.refreshConfiguredBlocks();
         ChunkComfortClientTooltipHandler.refreshGroupLimits();
         ChunkComfortClientTooltipHandler.refreshNonBlockEntities();

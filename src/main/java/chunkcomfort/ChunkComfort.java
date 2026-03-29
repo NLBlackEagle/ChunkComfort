@@ -65,5 +65,8 @@ public class ChunkComfort {
 }
 
 /*
-todo: make minecraft:banner count both minecraft:wall_banner and minecraft:standing_banner
+
+todo: add fireplaces tooltips
+todo: add sleep mechanic insert random string: "10,You dreamt of a warm house with a comfy <fire-block-name>, a pet and a carpet on the floor"
+      below comfort 10
  */

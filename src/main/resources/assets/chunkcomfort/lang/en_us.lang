@@ -1,1 +1,21 @@
 chunkcomfort.effects.comfort=Comfort
+
+
+# Headers and general Tooltips
+tooltip.chunkcomfort.header=§eComfort Info:
+tooltip.chunkcomfort.fire=§6A warm and comfy fire, used to establish a comfort zone.
+
+# Entity Tooltips (Such as spawneggs and Banners)
+tooltip.chunkcomfort.entity.line1=§aEntity points: %d  Limit: %d/%d
+tooltip.chunkcomfort.entity.line2=§bGroup: %s  Points: %d/%d
+
+# Comfort Block Tooltips
+tooltip.chunkcomfort.block.line1=§aBlock points: %d  Limit: %d/%d
+tooltip.chunkcomfort.block.line2=§bGroup: %s  Points: %d/%d
+
+# Living entities
+tooltip.chunkcomfort.living.line1=§aEntity points: %d  Limit: %d/%d
+tooltip.chunkcomfort.living.line2=§bGroup: %s  Points: %d/%d
+
+# Petting
+tooltip.chunkcomfort.pet=§d§oShift + Left Click to pet your pet!

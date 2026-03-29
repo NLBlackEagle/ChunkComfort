@@ -9,6 +9,7 @@ import chunkcomfort.registry.EntityComfortRegistry;
 import chunkcomfort.registry.LivingComfortRegistry;
 import chunkcomfort.registry.PettingComfortRegistry;
 import net.minecraft.block.Block;
+import net.minecraft.client.resources.I18n;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
 import net.minecraft.entity.EntityLiving;
@@ -26,6 +27,7 @@ public class ChunkComfortClientTooltipHandler {
     /** Cached set of block registry names from config for quick lookup */
     private static final Set<String> CONFIGURED_COMFORT_BLOCKS = new HashSet<>();
     private static final Map<String, Integer> GROUP_LIMITS = new HashMap<>();
+    private static final Set<String> FIRE_BLOCKS = new HashSet<>();
 
     /** Call this if the config is reloaded */
     public static void refreshConfiguredBlocks() {
@@ -34,6 +36,18 @@ public class ChunkComfortClientTooltipHandler {
             if (entry == null || entry.isEmpty()) continue;
             String blockName = entry.split(",")[0]; // extract <block> from <block>,<value>,<group>,<limit>
             CONFIGURED_COMFORT_BLOCKS.add(blockName);
+        }
+    }
+
+    public static void refreshFireBlocks() {
+        FIRE_BLOCKS.clear();
+
+        if (!ForgeConfigHandler.server.requireFire) return;
+
+        for (String entry : ForgeConfigHandler.server.fireBlocks) {
+            if (entry == null || entry.trim().isEmpty()) continue;
+
+            FIRE_BLOCKS.add(entry.trim());
         }
     }
 
@@ -118,8 +132,9 @@ public class ChunkComfortClientTooltipHandler {
 
                 PettingComfortData petEntry = PettingComfortRegistry.getEntry(entityID.toString());
 
-                // JEI header
-                if (!tooltip.contains("§eComfort Info:")) tooltip.add("§eComfort Info:");
+                // Add JEI header if it wasn’t added yet
+                String header = I18n.format("tooltip.chunkcomfort.header");
+                if (!tooltip.contains(header)) tooltip.add(header);
 
                 if (player != null) {
                     Entity entity = EntityList.createEntityByIDFromName(entityID, player.world);
@@ -128,15 +143,10 @@ public class ChunkComfortClientTooltipHandler {
                         int groupPoints = cache.entityGroupTotals.getOrDefault(livingEntry.group, 0);
                         int totalGroupLimit = LivingComfortRegistry.getGroupLimit(livingEntry.group);
 
+                        tooltip.add(I18n.format("tooltip.chunkcomfort.living.line1", livingEntry.value, entityCount, livingEntry.limit));
+                        tooltip.add(I18n.format("tooltip.chunkcomfort.living.line2", livingEntry.group, groupPoints, totalGroupLimit));
 
-                        tooltip.add(String.format("§aEntity points: %d  Limit: %d/%d",
-                                livingEntry.value, entityCount, livingEntry.limit));
-                        tooltip.add(String.format("§bGroup: %s  Points: %d/%d",
-                                livingEntry.group, groupPoints, totalGroupLimit));
-
-                        if (petEntry != null) {
-                            tooltip.add("§d§oShift + Left Click to pet your pet!");
-                        }
+                        if (petEntry != null) {tooltip.add(I18n.format("tooltip.chunkcomfort.pet"));}
                     }
                 }
 
@@ -151,14 +161,22 @@ public class ChunkComfortClientTooltipHandler {
         // -------------------
         boolean isConfiguredBlock = CONFIGURED_COMFORT_BLOCKS.contains(registryName);
         boolean isEntityItem = NON_BLOCK_ENTITIES.contains(registryName);
+        boolean isFireBlock = FIRE_BLOCKS.contains(registryName);
         EntityComfortRegistry.ComfortEntry entityEntry = EntityComfortRegistry.getEntityEntryFromId(new ResourceLocation(registryName));
 
 
         // Nothing to show? Exit early
-        if (!isConfiguredBlock && entityEntry == null && !isEntityItem) return;
+        if (!isConfiguredBlock && entityEntry == null && !isEntityItem && !isFireBlock) return;
 
         // Add JEI header if it wasn’t added yet
-        if (!tooltip.contains("§eComfort Info:")) tooltip.add("§eComfort Info:");
+        String header = I18n.format("tooltip.chunkcomfort.header");
+        if (!tooltip.contains(header)) tooltip.add(header);
+
+        // -------------------
+        // Fire tooltip
+        // -------------------
+        String fireLine = I18n.format("tooltip.chunkcomfort.fire");
+        if (!tooltip.contains(fireLine)) tooltip.add(fireLine);
 
         if (player == null) return;
 
@@ -184,10 +202,8 @@ public class ChunkComfortClientTooltipHandler {
                 totalGroupLimit = GROUP_LIMITS.getOrDefault(group, 0);
             }
 
-            tooltip.add(String.format("§aEntity points: %d  Limit: %d/%d", value, entityCount, entityEntry != null ? entityEntry.limit : 0));
-            tooltip.add(String.format("§bGroup: %s  Points: %d/%d", group, groupPoints, totalGroupLimit));
-
-            //add a tooltip: shift + left click to pet your pet! here if entity is in: pettingComfortEntries list then
+            tooltip.add(I18n.format("tooltip.chunkcomfort.entity.line1", value, entityCount, entityEntry != null ? entityEntry.limit : 0));
+            tooltip.add(I18n.format("tooltip.chunkcomfort.entity.line2", group, groupPoints, totalGroupLimit));
 
         }
 
@@ -207,8 +223,8 @@ public class ChunkComfortClientTooltipHandler {
                 int groupPoints = cache.groupTotals.getOrDefault(groupName, 0);
                 int totalGroupLimit = GROUP_LIMITS.getOrDefault(groupName, 0);
 
-                tooltip.add(String.format("§aBlock points: %d  Limit: %d/%d", pointsPerBlock, amountIn3x3, blockLimit));
-                tooltip.add(String.format("§bGroup: %s  Points: %d/%d", groupName, groupPoints, totalGroupLimit));
+                tooltip.add(I18n.format("tooltip.chunkcomfort.block.line1", pointsPerBlock, amountIn3x3, blockLimit));
+                tooltip.add(I18n.format("tooltip.chunkcomfort.block.line2", groupName, groupPoints, totalGroupLimit));
             }
         }
     }
