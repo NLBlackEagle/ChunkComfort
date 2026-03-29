@@ -20,3 +20,32 @@ tooltip.chunkcomfort.living.line2=§bGroup: %s  Points: %d/%d
 
 # Petting
 tooltip.chunkcomfort.pet=§d§oShift + Left Click to pet your pet!
+tooltip.chunkcomfort.petting.message=Petting your pet %s comforts you.\nComfort increased by %d point(s) for %d seconds!
+
+
+
+debug.chunkcomfort.usage=§cUsage: /chunkcomfort <info|reload>
+debug.chunkcomfort.unknown_subcommand=§cUnknown subcommand.
+
+debug.chunkcomfort.reload_start=§a[ChunkComfort] Clearing caches and reloading...
+debug.chunkcomfort.reload_config=§a[ChunkComfort] Config reloaded.
+debug.chunkcomfort.reload_world=§a[ChunkComfort] Cleared caches for world: %d
+debug.chunkcomfort.reload_complete=§a[ChunkComfort] Comfort recalculated for all players.
+
+debug.chunkcomfort.inactive=Comfort system inactive: %s
+
+
+debug.chunkcomfort.separator=-------------------
+debug.chunkcomfort.activation_header=Comfort Activation:
+debug.chunkcomfort.group_breakdown=Group Breakdown: [Total Comfort: %d/%d]
+debug.chunkcomfort.group_breakdown_syntax=Syntax: Group, Points, Limit | Entity, Count, Limit
+
+
+debug.chunkcomfort.shelter_required=Shelter Required: true
+debug.chunkcomfort.shelter_found= Shelter Found: %s
+debug.chunkcomfort.light_required=Light Level Required: %d
+debug.chunkcomfort.light_level= Light Level: %d
+debug.chunkcomfort.fire_required=Fire Required: true
+debug.chunkcomfort.fire_found= Fire Found: %s
+debug.chunkcomfort.temperature_required=Temperature Required: true
+debug.chunkcomfort.temperature_range= Comfort Temp: %d to %d Player Temp: %d

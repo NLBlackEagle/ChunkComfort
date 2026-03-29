@@ -10,6 +10,7 @@ import chunkcomfort.registry.ComfortRequirements;
 import chunkcomfort.registry.EntityComfortRegistry;
 import chunkcomfort.registry.LivingComfortRegistry;
 import net.minecraft.block.Block;
+import net.minecraft.client.resources.I18n;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.Entity;
@@ -42,7 +43,7 @@ public class CommandChunkComfort extends CommandBase {
     @Override
     public void execute(MinecraftServer server, ICommandSender sender, String[] args) {
         if (args.length == 0) {
-            sender.sendMessage(new TextComponentString("§cUsage: /chunkcomfort <info|reload>"));
+            sender.sendMessage(new TextComponentString(I18n.format("debug.chunkcomfort.usage")));
             return;
         }
         switch (args[0].toLowerCase()) {
@@ -53,7 +54,7 @@ public class CommandChunkComfort extends CommandBase {
                 executeReload(server, sender);
                 break;
             default:
-                sender.sendMessage(new TextComponentString("§cUnknown subcommand."));
+                sender.sendMessage(new TextComponentString(I18n.format("debug.chunkcomfort.unknown_subcommand")));
         }
     }
 
@@ -81,17 +82,17 @@ public class CommandChunkComfort extends CommandBase {
     }
 
     private void executeReload(MinecraftServer server, ICommandSender sender) {
-        sender.sendMessage(new TextComponentString("§a[ChunkComfort] Clearing caches and reloading..."));
+        sender.sendMessage(new TextComponentString(I18n.format("debug.chunkcomfort.reload_start")));
 
         // 1. Reload config
         ForgeConfigHandler.initialize();
         AreaComfortCalculator.reloadGroupLimits(ForgeConfigHandler.server.groupLimits);
-        sender.sendMessage(new TextComponentString("§a[ChunkComfort] Config reloaded."));
+        sender.sendMessage(new TextComponentString(I18n.format("debug.chunkcomfort.reload_config")));
 
         // 2. Clear caches
         for (World world : server.worlds) {
             ComfortWorldData.get(world).clearAllChunks();
-            sender.sendMessage(new TextComponentString("§a[ChunkComfort] Cleared caches for world: " + world.provider.getDimension()));
+            sender.sendMessage(new TextComponentString(I18n.format("debug.chunkcomfort.reload_world", world.provider.getDimension())));
         }
 
         // 3. Recalculate comfort for all players
@@ -106,7 +107,7 @@ public class CommandChunkComfort extends CommandBase {
             }
         }
 
-        sender.sendMessage(new TextComponentString("§a[ChunkComfort] Comfort recalculated for all players."));
+        sender.sendMessage(new TextComponentString(I18n.format("debug.chunkcomfort.reload_complete")));
     }
 
     // ---------------- Core Helpers (Computation) ----------------
@@ -132,7 +133,7 @@ public class CommandChunkComfort extends CommandBase {
             status.append("Too cold/hot ");
 
         if (comfortActive < requiredConditions) {
-            sender.sendMessage(new TextComponentString("Comfort system inactive: " + status));
+            sender.sendMessage(new TextComponentString(I18n.format("debug.chunkcomfort.inactive", status)));
             return false;
         }
         return true;
@@ -243,49 +244,37 @@ public class CommandChunkComfort extends CommandBase {
                 ComfortRequirementCheck.getRequirementsPresent(player.world, pos, player);
 
         StringBuilder sb = new StringBuilder();
-        sb.append("-------------------\n");
-        sb.append("Comfort Activation:\n");
+        sb.append(I18n.format("debug.chunkcomfort.separator") + "\n");
+        sb.append(I18n.format("debug.chunkcomfort.activation_header") + "\n");
 
         // Shelter
         if (ForgeConfigHandler.server.requireShelter) {
-            sb.append("Shelter Required: true");
-            if (reqs.shelterOk) sb.append(" Shelter Found: true\n");
-            else sb.append(" Shelter Found: false\n");
+            sb.append(I18n.format("debug.chunkcomfort.shelter_required"));
+            sb.append(I18n.format("debug.chunkcomfort.shelter_found", reqs.shelterOk));
         }
 
         // Light
         if (ForgeConfigHandler.server.minLightLevel > 0) {
             int light = player.world.getLight(pos);
-            sb.append("Light Level Required: ").append(ForgeConfigHandler.server.minLightLevel);
-            if (light >= ForgeConfigHandler.server.minLightLevel)
-                sb.append(" Light Level: ").append(light).append("\n");
-            else sb.append("\n"); // too dark, no need to show player light
+            sb.append(I18n.format("debug.chunkcomfort.light_required", ForgeConfigHandler.server.minLightLevel));
+            sb.append(I18n.format("debug.chunkcomfort.light_level", light));
         }
 
         // Fire
         if (ForgeConfigHandler.server.requireFire) {
-            sb.append("Fire Required: true");
-            if (reqs.fireOk) sb.append(" Fire Found: true\n");
-            else sb.append("\n"); // no fire found
+            sb.append(I18n.format("debug.chunkcomfort.fire_required"));
+            sb.append(I18n.format("debug.chunkcomfort.fire_found", reqs.fireOk));
         }
 
         // Temperature
         if (ForgeConfigHandler.server.enableTemperatureComfort) {
-            sb.append("Temperature Required: true");
+            sb.append(I18n.format("debug.chunkcomfort.temperature_required"));
             if (reqs.temperatureOk) {
-                sb.append(" Comfort Temp: ")
-                        .append(ForgeConfigHandler.server.minComfortTemperature)
-                        .append(" to ")
-                        .append(ForgeConfigHandler.server.maxComfortTemperature)
-                        .append(" Player Temp: ")
-                        .append(reqs.playerTemperature)
-                        .append("\n");
-            } else {
-                sb.append("\n"); // too cold/hot, don't show exact temp
+                sb.append(I18n.format("debug.chunkcomfort.temperature_range", ForgeConfigHandler.server.minComfortTemperature, ForgeConfigHandler.server.maxComfortTemperature, reqs.playerTemperature));
             }
         }
 
-        sb.append("-------------------");
+        sb.append(I18n.format("debug.chunkcomfort.separator") + "\n");
 
         sender.sendMessage(new TextComponentString(sb.toString()));
     }
@@ -338,9 +327,9 @@ public class CommandChunkComfort extends CommandBase {
 
         int maxComfort = calculateMaxComfort();
 
-        sender.sendMessage(new TextComponentString("-------------------"));
-        sender.sendMessage(new TextComponentString("Group Breakdown: [Total Comfort: " + totalComfort + "/" + maxComfort + "]"));
-        sender.sendMessage(new TextComponentString("Syntax: Group, Points, Limit | Entity, Count, Limit"));
+        sender.sendMessage(new TextComponentString(I18n.format("debug.chunkcomfort.separator")));
+        sender.sendMessage(new TextComponentString(I18n.format("debug.chunkcomfort.group_breakdown", totalComfort, maxComfort)));
+        sender.sendMessage(new TextComponentString(I18n.format("debug.chunkcomfort.group_breakdown_syntax")));
 
         for (Map.Entry<String,Map<String,Integer>> groupEntry : groupContents.entrySet()) {
             String group = groupEntry.getKey();
@@ -392,7 +381,7 @@ public class CommandChunkComfort extends CommandBase {
             ));
         }
 
-        sender.sendMessage(new TextComponentString("-------------------"));
+        sender.sendMessage(new TextComponentString(I18n.format("debug.chunkcomfort.separator")));
     }
 
     // ---------------- Utility Helpers ----------------

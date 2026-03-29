@@ -217,7 +217,7 @@ public class ForgeConfigHandler {
 
     public static void reloadRegistries() {
         FireBlockRegistry.reload(server.fireBlocks);
-        FireBlockRegistry.reload(server.fireSourceItems);
+        FireSourceItemRegistry.reload(server.fireSourceItems);
         BlockComfortRegistry.reload(server.blockComfortEntries);
         EntityComfortRegistry.reload(server.blockComfortEntries);
         AreaComfortCalculator.reloadGroupLimits(server.groupLimits);
@@ -228,8 +228,8 @@ public class ForgeConfigHandler {
 
 
         PlayerComfortManager.reloadConfig();
-        ChunkComfortClientTooltipHandler.refreshFireSourceItems();
         ChunkComfortClientTooltipHandler.refreshFireBlocks();
+        ChunkComfortClientTooltipHandler.refreshFireSourceItems();
         ChunkComfortClientTooltipHandler.refreshConfiguredBlocks();
         ChunkComfortClientTooltipHandler.refreshGroupLimits();
         ChunkComfortClientTooltipHandler.refreshNonBlockEntities();

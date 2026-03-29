@@ -1,8 +1,10 @@
 package chunkcomfort.chunk;
 
+import net.minecraft.client.resources.I18n;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.text.ITextComponent;
 import net.minecraft.world.World;
 import net.minecraft.util.text.TextComponentString;
 
@@ -50,11 +52,8 @@ public class PettingComfortManager {
                 .put(entityId, now + entry.cooldownSeconds * 1000L);
 
 
-        TextComponentString message = new TextComponentString(
-                "Petting your pet " + entity.getName() + " comforts you, whenever this is true for the pet remains a question.\n" +
-                        "Comfort increased by " + entry.comfortBoost + " point(s) for " + entry.boostSeconds + " seconds!"
-        );
-
+        String text = I18n.format("tooltip.chunkcomfort.petting.message", entity.getName(), entry.comfortBoost, entry.boostSeconds);
+        ITextComponent message = new TextComponentString(text);
         player.sendMessage(message);
     }
 
