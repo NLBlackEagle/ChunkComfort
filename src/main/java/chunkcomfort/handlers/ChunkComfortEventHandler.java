@@ -10,6 +10,7 @@ import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.item.EntityArmorStand;
 import net.minecraft.entity.passive.EntityTameable;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
@@ -43,15 +44,19 @@ public class ChunkComfortEventHandler {
         BlockPos pos = event.getPos();
         Block block = event.getState().getBlock();
 
+        if (world == null || pos == null || block == null) return;
+
         ChunkUpdateManager.onBlockBroken(world, pos, block);
     }
 
     @SubscribeEvent
     public void onNonLivingEntitySpawn(EntityJoinWorldEvent event) {
         Entity entity = event.getEntity();
-        World world = entity.world;
+        if (entity == null) return;
 
-        if (world.isRemote) return; // only server side
+        World world = entity.world;
+        if (world == null || world.isRemote) return;
+
         if (entity instanceof EntityLivingBase) {
             if (!(entity instanceof EntityArmorStand)) return; // skip living
         }
@@ -68,16 +73,20 @@ public class ChunkComfortEventHandler {
         if (event.phase != TickEvent.Phase.END) return;
 
         EntityPlayer player = event.player;
-        if (player.world.isRemote) return;
+        if (player == null || player.world == null || player.world.isRemote) return;
 
         if (player.ticksExisted % chunkcomfort.config.ForgeConfigHandler.server.comfortCheckInterval != 0) return;
+
+
 
         chunkcomfort.player.PlayerComfortManager.applyComfortEffects(player);
     }
 
     @SubscribeEvent
     public void onPlayerMove(TickEvent.PlayerTickEvent event) {
-        if (event.player.world.isRemote) return; // only server side
+
+        EntityPlayer player = event.player;
+        if (player == null || player.world == null || player.world.isRemote) return;
 
         ChunkPos pos = new ChunkPos(event.player.getPosition());
         ComfortWorldData.get(event.player.world).getChunkData(pos);
@@ -89,12 +98,17 @@ public class ChunkComfortEventHandler {
 
 
         Entity entity = event.getTarget();
+        if (entity == null) return;
+
+        if (!(event.getEntity() instanceof EntityPlayer)) return;
         EntityPlayer player = (EntityPlayer) event.getEntity();
 
-        String entityId = EntityList.getKey(entity).toString();
+        ResourceLocation key = EntityList.getKey(entity);
+        if (key == null) return;
+
+        String entityId = key.toString();
         PettingComfortData entry = PettingComfortRegistry.getEntry(entityId);
         if (entry == null) return; // Not configured for petting
-
 
         // --- Tamed / owner checks ---
         if (entry.tamed && !(entity instanceof EntityTameable)) return;
@@ -115,6 +129,7 @@ public class ChunkComfortEventHandler {
 
         // --- Max pettable enforcement per entity ---
         PlayerChunkComfortCache cache = PlayerChunkComfortCache.get(player);
+        if (cache == null) return;
         long now = System.currentTimeMillis();
 
         // Count active boosts for this player
