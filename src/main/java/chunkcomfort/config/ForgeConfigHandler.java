@@ -140,7 +140,8 @@ public class ForgeConfigHandler {
                 "minecraft:painting,1,luxury,25",
                 "minecraft:item_frame,1,luxury,15",
                 "minecraft:carpet,1,luxury,25",
-                "minecraft:banner,3,luxury,10",
+                "minecraft:wall_banner,3,luxury,10",
+                "minecraft:standing_banner,3,luxury,10",
                 "minecraft:flower_pot,1,luxury,10",
 
                 // Lightsources (small contribution)
