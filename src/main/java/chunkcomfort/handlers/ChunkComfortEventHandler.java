@@ -96,7 +96,6 @@ public class ChunkComfortEventHandler {
     @SubscribeEvent
     public void onEntityAttacked(AttackEntityEvent event) {
 
-
         Entity entity = event.getTarget();
         if (entity == null) return;
 
@@ -111,14 +110,10 @@ public class ChunkComfortEventHandler {
         if (entry == null) return; // Not configured for petting
 
         // --- Tamed / owner checks ---
-        if (entry.tamed && !(entity instanceof EntityTameable)) return;
-        if (entry.ownerOnly && entity instanceof EntityTameable) {
-            if (!((EntityTameable) entity).isOwner(player)) return;
-        }
+        if ((entry.tamed) && !(entity instanceof EntityTameable)) return;
+        if ((entry.ownerOnly) && !((EntityTameable) entity).isOwner(player)) return;
 
-        if (player.isSneaking()) {
-            event.setCanceled(true);
-        }
+        if (player.isSneaking()) event.setCanceled(true);
 
         // --- Minimal comfort requirements ---
         if (entry.requiresComfortActivation && !ComfortRequirementCheck.isComfortActive(player)) return;
