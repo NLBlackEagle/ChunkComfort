@@ -118,7 +118,6 @@ public class ChunkComfortEventHandler {
         // --- Minimal comfort requirements ---
         if (entry.requiresComfortActivation && !ComfortRequirementCheck.isComfortActive(player)) return;
 
-
         // --- Cooldown check ---
         if (!PettingComfortManager.canPet(player, entity, entry)) return;
 
