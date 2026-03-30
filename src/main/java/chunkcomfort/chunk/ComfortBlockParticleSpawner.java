@@ -25,6 +25,7 @@ public class ComfortBlockParticleSpawner {
             // Block case: same as before
             String groupName = BlockComfortRegistry.getGroup(block);
             PlayerChunkComfortCache cache = AreaComfortCalculator.getCache(player);
+            cache.ensureUpToDate();
             int currentCount = cache.blockCounts.getOrDefault(block, 0);
             BlockComfortRegistry.ComfortEntry entry = BlockComfortRegistry.getBlockEntry(block);
             int itemLimit = entry != null ? entry.limit : 0;

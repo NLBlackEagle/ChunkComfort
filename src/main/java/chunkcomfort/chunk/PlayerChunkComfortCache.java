@@ -12,15 +12,20 @@ import java.util.UUID;
 public class PlayerChunkComfortCache {
 
     private static final Map<UUID, PlayerChunkComfortCache> PLAYER_CACHES = new HashMap<>();
-
     public final Map<Block, Integer> blockCounts = new HashMap<>();
     public final Map<String, Integer> groupTotals = new HashMap<>();
-
     public final Map<Class<? extends Entity>, Integer> entityCounts = new HashMap<>();
     public final Map<String, Integer> entityGroupTotals = new HashMap<>();
-
-    // Temporary comfort per entity instance
     public final Map<UUID, TemporaryComfortBoost> tempComforts = new HashMap<>();
+
+    public int cacheVersion = 0; // default
+
+    public void ensureUpToDate() {
+        if (cacheVersion != AreaComfortCalculator.getCacheVersion()) {
+            clear(); // reset everything
+            cacheVersion = AreaComfortCalculator.getCacheVersion();
+        }
+    }
 
     public BlockPos lastPos = null;
 
@@ -95,6 +100,13 @@ public class PlayerChunkComfortCache {
         int current = blockCounts.getOrDefault(block, 0);
         if (current <= count) blockCounts.remove(block);
         else blockCounts.put(block, current - count);
+    }
+
+    public boolean isEmpty() {
+        return blockCounts.isEmpty()
+                && groupTotals.isEmpty()
+                && entityCounts.isEmpty()
+                && entityGroupTotals.isEmpty();
     }
 
     public void removeGroupTotal(String group, int total) {

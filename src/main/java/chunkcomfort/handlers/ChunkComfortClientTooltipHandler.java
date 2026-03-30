@@ -129,6 +129,7 @@ public class ChunkComfortClientTooltipHandler {
         List<String> tooltip = event.getToolTip();
         EntityPlayer player = event.getEntityPlayer();
         PlayerChunkComfortCache cache = player != null ? AreaComfortCalculator.getCache(player) : null;
+        if (player != null) {cache.ensureUpToDate();}
 
         String registryName = Objects.requireNonNull(stack.getItem().getRegistryName()).toString();
         boolean handledSpawnEgg = false;
@@ -150,6 +151,8 @@ public class ChunkComfortClientTooltipHandler {
 
                 if (player != null) {
                     Entity entity = EntityList.createEntityByIDFromName(entityID, player.world);
+                    if (cache.isEmpty()) {AreaComfortCalculator.calculatePlayerComfort(player);}
+
                     if (entity instanceof EntityLiving) {
                         int entityCount = cache.entityCounts.getOrDefault(entity.getClass(), 0);
                         int groupPoints = cache.entityGroupTotals.getOrDefault(livingEntry.group, 0);
@@ -204,6 +207,7 @@ public class ChunkComfortClientTooltipHandler {
 
         if (player == null) return;
 
+        if (cache.isEmpty()) {AreaComfortCalculator.calculatePlayerComfort(player);}
         // -------------------
         // Non-living / generic entity tooltip (skip if spawn egg already handled)
         // -------------------

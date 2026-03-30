@@ -82,6 +82,8 @@ public class CommandChunkComfort extends CommandBase {
     }
 
     private void executeReload(MinecraftServer server, ICommandSender sender) {
+        AreaComfortCalculator.incrementCacheVersion();
+
         sender.sendMessage(new TextComponentString(I18n.format("debug.chunkcomfort.reload_start")));
 
         // 1. Reload config
@@ -89,22 +91,19 @@ public class CommandChunkComfort extends CommandBase {
         AreaComfortCalculator.reloadGroupLimits(ForgeConfigHandler.server.groupLimits);
         sender.sendMessage(new TextComponentString(I18n.format("debug.chunkcomfort.reload_config")));
 
-        // 2. Clear caches
+        // 2. Clear world chunk data
         for (World world : server.worlds) {
             ComfortWorldData.get(world).clearAllChunks();
             sender.sendMessage(new TextComponentString(I18n.format("debug.chunkcomfort.reload_world", world.provider.getDimension())));
         }
 
-        // 3. Recalculate comfort for all players
-        for (World world : server.worlds) {
-            for (EntityPlayer player : server.getPlayerList().getPlayers()) {
-                ChunkPos center = new ChunkPos(player.getPosition());
-                int radius = AreaComfortCalculator.getRadius();
-                for (int dx = -radius; dx <= radius; dx++)
-                    for (int dz = -radius; dz <= radius; dz++)
-                        ComfortWorldData.get(world).recalcChunkWithFire(world, new ChunkPos(center.x + dx, center.z + dz));
-                AreaComfortCalculator.calculatePlayerComfort(player);
-            }
+        // 3. Clear all player caches
+        AreaComfortCalculator.clearAllPlayerCaches(); // <-- you need to implement this
+        sender.sendMessage(new TextComponentString("Cleared all player comfort caches."));
+
+        // 4. Recalculate comfort for all players
+        for (EntityPlayer player : server.getPlayerList().getPlayers()) {
+            AreaComfortCalculator.calculatePlayerComfort(player);
         }
 
         sender.sendMessage(new TextComponentString(I18n.format("debug.chunkcomfort.reload_complete")));

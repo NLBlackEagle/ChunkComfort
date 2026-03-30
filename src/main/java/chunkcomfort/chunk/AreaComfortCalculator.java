@@ -18,6 +18,10 @@ import java.util.*;
 
 public class AreaComfortCalculator {
 
+    private static int CACHE_VERSION = 0;
+    public static void incrementCacheVersion() {CACHE_VERSION++;}
+    public static int getCacheVersion() {return CACHE_VERSION;}
+
     private static final boolean DEBUG_COMFORT = false;
 
     private static final Map<String, Integer> GROUP_LIMITS = new HashMap<>();
@@ -25,6 +29,10 @@ public class AreaComfortCalculator {
 
     public static PlayerChunkComfortCache getCache(EntityPlayer player) {
         return PLAYER_CACHES.computeIfAbsent(player.getUniqueID(), k -> new PlayerChunkComfortCache());
+    }
+
+    public static void clearAllPlayerCaches() {
+        PLAYER_CACHES.clear();
     }
 
     public static int getRadius() {

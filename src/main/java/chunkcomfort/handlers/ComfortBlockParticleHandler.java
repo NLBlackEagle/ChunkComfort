@@ -30,6 +30,7 @@ public class ComfortBlockParticleHandler {
         if (isBlock) {
             // Get the player's cache safely
             PlayerChunkComfortCache cache = AreaComfortCalculator.getCache(player);
+            cache.ensureUpToDate();
 
             // Skip if cache is empty (not initialized yet)
             if (cache.blockCounts.isEmpty() && cache.groupTotals.isEmpty()) return;
