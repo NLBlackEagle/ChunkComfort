@@ -14,9 +14,10 @@ public class PlayerChunkComfortCache {
     private static final Map<UUID, PlayerChunkComfortCache> PLAYER_CACHES = new HashMap<>();
     public final Map<Block, Integer> blockCounts = new HashMap<>();
     public final Map<String, Integer> groupTotals = new HashMap<>();
-    public final Map<Class<? extends Entity>, Integer> entityCounts = new HashMap<>();
+    public final Map<Class<? extends Entity>, Integer> livingEntityCounts = new HashMap<>();
     public final Map<String, Integer> entityGroupTotals = new HashMap<>();
     public final Map<UUID, TemporaryComfortBoost> tempComforts = new HashMap<>();
+    public final Map<Class<? extends Entity>, Integer> decorativeEntityCounts = new HashMap<>();
 
     public int cacheVersion = 0; // default
 
@@ -33,10 +34,11 @@ public class PlayerChunkComfortCache {
     public void clear() {
         blockCounts.clear();
         groupTotals.clear();
-        entityCounts.clear();
+        livingEntityCounts.clear();
         entityGroupTotals.clear();
         lastPos = null;
         tempComforts.clear();
+        decorativeEntityCounts.clear();
     }
 
     public static class TemporaryComfortBoost {
@@ -76,6 +78,20 @@ public class PlayerChunkComfortCache {
     }
 
     // ----------------- existing block/entity methods -----------------
+    public void addDecorativeEntityCount(Class<? extends Entity> entityClass, int count) {
+        decorativeEntityCounts.put(entityClass, decorativeEntityCounts.getOrDefault(entityClass, 0) + count);
+    }
+
+    public int getDecorativeEntityCount(Class<? extends Entity> clazz) {
+        return decorativeEntityCounts.getOrDefault(clazz, 0);
+    }
+
+    public void removeDecorativeEntityCount(Class<? extends Entity> entityClass, int count) {
+        int current = decorativeEntityCounts.getOrDefault(entityClass, 0);
+        if (current <= count) decorativeEntityCounts.remove(entityClass);
+        else decorativeEntityCounts.put(entityClass, current - count);
+    }
+
     public void addBlockCount(Block block, int count) {
         blockCounts.put(block, blockCounts.getOrDefault(block, 0) + count);
     }
@@ -85,7 +101,7 @@ public class PlayerChunkComfortCache {
     }
 
     public void addEntityCount(Class<? extends Entity> entityClass, int count) {
-        entityCounts.put(entityClass, entityCounts.getOrDefault(entityClass, 0) + count);
+        livingEntityCounts.put(entityClass, livingEntityCounts.getOrDefault(entityClass, 0) + count);
     }
 
     public void addEntityGroupTotal(String group, int total) {
@@ -93,7 +109,7 @@ public class PlayerChunkComfortCache {
     }
 
     public int getEntityCount(Class<? extends Entity> clazz) {
-        return entityCounts.getOrDefault(clazz, 0);
+        return livingEntityCounts.getOrDefault(clazz, 0);
     }
 
     public void removeBlockCount(Block block, int count) {
@@ -105,7 +121,7 @@ public class PlayerChunkComfortCache {
     public boolean isEmpty() {
         return blockCounts.isEmpty()
                 && groupTotals.isEmpty()
-                && entityCounts.isEmpty()
+                && livingEntityCounts.isEmpty()
                 && entityGroupTotals.isEmpty();
     }
 
@@ -116,9 +132,9 @@ public class PlayerChunkComfortCache {
     }
 
     public void removeEntityCount(Class<? extends Entity> entityClass, int count) {
-        int current = entityCounts.getOrDefault(entityClass, 0);
-        if (current <= count) entityCounts.remove(entityClass);
-        else entityCounts.put(entityClass, current - count);
+        int current = livingEntityCounts.getOrDefault(entityClass, 0);
+        if (current <= count) livingEntityCounts.remove(entityClass);
+        else livingEntityCounts.put(entityClass, current - count);
     }
 
     public void removeEntityGroupTotal(String group, int total) {

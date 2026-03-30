@@ -6,9 +6,10 @@ tooltip.chunkcomfort.header=§eComfort Info:
 tooltip.chunkcomfort.fireblocks=§6A comfy fire, key to establishing a warm, lit and sheltered comfort zone.
 tooltip.chunkcomfort.firestarters=§6Used to create a comfy fire establishing a warm, lit and sheltered comfort zone.
 
-# Entity Tooltips (Such as spawneggs and Banners)
-tooltip.chunkcomfort.entity.line1=§aEntity points: %d  Limit: %d/%d
-tooltip.chunkcomfort.entity.line2=§bGroup: %s  Points: %d/%d
+# Decorative Entity Tooltips (Such as paintings and item frames)
+tooltip.chunkcomfort.decorative.line1=§aEntity points: %d  Limit: %d/%d
+tooltip.chunkcomfort.decorative.line2=§bGroup: %s  Points: %d/%d
+
 
 # Comfort Block Tooltips
 tooltip.chunkcomfort.block.line1=§aBlock points: %d  Limit: %d/%d

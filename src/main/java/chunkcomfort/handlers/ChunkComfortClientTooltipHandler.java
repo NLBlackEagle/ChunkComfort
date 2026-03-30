@@ -154,7 +154,7 @@ public class ChunkComfortClientTooltipHandler {
                     if (cache.isEmpty()) {AreaComfortCalculator.calculatePlayerComfort(player);}
 
                     if (entity instanceof EntityLiving) {
-                        int entityCount = cache.entityCounts.getOrDefault(entity.getClass(), 0);
+                        int entityCount = cache.livingEntityCounts.getOrDefault(entity.getClass(), 0);
                         int groupPoints = cache.entityGroupTotals.getOrDefault(livingEntry.group, 0);
                         int totalGroupLimit = LivingComfortRegistry.getGroupLimit(livingEntry.group);
 
@@ -211,13 +211,16 @@ public class ChunkComfortClientTooltipHandler {
         // -------------------
         // Non-living / generic entity tooltip (skip if spawn egg already handled)
         // -------------------
+// -------------------
+// Non-living / decorative entity tooltip
+// -------------------
         if (!handledSpawnEgg && (entityEntry != null || isEntityItem)) {
             Class<? extends Entity> entityClass = ENTITY_ITEM_MAP.getOrDefault(registryName, EntityArmorStand.class);
 
             ResourceLocation entityId = new ResourceLocation(registryName);
             PettingComfortData petEntry = PettingComfortRegistry.getEntry(entityId.toString());
 
-            int entityCount = cache.entityCounts.getOrDefault(entityClass, 0);
+            int entityCount = cache.getDecorativeEntityCount(entityClass); // <-- NEW: use decorativeEntityCounts
             int groupPoints = 0;
             int totalGroupLimit = 0;
             int value = 0;
@@ -230,9 +233,12 @@ public class ChunkComfortClientTooltipHandler {
                 totalGroupLimit = GROUP_LIMITS.getOrDefault(group, 0);
             }
 
-            tooltip.add(I18n.format("tooltip.chunkcomfort.entity.line1", value, entityCount, entityEntry != null ? entityEntry.limit : 0));
-            tooltip.add(I18n.format("tooltip.chunkcomfort.entity.line2", group, groupPoints, totalGroupLimit));
+            tooltip.add(I18n.format("tooltip.chunkcomfort.decorative.line1", value, entityCount, entityEntry != null ? entityEntry.limit : 0));
+            tooltip.add(I18n.format("tooltip.chunkcomfort.decorative.line2", group, groupPoints, totalGroupLimit));
 
+            if (petEntry != null) {
+                tooltip.add(I18n.format("tooltip.chunkcomfort.pet"));
+            }
         }
 
         // -------------------

@@ -80,12 +80,14 @@ public class AreaComfortCalculator {
         BlockPos playerPos = player.getPosition();
         int radius = getRadius();
 
+
         int comfortActive = calculateComfortActivation(world, player);
         int requiredConditions = 0;
         if (ForgeConfigHandler.server.requireShelter) requiredConditions++;
         if (ForgeConfigHandler.server.minLightLevel > 0) requiredConditions++;
         if (ForgeConfigHandler.server.requireFire) requiredConditions++;
         if (ForgeConfigHandler.server.enableTemperatureComfort) requiredConditions++;
+
 
         if (comfortActive < requiredConditions) {
             if (PotionRegistry.COMFORT != null) {
@@ -118,6 +120,7 @@ public class AreaComfortCalculator {
         }
 
         addLivingEntityComfort(world, playerPos, radius, cache);
+        addDecorativeEntityComfort(world, playerPos, radius, cache);
 
         // --- Combine block and entity group totals ---
         Set<String> allGroups = new HashSet<>();
@@ -147,6 +150,12 @@ public class AreaComfortCalculator {
         int finalComfort = Math.max(totalComfort, 0);
 
         debugComfortBreakdown(player, cache, allGroups, biomeModifier, finalComfort);
+
+        System.out.println("=== CALCULATING PLAYER COMFORT ===");
+        System.out.println("Blocks: " + cache.blockCounts);
+        System.out.println("Block Groups: " + cache.groupTotals);
+        System.out.println("Entities: " + cache.livingEntityCounts);
+        System.out.println("Entity Groups: " + cache.entityGroupTotals);
 
         return finalComfort;
     }
@@ -219,6 +228,38 @@ public class AreaComfortCalculator {
             }
 
              */
+        }
+    }
+
+    public static void addDecorativeEntityComfort(World world, BlockPos center, int radius,
+                                                  PlayerChunkComfortCache cache) {
+        AxisAlignedBB box = getAxisAlignedBB(world, center, radius);
+        List<Entity> entities = world.getEntitiesWithinAABB(Entity.class, box);
+
+        // Track which decorative entities we've counted this tick
+        Set<UUID> countedDecoratives = new HashSet<>();
+
+        for (Entity entity : entities) {
+            // Only handle non-living "decorative" comfort entities
+            if (entity instanceof net.minecraft.entity.EntityLiving) continue;
+
+            if (!EntityComfortRegistry.isComfortEntity(entity)) continue;
+            EntityComfortRegistry.ComfortEntry entry = EntityComfortRegistry.getEntityEntry(entity);
+            if (entry == null) continue;
+
+            Class<? extends Entity> clazz = entity.getClass();
+
+            // Handle multi-block or duplicate entities like paintings
+            UUID entityId = entity.getUniqueID();
+            if (countedDecoratives.contains(entityId)) continue;
+            countedDecoratives.add(entityId);
+
+            // Respect per-entity limits
+            int currentCount = cache.getDecorativeEntityCount(clazz);
+            if (currentCount >= entry.limit) continue;
+
+            cache.addDecorativeEntityCount(clazz, 1);
+            cache.addEntityGroupTotal(entry.group, entry.value); // Keep group totals separate from living entities
         }
     }
 
