@@ -101,6 +101,7 @@ public class AreaComfortCalculator {
         int centerChunkZ = playerPos.getZ() >> 4;
 
         PlayerChunkComfortCache cache = getCache(player);
+        float temp = cache.getTemporaryComfort();
         cache.clear();
 
         // Collect block and group totals from nearby chunks
@@ -146,6 +147,10 @@ public class AreaComfortCalculator {
 
         // --- Include temporary petting boosts ---
         totalComfort += cache.getTemporaryComfort();
+
+        System.out.println("Petting comfort: " + temp);
+
+
 
         int finalComfort = Math.max(totalComfort, 0);
 

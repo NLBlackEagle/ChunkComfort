@@ -171,7 +171,7 @@ public class ForgeConfigHandler {
         })
         @Config.Name("Living Comfort Entries")
         public String[] livingComfortEntries = new String[]{
-                "minecraft:ocelot,4,pets,2,{!CatType:1,OwnerUUID:'*-*'}",
+                "minecraft:ocelot,4,pets,2,{!CatType:0,OwnerUUID:'*-*'}",
                 "minecraft:parrot,1,pets,3,{OwnerUUID:'*-*'}"
         };
 

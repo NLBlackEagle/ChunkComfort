@@ -93,7 +93,6 @@ public class ChunkComfortEventHandler {
 
     @SubscribeEvent
     public void onEntityAttacked(AttackEntityEvent event) {
-
         Entity entity = event.getTarget();
         if (entity == null) return;
 
@@ -122,16 +121,22 @@ public class ChunkComfortEventHandler {
         // --- Max pettable enforcement per entity ---
         PlayerChunkComfortCache cache = PlayerChunkComfortCache.get(player);
         if (cache == null) return;
-        long now = System.currentTimeMillis();
 
-        // Count active boosts for this player
+        long now = System.currentTimeMillis();
         long activeCount = cache.tempComforts.values().stream()
                 .filter(boost -> boost.expireTime > now)
                 .count();
 
         if (activeCount >= entry.maxPettable) return; // max active boosts reached
 
-        // --- Apply the petting boost ---
-        PettingComfortManager.applyPettingBoost(player, entity, entry);
+        // --- Apply the boost server-side ---
+        if (!player.world.isRemote) {
+            PettingComfortManager.applyPettingBoostServer(player, entity, entry);
+        }
+
+        // --- Apply the client-side effects ---
+        if (player.world.isRemote) {
+            PettingComfortManager.applyPettingBoostClient(player, entity, entry);
+        }
     }
 }

@@ -62,8 +62,22 @@ public class PlayerChunkComfortCache {
     /** Get total temporary comfort (sum of all active boosts) */
     public float getTemporaryComfort() {
         long now = System.currentTimeMillis();
-        tempComforts.entrySet().removeIf(e -> e.getValue().expireTime < now);
-        return (float) tempComforts.values().stream().mapToDouble(b -> b.amount).sum();
+
+        // Remove expired boosts
+        tempComforts.entrySet().removeIf(e -> e.getValue().expireTime <= now);
+
+        // Sum all remaining active boosts
+        float sum = 0f;
+        for (TemporaryComfortBoost boost : tempComforts.values()) {
+            sum += boost.amount;
+        }
+
+        // Optional debug log to verify
+        System.out.println("[ChunkComfort] Temporary comfort sum: " + sum);
+
+        System.out.println("[Petting] Current temp boosts: " + tempComforts);
+
+        return sum;
     }
 
     /** Count active boosts of a specific entity type */

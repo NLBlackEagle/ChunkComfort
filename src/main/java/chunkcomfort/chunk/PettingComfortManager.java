@@ -29,30 +29,38 @@ public class PettingComfortManager {
         return nextPetTime == null || now >= nextPetTime;
     }
 
-    /** Apply the petting boost */
-    public static void applyPettingBoost(EntityPlayer player, Entity entity, PettingComfortData entry) {
+    /** Server-side: update cache & cooldowns */
+    public static void applyPettingBoostServer(EntityPlayer player, Entity entity, PettingComfortData entry) {
         UUID playerId = player.getUniqueID();
         UUID entityId = entity.getUniqueID();
         long now = System.currentTimeMillis();
 
         PlayerChunkComfortCache cache = PlayerChunkComfortCache.get(player);
 
-        // Enforce maxPettable per entity type
+        // Max boosts per type
         long activeCountByType = cache.countActiveBoostsByType(entity.getClass());
         if (activeCountByType >= entry.maxPettable) return;
 
-        // Add temporary comfort per entity instance
+        // Add temporary comfort
         cache.addTemporaryComfort(entityId, entry.comfortBoost, entry.boostSeconds, entity.getClass());
 
-        // Spawn hearts above entity
-        spawnHeartParticles(player, entry.comfortBoost, entity);
-
-        // Update cooldown per entity instance
+        // Update cooldown
         cooldowns.computeIfAbsent(playerId, k -> new HashMap<>())
                 .put(entityId, now + entry.cooldownSeconds * 1000L);
 
-        player.sendMessage(new TextComponentString(I18n.format("tooltip.chunkcomfort.petting.message.line1", entity.getName())));
-        player.sendMessage(new TextComponentString(I18n.format("tooltip.chunkcomfort.petting.message.line2", entry.comfortBoost, entry.boostSeconds)));
+        System.out.println("[Petting] Added boost " + entry.comfortBoost + " to entity " + entityId);
+    }
+
+    /** Client-side: spawn particles & show messages */
+    public static void applyPettingBoostClient(EntityPlayer player, Entity entity, PettingComfortData entry) {
+        spawnHeartParticles(player, entry.comfortBoost, entity);
+
+        player.sendMessage(new TextComponentString(
+                I18n.format("tooltip.chunkcomfort.petting.message.line1", entity.getName())
+        ));
+        player.sendMessage(new TextComponentString(
+                I18n.format("tooltip.chunkcomfort.petting.message.line2", entry.comfortBoost, entry.boostSeconds)
+        ));
     }
 
     /** Spawn hearts above the entity petted */
