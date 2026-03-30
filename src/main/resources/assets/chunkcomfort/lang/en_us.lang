@@ -20,7 +20,8 @@ tooltip.chunkcomfort.living.line2=§bGroup: %s  Points: %d/%d
 
 # Petting
 tooltip.chunkcomfort.pet=§d§oShift + Left Click to pet your pet!
-tooltip.chunkcomfort.petting.message=Petting your pet %s comforts you.\nComfort increased by %d point(s) for %d seconds!
+tooltip.chunkcomfort.petting.message.line1=§6Petting your pet %s comforts you.
+tooltip.chunkcomfort.petting.message.line2=§6Comfort increased by %d point(s) for %d seconds!
 
 
 

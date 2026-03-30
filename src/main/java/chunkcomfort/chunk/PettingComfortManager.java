@@ -51,10 +51,8 @@ public class PettingComfortManager {
         cooldowns.computeIfAbsent(playerId, k -> new HashMap<>())
                 .put(entityId, now + entry.cooldownSeconds * 1000L);
 
-
-        String text = I18n.format("tooltip.chunkcomfort.petting.message", entity.getName(), entry.comfortBoost, entry.boostSeconds);
-        ITextComponent message = new TextComponentString(text);
-        player.sendMessage(message);
+        player.sendMessage(new TextComponentString(I18n.format("tooltip.chunkcomfort.petting.message.line1", entity.getName())));
+        player.sendMessage(new TextComponentString(I18n.format("tooltip.chunkcomfort.petting.message.line2", entry.comfortBoost, entry.boostSeconds)));
     }
 
     /** Spawn hearts above the entity petted */
