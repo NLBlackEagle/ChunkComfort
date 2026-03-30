@@ -12,18 +12,17 @@ import java.util.UUID;
 public class PlayerChunkComfortCache {
 
     private static final Map<UUID, PlayerChunkComfortCache> PLAYER_CACHES = new HashMap<>();
+
     public final Map<Block, Integer> blockCounts = new HashMap<>();
     public final Map<String, Integer> groupTotals = new HashMap<>();
     public final Map<Class<? extends Entity>, Integer> livingEntityCounts = new HashMap<>();
     public final Map<String, Integer> entityGroupTotals = new HashMap<>();
-    public final Map<UUID, TemporaryComfortBoost> tempComforts = new HashMap<>();
     public final Map<Class<? extends Entity>, Integer> decorativeEntityCounts = new HashMap<>();
 
     public int cacheVersion = 0; // default
-
     public void ensureUpToDate() {
         if (cacheVersion != AreaComfortCalculator.getCacheVersion()) {
-            clear(); // reset everything
+            clear();
             cacheVersion = AreaComfortCalculator.getCacheVersion();
         }
     }
@@ -36,74 +35,21 @@ public class PlayerChunkComfortCache {
         groupTotals.clear();
         livingEntityCounts.clear();
         entityGroupTotals.clear();
-        lastPos = null;
-        tempComforts.clear();
         decorativeEntityCounts.clear();
-    }
-
-    public static class TemporaryComfortBoost {
-        public final int amount;
-        public final long expireTime;
-        public final Class<? extends Entity> type; // entity type for maxPettable counting
-
-        public TemporaryComfortBoost(int amount, long expireTime, Class<? extends Entity> type) {
-            this.amount = amount;
-            this.expireTime = expireTime;
-            this.type = type;
-        }
-    }
-
-    /** Add temporary comfort for a specific entity */
-    public void addTemporaryComfort(UUID entityId, int amount, int durationSeconds, Class<? extends Entity> type) {
-        tempComforts.put(entityId,
-                new TemporaryComfortBoost(amount, System.currentTimeMillis() + durationSeconds * 1000L, type));
-    }
-
-    /** Get total temporary comfort (sum of all active boosts) */
-    public float getTemporaryComfort() {
-        long now = System.currentTimeMillis();
-
-        // Remove expired boosts
-        tempComforts.entrySet().removeIf(e -> e.getValue().expireTime <= now);
-
-        // Sum all remaining active boosts
-        float sum = 0f;
-        for (TemporaryComfortBoost boost : tempComforts.values()) {
-            sum += boost.amount;
-        }
-
-        // Optional debug log to verify
-        System.out.println("[ChunkComfort] Temporary comfort sum: " + sum);
-
-        System.out.println("[Petting] Current temp boosts: " + tempComforts);
-
-        return sum;
-    }
-
-    /** Count active boosts of a specific entity type */
-    public long countActiveBoostsByType(Class<? extends Entity> type) {
-        long now = System.currentTimeMillis();
-        tempComforts.entrySet().removeIf(e -> e.getValue().expireTime < now);
-        return tempComforts.values().stream().filter(b -> b.type == type).count();
+        lastPos = null;
     }
 
     public static PlayerChunkComfortCache get(EntityPlayer player) {
         return PLAYER_CACHES.computeIfAbsent(player.getUniqueID(), k -> new PlayerChunkComfortCache());
     }
 
-    // ----------------- existing block/entity methods -----------------
+    // ----------------- block/entity helpers -----------------
     public void addDecorativeEntityCount(Class<? extends Entity> entityClass, int count) {
         decorativeEntityCounts.put(entityClass, decorativeEntityCounts.getOrDefault(entityClass, 0) + count);
     }
 
     public int getDecorativeEntityCount(Class<? extends Entity> clazz) {
         return decorativeEntityCounts.getOrDefault(clazz, 0);
-    }
-
-    public void removeDecorativeEntityCount(Class<? extends Entity> entityClass, int count) {
-        int current = decorativeEntityCounts.getOrDefault(entityClass, 0);
-        if (current <= count) decorativeEntityCounts.remove(entityClass);
-        else decorativeEntityCounts.put(entityClass, current - count);
     }
 
     public void addBlockCount(Block block, int count) {

@@ -22,6 +22,7 @@ import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -104,37 +105,47 @@ public class ChunkComfortEventHandler {
 
         String entityId = key.toString();
         PettingComfortData entry = PettingComfortRegistry.getEntry(entityId);
-        if (entry == null) return; // Not configured for petting
+        if (entry == null) return;
 
         // --- Tamed / owner checks ---
-        if ((entry.tamed) && !(entity instanceof EntityTameable)) return;
-        if ((entry.ownerOnly) && !((EntityTameable) entity).isOwner(player)) return;
+        if (entry.tamed && !(entity instanceof EntityTameable)) return;
 
-        if (player.isSneaking()) event.setCanceled(true);
+        if (entry.ownerOnly) {
+            if (!(entity instanceof EntityTameable)) return;
+            if (!((EntityTameable) entity).isOwner(player)) return;
+        }
 
-        // --- Minimal comfort requirements ---
-        if (entry.requiresComfortActivation && !ComfortRequirementCheck.isComfortActive(player)) return;
+        // Sneak = cancel attack (pet instead)
+        if (player.isSneaking()) {
+            event.setCanceled(true);
+        } else {
+            return;
+        }
 
-        // --- Cooldown check ---
-        if (!PettingComfortManager.canPet(player, entity, entry)) return;
+        // --- Comfort requirement ---
+        if (entry.requiresComfortActivation &&
+                !ComfortRequirementCheck.isComfortActive(player)) {
+            return;
+        }
 
-        // --- Max pettable enforcement per entity ---
-        PlayerChunkComfortCache cache = PlayerChunkComfortCache.get(player);
-        if (cache == null) return;
+        // --- Cooldown ---
+        if (!PettingComfortManager.canPet(player, entity)) return;
 
-        long now = System.currentTimeMillis();
-        long activeCount = cache.tempComforts.values().stream()
-                .filter(boost -> boost.expireTime > now)
-                .count();
+        // --- Max pettable enforcement ---
+        int activeCount =
+                PettingComfortManager.countActivePets(
+                        player.getUniqueID(),
+                        entity.getClass()
+                );
 
-        if (activeCount >= entry.maxPettable) return; // max active boosts reached
+        if (activeCount >= entry.maxPettable) return;
 
-        // --- Apply the boost server-side ---
+        // --- SERVER: register + cooldown ---
         if (!player.world.isRemote) {
             PettingComfortManager.applyPettingBoostServer(player, entity, entry);
         }
 
-        // --- Apply the client-side effects ---
+        // --- CLIENT: visuals only ---
         if (player.world.isRemote) {
             PettingComfortManager.applyPettingBoostClient(player, entity, entry);
         }

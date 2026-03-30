@@ -101,7 +101,6 @@ public class AreaComfortCalculator {
         int centerChunkZ = playerPos.getZ() >> 4;
 
         PlayerChunkComfortCache cache = getCache(player);
-        float temp = cache.getTemporaryComfort();
         cache.clear();
 
         // Collect block and group totals from nearby chunks
@@ -146,9 +145,9 @@ public class AreaComfortCalculator {
         totalComfort += biomeModifier;
 
         // --- Include temporary petting boosts ---
-        totalComfort += cache.getTemporaryComfort();
+        totalComfort += PettingComfortManager.getActivePettingPoints(player.getUniqueID());
 
-        System.out.println("Petting comfort: " + temp);
+        System.out.println("Petting comfort: " + PettingComfortManager.getActivePettingPoints(player.getUniqueID()));
 
 
 
