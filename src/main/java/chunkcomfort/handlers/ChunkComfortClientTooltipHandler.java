@@ -233,8 +233,8 @@ public class ChunkComfortClientTooltipHandler {
                 totalGroupLimit = GROUP_LIMITS.getOrDefault(group, 0);
             }
 
-            tooltip.add(I18n.format("tooltip.chunkcomfort.entity.line1", value, entityCount, entityEntry != null ? entityEntry.limit : 0));
-            tooltip.add(I18n.format("tooltip.chunkcomfort.entity.line2", group, groupPoints, totalGroupLimit));
+            tooltip.add(I18n.format("tooltip.chunkcomfort.decorative.line1", value, entityCount, entityEntry != null ? entityEntry.limit : 0));
+            tooltip.add(I18n.format("tooltip.chunkcomfort.decorative.line2", group, groupPoints, totalGroupLimit));
 
             if (petEntry != null) {
                 tooltip.add(I18n.format("tooltip.chunkcomfort.pet"));
