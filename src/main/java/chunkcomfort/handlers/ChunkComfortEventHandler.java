@@ -62,8 +62,6 @@ public class ChunkComfortEventHandler {
         }
         if (!EntityComfortRegistry.isComfortEntity(entity)) return; // only comfort entities
 
-        // Add comfort points immediately
-        ChunkUpdateManager.onEntityAdded(world, entity.getPosition(), entity);
         ComfortBlockParticleSpawner.trySpawnComfortParticles(world, entity.getPosition(), null, null, entity);
     }
 

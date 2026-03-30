@@ -151,12 +151,6 @@ public class AreaComfortCalculator {
 
         debugComfortBreakdown(player, cache, allGroups, biomeModifier, finalComfort);
 
-        System.out.println("=== CALCULATING PLAYER COMFORT ===");
-        System.out.println("Blocks: " + cache.blockCounts);
-        System.out.println("Block Groups: " + cache.groupTotals);
-        System.out.println("Entities: " + cache.livingEntityCounts);
-        System.out.println("Entity Groups: " + cache.entityGroupTotals);
-
         return finalComfort;
     }
 
@@ -166,10 +160,6 @@ public class AreaComfortCalculator {
         List<Entity> entities = world.getEntitiesWithinAABB(Entity.class, box);
 
         Map<ResourceLocation, Integer> livingCount = new HashMap<>();
-        Map<Class<? extends Entity>, Integer> nonLivingCount = new HashMap<>();
-
-        // Set to track which paintings we've already counted this tick
-        Set<UUID> countedPaintings = new HashSet<>();
 
         for (Entity entity : entities) {
             // -----------------------------
@@ -192,42 +182,6 @@ public class AreaComfortCalculator {
 
                 livingCount.put(id, count + 1);
             }
-            /*
-
-            // -----------------------------
-            // Non-living / block-like entities
-            // -----------------------------
-
-            I rather not remove this just in case but this probably is not required.
-
-
-            else {
-                if (!EntityComfortRegistry.isComfortEntity(entity)) continue;
-
-                EntityComfortRegistry.ComfortEntry entry = EntityComfortRegistry.getEntityEntry(entity);
-                if (entry == null) continue;
-
-                Class<? extends Entity> clazz = entity.getClass();
-
-                // Handle multiblock paintings by UUID
-                if (entity instanceof EntityPainting) {
-                    UUID paintingId = entity.getUniqueID();
-                    if (countedPaintings.contains(paintingId)) continue; // already counted
-                    countedPaintings.add(paintingId);
-                }
-
-                int count = nonLivingCount.getOrDefault(clazz, 0);
-                if (count >= entry.limit) continue;
-
-                if (cache.getEntityCount(clazz) >= entry.limit) continue;
-
-                cache.addEntityCount(clazz, 1);
-                cache.addEntityGroupTotal(entry.group, entry.value);
-
-                nonLivingCount.put(clazz, count + 1);
-            }
-
-             */
         }
     }
 
