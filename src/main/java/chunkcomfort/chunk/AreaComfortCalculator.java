@@ -177,8 +177,16 @@ public class AreaComfortCalculator {
                 int cacheCount = cache.getEntityCount(entity.getClass());
                 if (cacheCount >= entry.limit) continue;
 
+                // Add bonus based on name
+                int bonus = NamedPetComfortRegistry.getBonus(EntityList.getKey(entity), entity.getCustomNameTag());
+                if (bonus > 0) {
+                    cache.addEntityGroupTotal(entry.group, bonus);
+                }
+
                 cache.addEntityCount(entity.getClass(), 1);
                 cache.addEntityGroupTotal(entry.group, entry.value);
+
+
 
                 livingCount.put(id, count + 1);
             }

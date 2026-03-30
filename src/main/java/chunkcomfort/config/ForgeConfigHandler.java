@@ -166,14 +166,23 @@ public class ForgeConfigHandler {
                 "Example: minecraft:parrot,2,birds,5",
                 "Rules: * is wildcard, {},{} equals {} or {}, a singular {} = no nbt check",
                 "{!CatType:1} means it can't have CatType1, {OwnerUUID:'*-*'} will check for - in the OwnerUUID",
-                "{OwnerUUID:'*-*'} basically means tamed for practically all entities including modded ones."
+                "{OwnerUUID:'*-*'} basically means tamed for practically all entities including modded ones.",
+                "Disclaimer: Do not add multiple entities of the same type!"
         })
         @Config.Name("Living Comfort Entries")
         public String[] livingComfortEntries = new String[]{
-                "minecraft:ocelot,5,pets,2,{!CatType:1,OwnerUUID:'*-*'}",
-                "minecraft:parrot,2,pets,3,{OwnerUUID:'*-*'}",
-                "minecraft:ocelot,2,legendary_pet,3,{CustomName:'Skully',OwnerUUID:'*-*'},{CustomName:'Dilly',OwnerUUID:'*-*'}",
-                "minecraft:parrot,10,legendary,3,{CustomName:'NLBlackEagle',OwnerUUID:'*-*'}"
+                "minecraft:ocelot,4,pets,2,{!CatType:1,OwnerUUID:'*-*'}",
+                "minecraft:parrot,1,pets,3,{OwnerUUID:'*-*'}"
+        };
+
+        @Config.Comment({
+                "Give your pets names for extra comfort!",
+                "Format: <entity>,<name|name2|etc>,<points>"
+        })
+        @Config.Name("Additional Comfort Names")
+        public String[] livingTooltipEntries = new String[]{
+                "minecraft:ocelot,'Dilli|Skully|Gizmo',2",
+                "minecraft:parrot,'Eagle|BaldEagle',1"
         };
 
         @Config.Comment({
@@ -237,6 +246,7 @@ public class ForgeConfigHandler {
         LivingComfortRegistry.reload(server.livingComfortEntries);
         PettingComfortRegistry.loadFromConfig(server.pettingComfortEntries);
         BiomeComfortRegistry.reload(server.biomeComfortModifiers);
+        NamedPetComfortRegistry.reload(server.livingTooltipEntries);
 
 
         PlayerComfortManager.reloadConfig();

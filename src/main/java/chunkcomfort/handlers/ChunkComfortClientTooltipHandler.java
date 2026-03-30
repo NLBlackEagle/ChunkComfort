@@ -4,10 +4,7 @@ import chunkcomfort.chunk.AreaComfortCalculator;
 import chunkcomfort.chunk.PettingComfortData;
 import chunkcomfort.chunk.PlayerChunkComfortCache;
 import chunkcomfort.config.ForgeConfigHandler;
-import chunkcomfort.registry.BlockComfortRegistry;
-import chunkcomfort.registry.EntityComfortRegistry;
-import chunkcomfort.registry.LivingComfortRegistry;
-import chunkcomfort.registry.PettingComfortRegistry;
+import chunkcomfort.registry.*;
 import net.minecraft.block.Block;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.entity.Entity;
@@ -160,6 +157,12 @@ public class ChunkComfortClientTooltipHandler {
 
                         tooltip.add(I18n.format("tooltip.chunkcomfort.living.line1", livingEntry.value, entityCount, livingEntry.limit));
                         tooltip.add(I18n.format("tooltip.chunkcomfort.living.line2", livingEntry.group, groupPoints, totalGroupLimit));
+
+                        // Add pet names bonus
+                        String nameLine = NamedPetComfortRegistry.formatNamesWithPoints(entityID);
+                        if (nameLine != null) {
+                            tooltip.add(nameLine);
+                        }
 
                         if (petEntry != null) {tooltip.add(I18n.format("tooltip.chunkcomfort.pet"));}
                     }

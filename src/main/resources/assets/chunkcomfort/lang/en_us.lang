@@ -18,6 +18,7 @@ tooltip.chunkcomfort.block.line2=§bGroup: %s  Points: %d/%d
 # Living entities
 tooltip.chunkcomfort.living.line1=§aEntity points: %d  Limit: %d/%d
 tooltip.chunkcomfort.living.line2=§bGroup: %s  Points: %d/%d
+tooltip.chunkcomfort.named_pets=Comfort names: %s + %d points
 
 # Petting
 tooltip.chunkcomfort.pet=§d§oShift + Left Click to pet your pet!
