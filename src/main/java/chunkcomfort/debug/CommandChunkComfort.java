@@ -178,9 +178,9 @@ public class CommandChunkComfort extends CommandBase {
             perChunkGroup.merge(blockEntry.group, points, Integer::sum);
             groupTotals.merge(blockEntry.group, points, Integer::sum);
 
-            String blockName = Block.REGISTRY.getNameForObject(block).toString();
+            String canonicalId = BlockComfortRegistry.getCanonicalId(block);
             groupContents.computeIfAbsent(blockEntry.group, k -> new HashMap<>())
-                    .merge(blockName, entry.getValue(), Integer::sum);
+                    .merge(canonicalId, entry.getValue(), Integer::sum);
         }
     }
 
@@ -327,6 +327,17 @@ public class CommandChunkComfort extends CommandBase {
 
         int maxComfort = calculateMaxComfort();
 
+        // ---------------- Precompute maps ----------------
+        // Map: ComfortEntry -> canonicalId
+        Map<BlockComfortRegistry.ComfortEntry, String> blockEntryToCanonicalId = new HashMap<>();
+        // Map: canonicalId -> ComfortEntry
+        Map<String, BlockComfortRegistry.ComfortEntry> canonicalIdToBlockEntry = new HashMap<>();
+        for (Map.Entry<Block, BlockComfortRegistry.ComfortEntry> be : BlockComfortRegistry.BLOCK_ENTRIES.entrySet()) {
+            String canonicalId = BlockComfortRegistry.getCanonicalId(be.getKey());
+            blockEntryToCanonicalId.putIfAbsent(be.getValue(), canonicalId);
+            canonicalIdToBlockEntry.put(canonicalId, be.getValue());
+        }
+
         sender.sendMessage(new TextComponentString(I18n.format("debug.chunkcomfort.separator")));
         sender.sendMessage(new TextComponentString(I18n.format("debug.chunkcomfort.group_breakdown", totalComfort, maxComfort)));
         sender.sendMessage(new TextComponentString(I18n.format("debug.chunkcomfort.group_breakdown_syntax")));
@@ -348,19 +359,22 @@ public class CommandChunkComfort extends CommandBase {
                 int itemLimit = 0;
                 String color = "§a";
 
-                Block block = Block.getBlockFromName(name);
-                if (block != null && BlockComfortRegistry.isComfortBlock(block)) {
-                    BlockComfortRegistry.ComfortEntry blockEntry = BlockComfortRegistry.getBlockEntry(block);
+                // --- Block lookup O(1) ---
+                BlockComfortRegistry.ComfortEntry blockEntry = canonicalIdToBlockEntry.get(name);
+                if (blockEntry != null) {
                     itemLimit = blockEntry.limit;
                     displayCount = Math.min(count, itemLimit);
-                    if (count > itemLimit) color = "§c";
+                    color = (count > itemLimit) ? "§c" : "§a";
+                    name = blockEntryToCanonicalId.get(blockEntry); // canonical name
                 } else {
+                    // --- Living entity ---
                     LivingComfortRegistry.LivingComfortEntry livingEntry = LivingComfortRegistry.ENTITY_MAP.get(new ResourceLocation(name));
                     if (livingEntry != null) {
                         itemLimit = livingEntry.limit;
                         displayCount = Math.min(count, itemLimit);
                         if (count > itemLimit) color = "§c";
                     } else {
+                        // --- Other entities ---
                         EntityComfortRegistry.ComfortEntry entityEntry = EntityComfortRegistry.getEntityEntryFromId(new ResourceLocation(name));
                         if (entityEntry != null) {
                             itemLimit = entityEntry.limit;

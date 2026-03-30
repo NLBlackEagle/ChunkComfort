@@ -140,13 +140,23 @@ public class ForgeConfigHandler {
                 "minecraft:painting,1,luxury,25",
                 "minecraft:item_frame,1,luxury,15",
                 "minecraft:carpet,1,luxury,25",
-                "minecraft:wall_banner,3,luxury,10",
-                "minecraft:standing_banner,3,luxury,10",
+                "minecraft:banner,3,luxury,10",
                 "minecraft:flower_pot,1,luxury,10",
 
                 // Lightsources (small contribution)
                 "minecraft:torch,1,lightsources,20"
 
+        };
+
+        @Config.Comment({
+                "Block ID aliases",
+                "Allows multiple block IDs to be treated as one logical block in configs.",
+                "Example: minecraft:banner=minecraft:standing_banner,minecraft:wall_banner",
+                "Using 'minecraft:banner' will match both banner variants."
+        })
+        @Config.Name("Block ID aliases")
+        public static String[] blockAliases = new String[] {
+                "minecraft:banner=minecraft:standing_banner,minecraft:wall_banner"
         };
 
         @Config.Comment({
@@ -217,15 +227,16 @@ public class ForgeConfigHandler {
     }
 
     public static void reloadRegistries() {
+
         FireBlockRegistry.reload(server.fireBlocks);
         FireSourceItemRegistry.reload(server.fireSourceItems);
+        BlockComfortRegistry.reloadAliases(server.blockAliases);
         BlockComfortRegistry.reload(server.blockComfortEntries);
         EntityComfortRegistry.reload(server.blockComfortEntries);
         AreaComfortCalculator.reloadGroupLimits(server.groupLimits);
         LivingComfortRegistry.reload(server.livingComfortEntries);
         PettingComfortRegistry.loadFromConfig(server.pettingComfortEntries);
         BiomeComfortRegistry.reload(server.biomeComfortModifiers);
-
 
 
         PlayerComfortManager.reloadConfig();

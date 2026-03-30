@@ -6,7 +6,29 @@ import java.util.*;
 public class BlockComfortRegistry {
 
     // Config-driven blocks
-    private static final Map<Block, ComfortEntry> BLOCK_ENTRIES = new HashMap<>();
+    public static final Map<Block, ComfortEntry> BLOCK_ENTRIES = new HashMap<>();
+    private static final Map<String, String[]> BLOCK_ALIASES = new HashMap<>();
+
+    /**
+     * Reload block aliases from config
+     * Format: key=alias1,alias2,alias3
+     * Example: minecraft:banner=minecraft:standing_banner,minecraft:wall_banner
+     */
+    public static void reloadAliases(String[] aliases) {
+        BLOCK_ALIASES.clear();
+        if (aliases == null) return;
+
+        for (String line : aliases) {
+            if (line == null || line.isEmpty()) continue;
+            String[] split = line.split("=");
+            if (split.length != 2) continue;
+
+            String key = split[0].trim();
+            String[] vals = split[1].split(",");
+            for (int i = 0; i < vals.length; i++) vals[i] = vals[i].trim();
+            BLOCK_ALIASES.put(key, vals);
+        }
+    }
 
     /**
      * Reload block comfort entries from config
@@ -39,11 +61,51 @@ public class BlockComfortRegistry {
                 } catch (NumberFormatException ignored) {}
             }
 
-            Block block = Block.getBlockFromName(id);
-            if (block != null) {
-                BLOCK_ENTRIES.put(block, new ComfortEntry(value, group, limit));
+            ComfortEntry entry = new ComfortEntry(value, group, limit);
+
+            // Register main block + aliases
+            registerBlockAndAliases(id, entry);
+        }
+    }
+
+    /**
+     * Registers a block and all its aliases
+     */
+    private static void registerBlockAndAliases(String id, ComfortEntry entry) {
+        // Register main block
+        Block block = Block.getBlockFromName(id);
+        if (block != null) BLOCK_ENTRIES.put(block, entry);
+
+        // Register aliases
+        String[] aliases = BLOCK_ALIASES.get(id);
+        if (aliases != null) {
+            for (String aliasId : aliases) {
+                Block aliasBlock = Block.getBlockFromName(aliasId);
+                if (aliasBlock != null) {
+                    BLOCK_ENTRIES.put(aliasBlock, entry);
+                }
             }
         }
+    }
+
+    /**
+     * Returns the canonical ID used in the config for this block,
+     * either the block's registry name or the alias key it belongs to.
+     */
+    public static String getCanonicalId(Block block) {
+        if (block == null) return null;
+
+        String blockId = Block.REGISTRY.getNameForObject(block).toString();
+
+        for (Map.Entry<String, String[]> entry : BLOCK_ALIASES.entrySet()) {
+            String key = entry.getKey();
+            String[] aliases = entry.getValue();
+            if (key.equals(blockId)) return key; // main block
+            for (String alias : aliases) {
+                if (alias.equals(blockId)) return key; // return main alias key
+            }
+        }
+        return blockId; // fallback: block ID
     }
 
     public static boolean isComfortBlock(Block block) {
