@@ -1,54 +1,170 @@
+# ============================================================
+# Core Effect Name
+# ============================================================
+
+# Name of the Comfort status effect shown in the inventory/effects UI
 chunkcomfort.effects.comfort=Comfort
 
 
-# Headers and general Tooltips
+# ============================================================
+# Headers and General Tooltips
+# ============================================================
+
+# Main header shown at the top of Comfort-related tooltips
 tooltip.chunkcomfort.header=§eComfort Info:
+
+# Tooltip shown for blocks counted as valid comfort fire sources
+# (campfires, fireplaces, etc.)
 tooltip.chunkcomfort.fireblocks=§6A comfy fire, key to establishing a warm, lit and sheltered comfort zone.
+
+# Tooltip for items capable of creating a valid comfort fire
+# (flint & steel, fire charges, etc.)
 tooltip.chunkcomfort.firestarters=§6Used to create a comfy fire establishing a warm, lit and sheltered comfort zone.
 
-# Decorative Entity Tooltips (Such as paintings and item frames)
+
+# ============================================================
+# Decorative Entity Tooltips (paintings, item frames, etc.)
+# ============================================================
+
+# Shows total comfort points contributed by this decorative entity
+# %d = entity points added
+# %d/%d = current group total / group limit
 tooltip.chunkcomfort.decorative.line1=§aEntity points: %d  Limit: %d/%d
+
+# Displays which decorative group the entity belongs to
+# %s = group name
+# %d/%d = points in group / max allowed points
 tooltip.chunkcomfort.decorative.line2=§bGroup: %s  Points: %d/%d
 
 
+# ============================================================
 # Comfort Block Tooltips
+# ============================================================
+
+# Displays comfort value contributed by a placed block
+# %d = block points added
+# %d/%d = current group total / group limit
 tooltip.chunkcomfort.block.line1=§aBlock points: %d  Limit: %d/%d
+
+# Shows block comfort group information
 tooltip.chunkcomfort.block.line2=§bGroup: %s  Points: %d/%d
 
-# Living entities
+
+# ============================================================
+# Living Entity Tooltips
+# ============================================================
+
+# Comfort contribution from living entities (pets, villagers, animals)
 tooltip.chunkcomfort.living.line1=§aEntity points: %d  Limit: %d/%d
+
+# Living entity group breakdown
 tooltip.chunkcomfort.living.line2=§bGroup: %s  Points: %d/%d
+
+# Bonus comfort granted when entities are named
+# %s = list of names detected
+# %d = bonus points awarded
 tooltip.chunkcomfort.named_pets=Names: %s + %d points
 
-# Petting
+
+# ============================================================
+# Petting System
+# ============================================================
+
+# Instruction shown when looking at a pettable entity
 tooltip.chunkcomfort.pet=§d§oShift + Left Click to pet your pet!
+
+# Chat message shown when petting succeeds
+# %s = entity name
 tooltip.chunkcomfort.petting.message.line1=§6Petting your pet %s comforts you.
+
+# Displays temporary comfort bonus
+# %d = comfort gained
+# %d = duration in seconds
 tooltip.chunkcomfort.petting.message.line2=§6Comfort increased by %d point(s) for %d seconds!
 
 
+# ============================================================
+# Command Debug Messages
+# ============================================================
 
+# Usage hint for /chunkcomfort command
 debug.chunkcomfort.usage=§cUsage: /chunkcomfort <info|reload>
+
+# Unknown subcommand warning
 debug.chunkcomfort.unknown_subcommand=§cUnknown subcommand.
 
+
+# ============================================================
+# Reload Process Debug Messages
+# ============================================================
+
+# Reload process started (clears caches + reloads configs)
 debug.chunkcomfort.reload_start=§a[ChunkComfort] Clearing caches and reloading...
+
+# Config file successfully reloaded
 debug.chunkcomfort.reload_config=§a[ChunkComfort] Config reloaded.
+
+# Per-world cache cleared
+# %d = world/dimension id
 debug.chunkcomfort.reload_world=§a[ChunkComfort] Cleared caches for world: %d
+
+# Comfort recalculation finished for all players
 debug.chunkcomfort.reload_complete=§a[ChunkComfort] Comfort recalculated for all players.
 
+
+# ============================================================
+# System State Debugging
+# ============================================================
+
+# Printed when comfort system is disabled or inactive
+# %s = reason
 debug.chunkcomfort.inactive=Comfort system inactive: %s
 
 
+# ============================================================
+# Comfort Breakdown Debug Output
+# ============================================================
+
+# Visual separator used in debug chat output
 debug.chunkcomfort.separator=-------------------
+
+# Header for activation requirement debug section
 debug.chunkcomfort.activation_header=Comfort Activation:
+
+# Shows total comfort points vs required activation threshold
 debug.chunkcomfort.group_breakdown=Group Breakdown: [Total Comfort: %d/%d]
+
+# Explains debug output formatting
 debug.chunkcomfort.group_breakdown_syntax=Syntax: Group, Points, Limit | Entity, Count, Limit
 
 
+# ============================================================
+# Activation Requirement Debug Checks
+# ============================================================
+
+# Shelter requirement enabled
 debug.chunkcomfort.shelter_required=Shelter Required: true
+
+# Whether valid shelter was detected
 debug.chunkcomfort.shelter_found= Shelter Found: %s
+
+# Required minimum light level
 debug.chunkcomfort.light_required=Light Level Required: %d
+
+# Player's current light level
 debug.chunkcomfort.light_level= Light Level: %d
+
+# Fire requirement enabled
 debug.chunkcomfort.fire_required=Fire Required: true
+
+# Whether valid fire source was found nearby
 debug.chunkcomfort.fire_found= Fire Found: %s
+
+# Temperature requirement enabled
 debug.chunkcomfort.temperature_required=Temperature Required: true
+
+# Comfort temperature range comparison
+# %d = minimum comfort temp
+# %d = maximum comfort temp
+# %d = player temperature
 debug.chunkcomfort.temperature_range= Comfort Temp: %d to %d Player Temp: %d
