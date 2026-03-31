@@ -6,12 +6,14 @@ import chunkcomfort.chunk.PlayerChunkComfortCache;
 import chunkcomfort.config.ForgeConfigHandler;
 import chunkcomfort.registry.*;
 import net.minecraft.block.Block;
+import net.minecraft.block.BlockBanner;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.item.EntityArmorStand;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
@@ -227,17 +229,18 @@ public class ChunkComfortClientTooltipHandler {
         // todo: add !isAliasBlock here and change the method to be a for-each item in aliases?
         //  could probably just do !no darn banner instances if I am lazy?
 
-        if (!handledSpawnEgg && (entityEntry != null || isEntityItem)) {
+        boolean isBanner = false;
+
+        if (stack.getItem() instanceof ItemBlock) {
+            Block block = ((ItemBlock) stack.getItem()).getBlock();
+            isBanner = block instanceof BlockBanner;
+        }
+
+        if (!handledSpawnEgg && (entityEntry != null || isEntityItem) && !isBanner) {
 
             // todo: this is hardcoded mess cuz I was lazy, I aliases may not work? Not sure, only banners are stupid aliases.
             //  probably have to test this with other aliases and test it.
-            //  what the actual fuck it still happens!!! argh, tomorrow new day!
-            if (stack.getItem() instanceof net.minecraft.item.ItemBlock) {
-                Block block = ((net.minecraft.item.ItemBlock) stack.getItem()).getBlock();
-                if (block instanceof net.minecraft.block.BlockBanner) {
-                    return; // do not show generic entity tooltip for banners
-                }
-            }
+
             Class<? extends Entity> entityClass = ENTITY_ITEM_MAP.getOrDefault(registryName, EntityArmorStand.class);
 
             ResourceLocation entityId = new ResourceLocation(registryName);

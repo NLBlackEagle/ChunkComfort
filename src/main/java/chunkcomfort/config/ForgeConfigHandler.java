@@ -155,7 +155,7 @@ public class ForgeConfigHandler {
                 "Using 'minecraft:banner' will match both banner variants."
         })
         @Config.Name("Block ID aliases")
-        public static String[] blockAliases = new String[] {
+        public String[] blockAliases = new String[] {
                 "minecraft:banner=minecraft:standing_banner,minecraft:wall_banner"
         };
 
