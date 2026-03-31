@@ -130,7 +130,7 @@ public class ForgeConfigHandler {
                 "minecraft:furnace,1,workstation,5",
                 "minecraft:cauldron,3,workstation,5",
                 "minecraft:brewing_stand,10,workstation,2",
-                "minecraft:anvil,5,2",
+                "minecraft:anvil,5,workstation,2",
 
                 // Enchanting (rare, late-game goal)
                 "minecraft:enchanting_table,25,enchanting,1",
@@ -152,7 +152,7 @@ public class ForgeConfigHandler {
                 // Lightsources (small contribution)
                 "minecraft:torch,1,lightsources,20",
                 "minecraft:redstone_torch,1,lightsources,20",
-                "minecraft:lamp,1,lightsources,20"
+                "minecraft:redstone_lamp,1,lightsources,20"
 
         };
 
@@ -165,7 +165,7 @@ public class ForgeConfigHandler {
         @Config.Name("Block ID aliases")
         public String[] blockAliases = new String[] {
                 "minecraft:banner=minecraft:standing_banner,minecraft:wall_banner",
-                "minecraft:lamp=minecraft:lit_redstone_lamp,minecraft:redstone_lamp"
+                "minecraft:redstone_lamp=minecraft:lit_redstone_lamp,minecraft:redstone_lamp"
         };
 
         @Config.Comment({
@@ -182,7 +182,12 @@ public class ForgeConfigHandler {
         public String[] livingComfortEntries = new String[]{
                 "minecraft:ocelot,4,pets,2,{!CatType:0,OwnerUUID:'*-*'}",
                 "minecraft:parrot,1,pets,3,{OwnerUUID:'*-*'}",
-                "minecraft:wolf,4,pets,2,{OwnerUUID:'*-*'}"
+                "minecraft:wolf,4,pets,2,{OwnerUUID:'*-*'}",
+                "minecraft:horse,2,pets,1,{OwnerUUID:'*-*'}",
+                "minecraft:donkey,2,pets,1,{OwnerUUID:'*-*'}",
+                "minecraft:mule,2,pets,1,{OwnerUUID:'*-*'}",
+                "minecraft:llama,2,pets,1,{OwnerUUID:'*-*'}",
+                "minecraft:skeleton_horse,2,pets,1,{OwnerUUID:'*-*'}"
         };
 
         @Config.Comment({
