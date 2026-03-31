@@ -3,6 +3,9 @@ package chunkcomfort.chunk;
 import chunkcomfort.registry.BlockComfortRegistry;
 import chunkcomfort.registry.EntityComfortRegistry;
 import chunkcomfort.registry.FireBlockRegistry;
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockBed;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
@@ -63,6 +66,13 @@ public class ComfortWorldData extends WorldSavedData {
         try {
             // Scan all blocks once
             ChunkScanner.scanChunk(world, chunkPos, minY, maxY, (pos, block) -> {
+
+                IBlockState state = world.getBlockState(pos);
+
+                // Prevent double-counting multiblocks (beds etc)
+                if (!isPrimaryBlock(state)) {
+                    return;
+                }
 
                 // Comfort blocks
                 if (BlockComfortRegistry.isComfortBlock(block)) {
@@ -182,5 +192,17 @@ public class ComfortWorldData extends WorldSavedData {
             data.totalComfort = 0;
         }
         markDirty();
+    }
+
+    public static boolean isPrimaryBlock(IBlockState state) {
+        Block block = state.getBlock();
+
+        // Beds → only count FOOT
+        if (block instanceof BlockBed) {
+            return state.getValue(BlockBed.PART)
+                    == BlockBed.EnumPartType.FOOT;
+        }
+
+        return true;
     }
 }
