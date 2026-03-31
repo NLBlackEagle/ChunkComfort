@@ -182,9 +182,9 @@ public class ForgeConfigHandler {
         })
         @Config.Name("Additional Comfort Names")
         public String[] livingTooltipEntries = new String[]{
-                "minecraft:ocelot,'Dilly|Skully|Gizmo',2",
-                "minecraft:parrot,'Eagle|BaldEagle',1",
-                "minecraft:wolf,'Stitch|Lyn',1"
+                "minecraft:ocelot,'Dilly|Skully|Gizmo',1",
+                "minecraft:parrot,'Eagle|BaldEagle|Heaven',1",
+                "minecraft:wolf,'Stitch|Lyn',1",
         };
 
         @Config.Comment({
@@ -198,8 +198,10 @@ public class ForgeConfigHandler {
         })
         @Config.Name("Comfort Petting Entries")
         public String[] pettingComfortEntries = new String[]{
-                "minecraft:ocelot,5,2,300,600,true,true,true",
+                "minecraft:ocelot,3,2,300,600,true,true,true",
+                "minecraft:wolf,3,2,300,600,true,true,true",
                 "minecraft:parrot,1,3,300,1200,true,true,true"
+
         };
 
         @Config.Comment({

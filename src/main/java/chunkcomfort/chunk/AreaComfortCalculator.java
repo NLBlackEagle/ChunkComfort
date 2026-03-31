@@ -147,10 +147,6 @@ public class AreaComfortCalculator {
         // --- Include temporary petting boosts ---
         totalComfort += PettingComfortManager.getActivePettingPoints(player.getUniqueID());
 
-        System.out.println("Petting comfort: " + PettingComfortManager.getActivePettingPoints(player.getUniqueID()));
-
-
-
         int finalComfort = Math.max(totalComfort, 0);
 
         debugComfortBreakdown(player, cache, allGroups, biomeModifier, finalComfort);
