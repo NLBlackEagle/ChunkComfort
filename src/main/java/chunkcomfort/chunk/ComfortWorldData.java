@@ -12,6 +12,7 @@ import net.minecraft.nbt.NBTTagList;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
+import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.storage.WorldSavedData;
 
 import java.util.HashMap;
@@ -53,6 +54,43 @@ public class ComfortWorldData extends WorldSavedData {
         return chunks.computeIfAbsent(pos, k -> new ChunkComfortData());
     }
 
+    static boolean hasFireNearby(World world, BlockPos center, int radius) {
+        int minX = center.getX() - radius * 16;
+        int maxX = center.getX() + radius * 16;
+        int minZ = center.getZ() - radius * 16;
+        int maxZ = center.getZ() + radius * 16;
+
+        int minY = 0;
+        int maxY = world.getHeight() - 1;
+
+        AtomicBoolean fireFound = new AtomicBoolean(false);
+
+        int chunkMinX = minX >> 4;
+        int chunkMaxX = maxX >> 4;
+        int chunkMinZ = minZ >> 4;
+        int chunkMaxZ = maxZ >> 4;
+
+        outer:
+        for (int cx = chunkMinX; cx <= chunkMaxX; cx++) {
+            for (int cz = chunkMinZ; cz <= chunkMaxZ; cz++) {
+                ChunkPos chunkPos = new ChunkPos(cx, cz);
+                Chunk chunk = world.getChunk(chunkPos.x, chunkPos.z);
+
+                ChunkScanner.scanChunk(world, chunkPos, minY, maxY, (pos, block) -> {
+                    if (fireFound.get()) return; // stop scanning this chunk
+                    if (FireBlockRegistry.isFireBlock(block)) {
+                        fireFound.set(true);
+                        return; // just return, don’t throw
+                    }
+                });
+
+                if (fireFound.get()) break outer; // stop scanning other chunks
+            }
+        }
+
+        return fireFound.get();
+    }
+
     /**
      * Recalculate the comfort for a specific chunk.
      * This will scan all blocks in the chunk and update the ChunkComfortData.
@@ -61,7 +99,6 @@ public class ComfortWorldData extends WorldSavedData {
         ChunkComfortData data = new ChunkComfortData();
         int minY = 0;
         int maxY = world.getHeight() - 1;
-        AtomicBoolean fireFound = new AtomicBoolean(false);
 
         try {
             // Scan all blocks once
@@ -85,12 +122,6 @@ public class ComfortWorldData extends WorldSavedData {
                     // Update block counts (this is new!)
                     data.blockCounts.put(block, data.blockCounts.getOrDefault(block, 0) + 1);
                 }
-
-                // Fire blocks
-                if (!fireFound.get() && FireBlockRegistry.isFireBlock(block)) {
-                    fireFound.set(true);
-                    throw new ChunkScanner.StopScanException(); // early exit if fire found
-                }
             });
         } catch (ChunkScanner.StopScanException e) {
             // Expected: stop scanning early if fire found
@@ -109,7 +140,6 @@ public class ComfortWorldData extends WorldSavedData {
 
         // Final calculations
         data.totalComfort = data.groupTotals.values().stream().mapToInt(Integer::intValue).sum();
-        data.firePresent = fireFound.get();
         data.initialized = true;
         data.lastRecalcTick = world.getTotalWorldTime();
 

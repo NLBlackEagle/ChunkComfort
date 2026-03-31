@@ -142,6 +142,10 @@ public class ForgeConfigHandler {
                 "minecraft:carpet,1,luxury,25",
                 "minecraft:banner,3,luxury,10",
                 "minecraft:flower_pot,1,luxury,10",
+                "minecraft:skull,1,10",
+
+                //Legendary
+                "minecraft:dragon_egg,25,legendary,1",
 
                 // Lightsources (small contribution)
                 "minecraft:torch,1,lightsources,20"
@@ -214,11 +218,10 @@ public class ForgeConfigHandler {
                 "furniture,90",
                 "workstation,50",
                 "enchanting,25",
-                "luxury,167",
+                "luxury,175",
                 "lightsources,20",
                 "pets,15",
-                "legendary,1",
-                "legendary_pet,1"
+                "legendary,25"
         };
 
         @Config.Comment({
@@ -227,15 +230,45 @@ public class ForgeConfigHandler {
                 "Example: 10,[[minecraft:speed,0],[minecraft:regeneration,0]]"
         })
         public String[] comfortEffects = new String[]{
-                "10,[[minecraft:haste,0]]",                               // Early: small boost
-                "30,[[minecraft:speed,0]]",                               // Early mid-game
-                "60,[[minecraft:regeneration,0]]",                        // Mid-game minor regen
-                "100,[[minecraft:speed,1],[minecraft:regeneration,1]]",  // Mid-late combo
-                "150,[[minecraft:strength,0],[minecraft:speed,1]]",      // Late-game perk
-                "200,[[minecraft:resistance,1],[minecraft:regeneration,1]]", // Strong late-game
-                "250,[[minecraft:strength,1],[minecraft:resistance,1],[minecraft:regeneration,1]]", // Epic base
-                "300,[[minecraft:strength,1],[minecraft:resistance,1],[minecraft:regeneration,2]]", // Near max
-                "350,[[minecraft:strength,2],[minecraft:resistance,2],[minecraft:regeneration,2]]"  // Max comfort
+                "10,[[minecraft:haste,0]]",
+                "30,[[minecraft:speed,0]]",
+                "60,[[minecraft:regeneration,0]]",
+                "100,[[minecraft:speed,1],[minecraft:regeneration,1]]",
+                "150,[[minecraft:strength,0],[minecraft:speed,1]]",
+                "200,[[minecraft:resistance,1],[minecraft:regeneration,1]]",
+                "250,[[minecraft:strength,1],[minecraft:resistance,1],[minecraft:regeneration,1]]",
+                "300,[[minecraft:strength,1],[minecraft:resistance,1],[minecraft:regeneration,2]]",
+                "350,[[minecraft:strength,1],[minecraft:resistance,2],[minecraft:regeneration,2]]",
+                "400,[[minecraft:strength,2],[minecraft:resistance,2],[minecraft:regeneration,2]]"
+        };
+
+        @Config.Comment("Percentage chance for messages from Comfort Waking Messages to display after waking up in-game")
+        @Config.RangeInt(min = 0, max = 100)
+        @Config.Name("Comfort Waking Messages Percentage")
+        public int messagePercentage = 100;
+
+        @Config.Comment({
+                "Syntax: <comfort-min>,<comfort-max>,<message>",
+                "These messages will be displayed randomly after you slept in-game with a",
+                "% chance configured in Comfort Waking Messages Percentage",
+                "Each message has a min-max comfort requirement for it to display.",
+                "0,0 is an exception and will show when the base requirements are not met."
+        })
+        @Config.Name("Comfort Waking Messages")
+        public String[] stagedMessages = new String[]{
+                "0,0,'§6You dreamt of a warm, sheltered house with a comfy fire, a pet, and a carpet on the floor'",
+                "0,0,'§6As you wake up a thought lingers, surely a sheltered place with a bed, a fire and banners would beat this?'",
+                "1,10,'§6You dreamt of petting your pet while watching the flames dance within the fireplace'",
+                "10,30,'§6You feel refreshed, though your residence could use some improvements'",
+                "30,60,'§6As you wake and look around your house, you feel somewhat established'",
+                "60,100,'§6You had one of those fleeting dreams about building a library expansion'",
+                "100,150,'§6Open sky, fresh air... it all sounds so romantic, but nothing beats a place like home'",
+                "150,200,'§6You dreamt about beating the Ender Dragon and displaying its trophy egg!'",
+                "200,250,'§6Cats, dogs, parrots!? All in the same place — wild! But also comfy!'",
+                "250,300,'§6As you open your eyes, there is but one thing you can think of... a parrot called Eagle!'",
+                "300,350,'§6You dreamt about a world, Dregora... and being sheltered against the probability of being smitten'",
+                "350,400,'§6You wake and have an existential crisis: how much more comfort makes things comfier?!'",
+                "400,450,'§6You no longer need to dream — you are living it'"
         };
     }
 

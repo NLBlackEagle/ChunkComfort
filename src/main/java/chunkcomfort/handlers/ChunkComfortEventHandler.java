@@ -1,6 +1,7 @@
 package chunkcomfort.handlers;
 
 import chunkcomfort.chunk.*;
+import chunkcomfort.config.ForgeConfigHandler;
 import chunkcomfort.registry.EntityComfortRegistry;
 import chunkcomfort.registry.PettingComfortRegistry;
 import net.minecraft.block.Block;
@@ -18,6 +19,7 @@ import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
+import net.minecraftforge.event.entity.player.PlayerWakeUpEvent;
 import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
@@ -90,6 +92,24 @@ public class ChunkComfortEventHandler {
         ChunkPos pos = new ChunkPos(event.player.getPosition());
         ComfortWorldData.get(event.player.world).getChunkData(pos);
         // this triggers self-healing if the chunk cache is empty
+    }
+
+    @SubscribeEvent
+    public void onPlayerWakeUp(PlayerWakeUpEvent event) {
+
+        if (!event.shouldSetSpawn()) return;
+
+        EntityPlayer player = event.getEntityPlayer();
+
+        if (player.world.isRemote) return;
+
+        int chance = ForgeConfigHandler.server.messagePercentage;
+
+        if (player.world.rand.nextInt(100) >= chance) return;
+
+        int comfort = AreaComfortCalculator.calculatePlayerComfort(player);
+
+        ComfortMessage.send(player, comfort);
     }
 
     @SubscribeEvent

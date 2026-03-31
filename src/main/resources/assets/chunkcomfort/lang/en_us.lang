@@ -168,3 +168,9 @@ debug.chunkcomfort.temperature_required=Temperature Required: true
 # %d = maximum comfort temp
 # %d = player temperature
 debug.chunkcomfort.temperature_range= Comfort Temp: %d to %d Player Temp: %d
+
+wake.chunkcomfort.message.1=1
+wake.chunkcomfort.message.2=2
+wake.chunkcomfort.message.3=3
+wake.chunkcomfort.message.4=4
+wake.chunkcomfort.message.5=5

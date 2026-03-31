@@ -16,6 +16,8 @@ import net.minecraft.world.World;
 
 import java.util.*;
 
+import static chunkcomfort.chunk.ComfortWorldData.hasFireNearby;
+
 public class AreaComfortCalculator {
 
     private static int CACHE_VERSION = 0;
@@ -101,6 +103,7 @@ public class AreaComfortCalculator {
         int centerChunkZ = playerPos.getZ() >> 4;
 
         PlayerChunkComfortCache cache = getCache(player);
+        boolean fireNearby = hasFireNearby(world, playerPos, radius);
         cache.clear();
 
         // Collect block and group totals from nearby chunks
@@ -109,7 +112,7 @@ public class AreaComfortCalculator {
                 ChunkPos chunkPos = new ChunkPos(centerChunkX + dx, centerChunkZ + dz);
                 ChunkComfortData data = worldData.getChunkData(chunkPos);
 
-                if (!data.initialized) {
+                if (!data.initialized && (fireNearby)) {
                     worldData.recalcChunkWithFire(world, chunkPos);
                     data = worldData.getChunkData(chunkPos);
                 }

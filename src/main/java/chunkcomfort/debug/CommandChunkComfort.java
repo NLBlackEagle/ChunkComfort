@@ -24,6 +24,8 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.world.World;
+import net.minecraft.world.chunk.Chunk;
+import net.minecraft.world.gen.ChunkProviderServer;
 
 import java.util.*;
 
@@ -82,26 +84,35 @@ public class CommandChunkComfort extends CommandBase {
     }
 
     private void executeReload(MinecraftServer server, ICommandSender sender) {
-        AreaComfortCalculator.incrementCacheVersion();
-
         sender.sendMessage(new TextComponentString(I18n.format("debug.chunkcomfort.reload_start")));
 
-        // 1. Reload config
-        ForgeConfigHandler.initialize();
-        AreaComfortCalculator.reloadGroupLimits(ForgeConfigHandler.server.groupLimits);
+        // Reload configs & registries
+        ForgeConfigHandler.reloadRegistries();
         sender.sendMessage(new TextComponentString(I18n.format("debug.chunkcomfort.reload_config")));
 
-        // 2. Clear world chunk data
+        // Clear & recalc all chunks
         for (World world : server.worlds) {
-            ComfortWorldData.get(world).clearAllChunks();
+            ComfortWorldData worldData = ComfortWorldData.get(world);
+            worldData.clearAllChunks();
+
+            ChunkProviderServer cps = (ChunkProviderServer) world.getChunkProvider();
+            for (Chunk chunk : cps.loadedChunks.values()) {
+                ChunkPos pos = chunk.getPos();
+                ChunkComfortData data = worldData.getChunkData(pos);
+                data.initialized = false; // mark for forced recalculation
+
+                // Recalculate chunk with new two-step scan
+                worldData.recalcChunkWithFire(world, pos);
+            }
+
             sender.sendMessage(new TextComponentString(I18n.format("debug.chunkcomfort.reload_world", world.provider.getDimension())));
         }
 
-        // 3. Clear all player caches
-        AreaComfortCalculator.clearAllPlayerCaches(); // <-- you need to implement this
+        // Clear player caches
+        AreaComfortCalculator.clearAllPlayerCaches();
         sender.sendMessage(new TextComponentString("Cleared all player comfort caches."));
 
-        // 4. Recalculate comfort for all players
+        // Recalculate comfort for all players
         for (EntityPlayer player : server.getPlayerList().getPlayers()) {
             AreaComfortCalculator.calculatePlayerComfort(player);
         }
