@@ -143,11 +143,11 @@ public class ForgeConfigHandler {
                 "minecraft:carpet,1,luxury,25",
                 "minecraft:banner,3,luxury,10",
                 "minecraft:flower_pot,1,luxury,10",
-                "minecraft:skull,1,luxury,10",
 
-                //Legendary
-                "minecraft:dragon_egg,25,legendary,1",
-                "minecraft:beacon,25,legendary,1",
+                // Collectibles
+                "minecraft:skull,1,collectibles,10",
+                "minecraft:dragon_egg,20,collectibles,1",
+                "minecraft:beacon,20,collectibles,1",
 
                 // Lightsources (small contribution)
                 "minecraft:torch,1,lightsources,20",
@@ -236,7 +236,7 @@ public class ForgeConfigHandler {
                 "luxury,175",
                 "lightsources,20",
                 "pets,15",
-                "legendary,50"
+                "collectibles,50"
         };
 
         @Config.Comment({
