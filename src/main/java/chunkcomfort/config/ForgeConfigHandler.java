@@ -199,6 +199,7 @@ public class ForgeConfigHandler {
                 "minecraft:ocelot,'Dilly|Skully|Gizmo',1",
                 "minecraft:parrot,'Eagle|BaldEagle|Heaven',1",
                 "minecraft:wolf,'Stitch|Lyn',1",
+                "minecraft:donkey,'Donkey',1"
         };
 
         @Config.Comment({
@@ -214,8 +215,12 @@ public class ForgeConfigHandler {
         public String[] pettingComfortEntries = new String[]{
                 "minecraft:ocelot,3,2,300,600,true,true,true",
                 "minecraft:wolf,3,2,300,600,true,true,true",
-                "minecraft:parrot,1,3,300,1200,true,true,true"
-
+                "minecraft:parrot,1,3,300,1200,true,true,true",
+                "minecraft:horse,2,1,300,600,true,true,true",
+                "minecraft:donkey,1,1,300,600,true,true,true",
+                "minecraft:mule,1,1,300,600,true,true,true",
+                "minecraft:llama,1,1,300,600,true,true,true",
+                "minecraft:skeleton_horse,3,1,300,1200,true,true,true"
         };
 
         @Config.Comment({
