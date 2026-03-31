@@ -130,6 +130,7 @@ public class ForgeConfigHandler {
                 "minecraft:furnace,1,workstation,5",
                 "minecraft:cauldron,3,workstation,5",
                 "minecraft:brewing_stand,10,workstation,2",
+                "minecraft:anvil,5,2",
 
                 // Enchanting (rare, late-game goal)
                 "minecraft:enchanting_table,25,enchanting,1",
@@ -146,9 +147,12 @@ public class ForgeConfigHandler {
 
                 //Legendary
                 "minecraft:dragon_egg,25,legendary,1",
+                "minecraft:beacon,25,legendary,1",
 
                 // Lightsources (small contribution)
-                "minecraft:torch,1,lightsources,20"
+                "minecraft:torch,1,lightsources,20",
+                "minecraft:redstone_torch,1,lightsources,20",
+                "minecraft:lamp,1,lightsources,20"
 
         };
 
@@ -160,7 +164,8 @@ public class ForgeConfigHandler {
         })
         @Config.Name("Block ID aliases")
         public String[] blockAliases = new String[] {
-                "minecraft:banner=minecraft:standing_banner,minecraft:wall_banner"
+                "minecraft:banner=minecraft:standing_banner,minecraft:wall_banner",
+                "minecraft:lamp=minecraft:lit_redstone_lamp,minecraft:redstone_lamp"
         };
 
         @Config.Comment({
@@ -221,7 +226,7 @@ public class ForgeConfigHandler {
                 "luxury,175",
                 "lightsources,20",
                 "pets,15",
-                "legendary,25"
+                "legendary,50"
         };
 
         @Config.Comment({
@@ -239,7 +244,7 @@ public class ForgeConfigHandler {
                 "250,[[minecraft:strength,1],[minecraft:resistance,1],[minecraft:regeneration,1]]",
                 "300,[[minecraft:strength,1],[minecraft:resistance,1],[minecraft:regeneration,2]]",
                 "350,[[minecraft:strength,1],[minecraft:resistance,2],[minecraft:regeneration,2]]",
-                "400,[[minecraft:strength,2],[minecraft:resistance,2],[minecraft:regeneration,2]]"
+                "425,[[minecraft:strength,2],[minecraft:resistance,2],[minecraft:regeneration,2]]"
         };
 
         @Config.Comment("Percentage chance for messages from Comfort Waking Messages to display after waking up in-game")
@@ -267,8 +272,8 @@ public class ForgeConfigHandler {
                 "200,250,'§6Cats, dogs, parrots!? All in the same place — wild! But also comfy!'",
                 "250,300,'§6As you open your eyes, there is but one thing you can think of... a parrot called Eagle!'",
                 "300,350,'§6You dreamt about a world, Dregora... and being sheltered against the probability of being smitten'",
-                "350,400,'§6You wake and have an existential crisis: how much more comfort makes things comfier?!'",
-                "400,450,'§6You no longer need to dream — you are living it'"
+                "350,425,'§6You wake and have an existential crisis: how much more comfort makes things comfier?!'",
+                "425,450,'§6You no longer need to dream — you are living it'"
         };
     }
 
