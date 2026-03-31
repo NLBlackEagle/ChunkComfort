@@ -180,6 +180,7 @@ public class ForgeConfigHandler {
         })
         @Config.Name("Living Comfort Entries")
         public String[] livingComfortEntries = new String[]{
+                "minecraft:villager,1,villagers,10,{Profession:5}",
                 "minecraft:ocelot,4,pets,2,{!CatType:0,OwnerUUID:'*-*'}",
                 "minecraft:parrot,1,pets,3,{OwnerUUID:'*-*'}",
                 "minecraft:wolf,4,pets,2,{OwnerUUID:'*-*'}",
@@ -199,7 +200,8 @@ public class ForgeConfigHandler {
                 "minecraft:ocelot,'Dilly|Skully|Gizmo',1",
                 "minecraft:parrot,'Eagle|BaldEagle|Heaven',1",
                 "minecraft:wolf,'Stitch|Lyn',1",
-                "minecraft:donkey,'Donkey',1"
+                "minecraft:donkey,'Donkey',1",
+                "minecraft:villager,'ijsbrand',1"
         };
 
         @Config.Comment({
@@ -236,7 +238,8 @@ public class ForgeConfigHandler {
                 "luxury,175",
                 "lightsources,20",
                 "pets,15",
-                "collectibles,50"
+                "collectibles,50",
+                "villagers,10"
         };
 
         @Config.Comment({
