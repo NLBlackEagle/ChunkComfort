@@ -188,7 +188,11 @@ public class ForgeConfigHandler {
                 "minecraft:donkey,2,pets,1,{OwnerUUID:'*-*'}",
                 "minecraft:mule,2,pets,1,{OwnerUUID:'*-*'}",
                 "minecraft:llama,2,pets,1,{OwnerUUID:'*-*'}",
-                "minecraft:skeleton_horse,2,pets,1,{OwnerUUID:'*-*'}"
+                "minecraft:skeleton_horse,2,pets,1,{OwnerUUID:'*-*'}",
+                "minecraft:sheep,1,farm,5,{}",
+                "minecraft:cow,1,farm,5,{}",
+                "minecraft:chicken,1,farm,5,{}",
+                "minecraft:mooshroom,5,farm,1,{}"
         };
 
         @Config.Comment({
@@ -202,6 +206,7 @@ public class ForgeConfigHandler {
                 "minecraft:wolf,'Stitch|Lyn',1",
                 "minecraft:donkey,'Donkey',1",
                 "minecraft:villager,'ijsbrand',1"
+
         };
 
         @Config.Comment({
@@ -239,7 +244,8 @@ public class ForgeConfigHandler {
                 "lightsources,20",
                 "pets,15",
                 "collectibles,50",
-                "villagers,10"
+                "villagers,10",
+                "farm,10"
         };
 
         @Config.Comment({
