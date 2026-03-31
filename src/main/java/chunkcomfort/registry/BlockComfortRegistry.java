@@ -7,7 +7,7 @@ public class BlockComfortRegistry {
 
     // Config-driven blocks
     public static final Map<Block, ComfortEntry> BLOCK_ENTRIES = new HashMap<>();
-    private static final Map<String, String[]> BLOCK_ALIASES = new HashMap<>();
+    public static final Map<String, String[]> BLOCK_ALIASES = new HashMap<>();
 
     /**
      * Reload block aliases from config
@@ -86,6 +86,29 @@ public class BlockComfortRegistry {
                 }
             }
         }
+    }
+
+    /**
+     * Returns the canonical ID used in the config for a given registry name string,
+     * either the main ID or the alias key it belongs to.
+     */
+    public static String getCanonicalIdFromRegistryName(String registryName) {
+        if (registryName == null) return null;
+
+        // Check if this registryName is a main key
+        if (BLOCK_ALIASES.containsKey(registryName)) return registryName;
+
+        // Otherwise, check if it is an alias
+        for (Map.Entry<String, String[]> entry : BLOCK_ALIASES.entrySet()) {
+            String key = entry.getKey();
+            String[] aliases = entry.getValue();
+            for (String alias : aliases) {
+                if (registryName.equals(alias)) return key; // return main ID
+            }
+        }
+
+        // fallback: return the original registry name
+        return registryName;
     }
 
     /**

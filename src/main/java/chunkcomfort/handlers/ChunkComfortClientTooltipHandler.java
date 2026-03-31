@@ -22,6 +22,7 @@ import java.util.*;
 public class ChunkComfortClientTooltipHandler {
 
     /** Cached set of block registry names from config for quick lookup */
+    private static final Set<String> CONFIGURED_ALIAS_BLOCKS = new HashSet<>();
     private static final Set<String> CONFIGURED_COMFORT_BLOCKS = new HashSet<>();
     private static final Map<String, Integer> GROUP_LIMITS = new HashMap<>();
     private static final Set<String> FIRE_BLOCKS = new HashSet<>();
@@ -30,10 +31,17 @@ public class ChunkComfortClientTooltipHandler {
     /** Call this if the config is reloaded */
     public static void refreshConfiguredBlocks() {
         CONFIGURED_COMFORT_BLOCKS.clear();
+        CONFIGURED_ALIAS_BLOCKS.clear();
+
         for (String entry : ForgeConfigHandler.server.blockComfortEntries) {
             if (entry == null || entry.isEmpty()) continue;
             String blockName = entry.split(",")[0]; // extract <block> from <block>,<value>,<group>,<limit>
             CONFIGURED_COMFORT_BLOCKS.add(blockName);
+
+            String[] aliases = BlockComfortRegistry.BLOCK_ALIASES.get(blockName);
+            if (aliases != null) {
+                CONFIGURED_ALIAS_BLOCKS.addAll(Arrays.asList(aliases));
+            }
         }
     }
 
@@ -177,6 +185,7 @@ public class ChunkComfortClientTooltipHandler {
         // -------------------
         // Generic entity / block handling
         // -------------------
+        boolean isAliasBlock = CONFIGURED_ALIAS_BLOCKS.contains(registryName);
         boolean isConfiguredBlock = CONFIGURED_COMFORT_BLOCKS.contains(registryName);
         boolean isEntityItem = NON_BLOCK_ENTITIES.contains(registryName);
         boolean isFireBlock = FIRE_BLOCKS.contains(registryName);
@@ -214,7 +223,20 @@ public class ChunkComfortClientTooltipHandler {
         // -------------------
         // Non-living / generic entity tooltip (skip if spawn egg already handled)
         // -------------------
+
+        // todo: add !isAliasBlock here and change the method to be a for-each item in aliases?
+        //  could probably just do !no darn banner instances if I am lazy?
+
         if (!handledSpawnEgg && (entityEntry != null || isEntityItem)) {
+
+            // todo: this is hardcoded mess cuz I was lazy, I aliases may not work? Not sure, only banners are stupid aliases.
+            //  probably have to test this with other aliases and test it.
+            if (stack.getItem() instanceof net.minecraft.item.ItemBlock) {
+                Block block = ((net.minecraft.item.ItemBlock) stack.getItem()).getBlock();
+                if (block instanceof net.minecraft.block.BlockBanner) {
+                    return; // do not show generic entity tooltip for banners
+                }
+            }
             Class<? extends Entity> entityClass = ENTITY_ITEM_MAP.getOrDefault(registryName, EntityArmorStand.class);
 
             ResourceLocation entityId = new ResourceLocation(registryName);
@@ -245,20 +267,48 @@ public class ChunkComfortClientTooltipHandler {
         // Block tooltip
         // -------------------
         if (isConfiguredBlock) {
-            Block block = Block.getBlockFromName(registryName);
-            if (block != null) {
-                int pointsPerBlock = BlockComfortRegistry.getValue(block);
-                String groupName = BlockComfortRegistry.getGroup(block);
+            System.out.println("[ChunkComfort DEBUG]: Configured Block name " + registryName);
+
+            // Get canonical ID (the "main" ID from config, e.g., minecraft:banner)
+            String canonicalId = BlockComfortRegistry.getCanonicalIdFromRegistryName(registryName);
+
+            // Get aliases (wall_banner, standing_banner)
+            String[] aliases = BlockComfortRegistry.BLOCK_ALIASES.get(canonicalId);
+
+            // Collect all block IDs to check (main + aliases)
+            List<String> allIds = new ArrayList<>();
+            allIds.add(canonicalId); // include main ID
+            if (aliases != null) allIds.addAll(Arrays.asList(aliases));
+
+            int totalAmount = 0;
+            Block mainBlock = null; // we'll use the first valid block to fetch points/group/etc
+
+            for (String id : allIds) {
+                Block b = Block.getBlockFromName(id);
+                if (b != null) {
+                    if (mainBlock == null) mainBlock = b; // remember first valid block
+                    int count = cache.blockCounts.getOrDefault(b, 0);
+                    totalAmount += count;
+                    System.out.println("[ChunkComfort DEBUG]: Counting block " + id + " = " + count);
+                } else {
+                    System.out.println("[ChunkComfort DEBUG]: Block not found for ID " + id);
+                }
+            }
+
+            if (mainBlock != null) {
+                int pointsPerBlock = BlockComfortRegistry.getValue(mainBlock);
+                String groupName = BlockComfortRegistry.getGroup(mainBlock);
                 int blockLimit = 0;
-                BlockComfortRegistry.ComfortEntry entry = BlockComfortRegistry.getBlockEntry(block);
+                BlockComfortRegistry.ComfortEntry entry = BlockComfortRegistry.getBlockEntry(mainBlock);
                 if (entry != null) blockLimit = entry.limit;
 
-                int amountIn3x3 = cache.blockCounts.getOrDefault(block, 0);
                 int groupPoints = cache.groupTotals.getOrDefault(groupName, 0);
                 int totalGroupLimit = GROUP_LIMITS.getOrDefault(groupName, 0);
 
-                tooltip.add(I18n.format("tooltip.chunkcomfort.block.line1", pointsPerBlock, amountIn3x3, blockLimit));
+                tooltip.add(I18n.format("tooltip.chunkcomfort.block.line1", pointsPerBlock, totalAmount, blockLimit));
                 tooltip.add(I18n.format("tooltip.chunkcomfort.block.line2", groupName, groupPoints, totalGroupLimit));
+
+                System.out.println("[ChunkComfort DEBUG]: Total amount for " + canonicalId + " = " + totalAmount);
             }
         }
     }
