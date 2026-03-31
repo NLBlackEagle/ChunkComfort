@@ -231,6 +231,7 @@ public class ChunkComfortClientTooltipHandler {
 
             // todo: this is hardcoded mess cuz I was lazy, I aliases may not work? Not sure, only banners are stupid aliases.
             //  probably have to test this with other aliases and test it.
+            //  what the actual fuck it still happens!!! argh, tomorrow new day!
             if (stack.getItem() instanceof net.minecraft.item.ItemBlock) {
                 Block block = ((net.minecraft.item.ItemBlock) stack.getItem()).getBlock();
                 if (block instanceof net.minecraft.block.BlockBanner) {
