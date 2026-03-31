@@ -142,7 +142,7 @@ public class ForgeConfigHandler {
                 "minecraft:carpet,1,luxury,25",
                 "minecraft:banner,3,luxury,10",
                 "minecraft:flower_pot,1,luxury,10",
-                "minecraft:skull,1,10",
+                "minecraft:skull,1,luxury,10",
 
                 //Legendary
                 "minecraft:dragon_egg,25,legendary,1",
