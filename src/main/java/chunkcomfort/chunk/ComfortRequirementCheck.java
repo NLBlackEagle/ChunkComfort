@@ -6,6 +6,9 @@ import chunkcomfort.integration.simpledifficulty.SimpleDifficultyTemperatureBrid
 import chunkcomfort.registry.ComfortRequirements;
 import chunkcomfort.registry.FireBlockRegistry;
 import net.minecraft.block.Block;
+import net.minecraft.block.BlockAir;
+import net.minecraft.block.BlockGlass;
+import net.minecraft.block.BlockLeaves;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.math.BlockPos;
@@ -29,8 +32,7 @@ public class ComfortRequirementCheck {
                 IBlockState state = world.getBlockState(checkPos);
                 Block block = state.getBlock();
 
-                // Check if block is a "solid roof block" — not leaves, not plants, not air
-                if (block.getMaterial(state).isSolid() && block.isOpaqueCube(state)) {
+                if (!(block instanceof BlockAir) && !(block instanceof BlockLeaves) && (block.getMaterial(state).isSolid())) {
                     shelterOk = true;
                     break;
                 }
