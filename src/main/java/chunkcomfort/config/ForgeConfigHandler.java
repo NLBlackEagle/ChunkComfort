@@ -109,6 +109,17 @@ public class ForgeConfigHandler {
         @Config.Name("Biome Comfort Modifiers")
         public String[] biomeComfortModifiers = new String[]{};
 
+        @Config.Name("Custom Spawn Eggs")
+        @Config.Comment({
+                "Format: <entity_registry_name>=<spawn_egg_item>,<nbt_path>",
+                "Example: lycanitesmobs:roc=lycanitesmobs:avianspawn,CreatureInfoSpawnEgg.creaturename",
+                "This allows the mod to recognize Lycanites spawn eggs for comfort calculations."
+        })
+        public String[] customSpawnEggs = new String[] {
+                "lycanitesmobs:roc=lycanitesmobs:avianspawn,CreatureInfoSpawnEgg.creaturename",
+                "lycanitesmobs:morock=lycanitesmobs:dragonspawn,CreatureInfoSpawnEgg.creaturename"
+        };
+
 
         @Config.Comment({
                 "Block Comfort Entries",
@@ -189,6 +200,7 @@ public class ForgeConfigHandler {
                 "minecraft:mule,2,pets,1,{OwnerUUID:'*-*'}",
                 "minecraft:llama,2,pets,1,{OwnerUUID:'*-*'}",
                 "minecraft:skeleton_horse,2,pets,1,{OwnerUUID:'*-*'}",
+                "minecraft:squid,farm,5,{}",
                 "minecraft:sheep,1,farm,5,{}",
                 "minecraft:cow,1,farm,5,{}",
                 "minecraft:chicken,1,farm,5,{}",
@@ -205,7 +217,8 @@ public class ForgeConfigHandler {
                 "minecraft:parrot,'Eagle|BaldEagle|Heaven',1",
                 "minecraft:wolf,'Stitch|Lyn',1",
                 "minecraft:donkey,'Donkey',1",
-                "minecraft:villager,'ijsbrand',1"
+                "minecraft:villager,'ijsbrand',1",
+                "minecraft:squid,'Octo',5"
 
         };
 
@@ -303,11 +316,13 @@ public class ForgeConfigHandler {
         BlockComfortRegistry.reloadAliases(server.blockAliases);
         BlockComfortRegistry.reload(server.blockComfortEntries);
         EntityComfortRegistry.reload(server.blockComfortEntries);
+        CustomSpawnEggRegistry.reload(server.customSpawnEggs);
         AreaComfortCalculator.reloadGroupLimits(server.groupLimits);
         LivingComfortRegistry.reload(server.livingComfortEntries);
         PettingComfortRegistry.loadFromConfig(server.pettingComfortEntries);
         BiomeComfortRegistry.reload(server.biomeComfortModifiers);
         NamedPetComfortRegistry.reload(server.livingTooltipEntries);
+
 
 
         PlayerComfortManager.reloadConfig();

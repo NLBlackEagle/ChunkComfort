@@ -14,6 +14,7 @@ import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.item.EntityArmorStand;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemBlock;
+import net.minecraft.item.ItemMonsterPlacer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
@@ -142,43 +143,84 @@ public class ChunkComfortClientTooltipHandler {
         boolean handledSpawnEgg = false;
 
         // -------------------
+        // Resolve entity from item (CUSTOM + VANILLA)
+        // -------------------
+        ResourceLocation entityID = null;
+
+        // 1. Custom spawn eggs (Lycanites etc)
+        entityID = CustomSpawnEggRegistry.resolve(stack);
+
+        // 2. Vanilla spawn eggs (fallback)
+        if (entityID == null &&
+                stack.getItem() instanceof net.minecraft.item.ItemMonsterPlacer) {
+
+            entityID = net.minecraft.item.ItemMonsterPlacer.getNamedIdFrom(stack);
+        }
+
+        // -------------------
         // SPAWN EGGS (Living entities only)
         // -------------------
-        if (stack.getItem() instanceof net.minecraft.item.ItemMonsterPlacer) {
-            ResourceLocation entityID = net.minecraft.item.ItemMonsterPlacer.getNamedIdFrom(stack);
-            if (entityID != null) {
-                LivingComfortRegistry.LivingComfortEntry livingEntry = LivingComfortRegistry.ENTITY_MAP.get(entityID);
-                if (livingEntry == null) return; // Only configured entities
+        if (entityID != null) {
 
-                PettingComfortData petEntry = PettingComfortRegistry.getEntry(entityID.toString());
+            LivingComfortRegistry.LivingComfortEntry livingEntry =
+                    LivingComfortRegistry.ENTITY_MAP.get(entityID);
+
+            if (livingEntry != null) {
+
+                PettingComfortData petEntry =
+                        PettingComfortRegistry.getEntry(entityID.toString());
 
                 // Add JEI header if it wasn’t added yet
                 String header = I18n.format("tooltip.chunkcomfort.header");
                 if (!tooltip.contains(header)) tooltip.add(header);
 
                 if (player != null) {
-                    Entity entity = EntityList.createEntityByIDFromName(entityID, player.world);
-                    if (cache.isEmpty()) {AreaComfortCalculator.calculatePlayerComfort(player);}
+
+                    Entity entity =
+                            EntityList.createEntityByIDFromName(entityID, player.world);
+
+                    if (cache.isEmpty()) {
+                        AreaComfortCalculator.calculatePlayerComfort(player);
+                    }
 
                     if (entity instanceof EntityLiving) {
-                        int entityCount = cache.livingEntityCounts.getOrDefault(entity.getClass(), 0);
-                        int groupPoints = cache.entityGroupTotals.getOrDefault(livingEntry.group, 0);
-                        int totalGroupLimit = LivingComfortRegistry.getGroupLimit(livingEntry.group);
 
-                        tooltip.add(I18n.format("tooltip.chunkcomfort.living.line1", livingEntry.value, entityCount, livingEntry.limit));
-                        tooltip.add(I18n.format("tooltip.chunkcomfort.living.line2", livingEntry.group, groupPoints, totalGroupLimit));
+                        int entityCount =
+                                cache.livingEntityCounts.getOrDefault(entity.getClass(), 0);
+
+                        int groupPoints =
+                                cache.entityGroupTotals.getOrDefault(livingEntry.group, 0);
+
+                        int totalGroupLimit =
+                                LivingComfortRegistry.getGroupLimit(livingEntry.group);
+
+                        tooltip.add(I18n.format(
+                                "tooltip.chunkcomfort.living.line1",
+                                livingEntry.value,
+                                entityCount,
+                                livingEntry.limit));
+
+                        tooltip.add(I18n.format(
+                                "tooltip.chunkcomfort.living.line2",
+                                livingEntry.group,
+                                groupPoints,
+                                totalGroupLimit));
 
                         // Add pet names bonus
-                        String nameLine = NamedPetComfortRegistry.formatNamesWithPoints(entityID);
+                        String nameLine =
+                                NamedPetComfortRegistry.formatNamesWithPoints(entityID);
+
                         if (nameLine != null) {
                             tooltip.add(nameLine);
                         }
 
-                        if (petEntry != null) {tooltip.add(I18n.format("tooltip.chunkcomfort.pet"));}
+                        if (petEntry != null) {
+                            tooltip.add(I18n.format("tooltip.chunkcomfort.pet"));
+                        }
                     }
                 }
 
-                handledSpawnEgg = true; // skip generic entity section
+                handledSpawnEgg = true;
                 NON_BLOCK_ENTITIES.add(registryName);
                 ENTITY_ITEM_MAP.put(registryName, EntityList.getClass(entityID));
             }

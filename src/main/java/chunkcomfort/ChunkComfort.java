@@ -65,7 +65,7 @@ public class ChunkComfort {
 }
 
 /*
-
+todo: shelter must also count for under transparent block
 todo: check whenever comfort is counted before fire is placed.
 todo: add sleep mechanic insert random string: "10,You dreamt of a warm house with a comfy <fire-block-name>, a pet and a carpet on the floor"
       below comfort 10
