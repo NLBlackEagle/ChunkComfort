@@ -162,68 +162,69 @@ public class ChunkComfortClientTooltipHandler {
         // -------------------
         if (entityID != null) {
 
+
             LivingComfortRegistry.LivingComfortEntry livingEntry =
                     LivingComfortRegistry.ENTITY_MAP.get(entityID);
 
-            if (livingEntry != null) {
+            // ONLY continue if this entity is configured for comfort
+            if (livingEntry == null) {
+                return;
+            }
 
-                PettingComfortData petEntry =
-                        PettingComfortRegistry.getEntry(entityID.toString());
+            PettingComfortData petEntry =
+                    PettingComfortRegistry.getEntry(entityID.toString());
 
-                // Add JEI header if it wasn’t added yet
-                String header = I18n.format("tooltip.chunkcomfort.header");
-                if (!tooltip.contains(header)) tooltip.add(header);
+            String header = I18n.format("tooltip.chunkcomfort.header");
+            if (!tooltip.contains(header)) tooltip.add(header);
 
-                if (player != null) {
+            if (player != null) {
 
-                    Entity entity =
-                            EntityList.createEntityByIDFromName(entityID, player.world);
+                Entity entity =
+                        EntityList.createEntityByIDFromName(entityID, player.world);
 
-                    if (cache.isEmpty()) {
-                        AreaComfortCalculator.calculatePlayerComfort(player);
-                    }
-
-                    if (entity instanceof EntityLiving) {
-
-                        int entityCount =
-                                cache.livingEntityCounts.getOrDefault(entity.getClass(), 0);
-
-                        int groupPoints =
-                                cache.entityGroupTotals.getOrDefault(livingEntry.group, 0);
-
-                        int totalGroupLimit =
-                                LivingComfortRegistry.getGroupLimit(livingEntry.group);
-
-                        tooltip.add(I18n.format(
-                                "tooltip.chunkcomfort.living.line1",
-                                livingEntry.value,
-                                entityCount,
-                                livingEntry.limit));
-
-                        tooltip.add(I18n.format(
-                                "tooltip.chunkcomfort.living.line2",
-                                livingEntry.group,
-                                groupPoints,
-                                totalGroupLimit));
-
-                        // Add pet names bonus
-                        String nameLine =
-                                NamedPetComfortRegistry.formatNamesWithPoints(entityID);
-
-                        if (nameLine != null) {
-                            tooltip.add(nameLine);
-                        }
-
-                        if (petEntry != null) {
-                            tooltip.add(I18n.format("tooltip.chunkcomfort.pet"));
-                        }
-                    }
+                if (cache.isEmpty()) {
+                    AreaComfortCalculator.calculatePlayerComfort(player);
                 }
 
-                handledSpawnEgg = true;
-                NON_BLOCK_ENTITIES.add(registryName);
-                ENTITY_ITEM_MAP.put(registryName, EntityList.getClass(entityID));
+                if (entity instanceof EntityLiving) {
+
+                    int entityCount =
+                            cache.livingEntityCounts.getOrDefault(entity.getClass(), 0);
+
+                    int groupPoints =
+                            cache.entityGroupTotals.getOrDefault(livingEntry.group, 0);
+
+                    int totalGroupLimit =
+                            LivingComfortRegistry.getGroupLimit(livingEntry.group);
+
+                    tooltip.add(I18n.format(
+                            "tooltip.chunkcomfort.living.line1",
+                            livingEntry.value,
+                            entityCount,
+                            livingEntry.limit));
+
+                    tooltip.add(I18n.format(
+                            "tooltip.chunkcomfort.living.line2",
+                            livingEntry.group,
+                            groupPoints,
+                            totalGroupLimit));
+
+                    String nameLine =
+                            NamedPetComfortRegistry.formatNamesWithPoints(entityID);
+
+                    if (nameLine != null) {
+                        tooltip.add(nameLine);
+                    }
+
+                    if (petEntry != null) {
+                        tooltip.add(I18n.format("tooltip.chunkcomfort.pet"));
+                    }
+                }
             }
+
+            handledSpawnEgg = true;
+            NON_BLOCK_ENTITIES.add(registryName);
+            ENTITY_ITEM_MAP.put(registryName, EntityList.getClass(entityID));
         }
 
         // -------------------
@@ -231,7 +232,7 @@ public class ChunkComfortClientTooltipHandler {
         // -------------------
         boolean isAliasBlock = CONFIGURED_ALIAS_BLOCKS.contains(registryName);
         boolean isConfiguredBlock = CONFIGURED_COMFORT_BLOCKS.contains(registryName);
-        boolean isEntityItem = NON_BLOCK_ENTITIES.contains(registryName);
+        boolean isEntityItem = entityID != null && LivingComfortRegistry.ENTITY_MAP.containsKey(entityID);
         boolean isFireBlock = FIRE_BLOCKS.contains(registryName);
         boolean isFireSourceItem = FIRE_SOURCE_ITEMS.contains(registryName);
         EntityComfortRegistry.ComfortEntry entityEntry = EntityComfortRegistry.getEntityEntryFromId(new ResourceLocation(registryName));
