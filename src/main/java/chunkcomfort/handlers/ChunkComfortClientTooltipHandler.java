@@ -314,7 +314,6 @@ public class ChunkComfortClientTooltipHandler {
         // Block tooltip
         // -------------------
         if (isConfiguredBlock) {
-            System.out.println("[ChunkComfort DEBUG]: Configured Block name " + registryName);
 
             // Get canonical ID (the "main" ID from config, e.g., minecraft:banner)
             String canonicalId = BlockComfortRegistry.getCanonicalIdFromRegistryName(registryName);
@@ -336,9 +335,7 @@ public class ChunkComfortClientTooltipHandler {
                     if (mainBlock == null) mainBlock = b; // remember first valid block
                     int count = cache.blockCounts.getOrDefault(b, 0);
                     totalAmount += count;
-                    System.out.println("[ChunkComfort DEBUG]: Counting block " + id + " = " + count);
-                } else {
-                    System.out.println("[ChunkComfort DEBUG]: Block not found for ID " + id);
+
                 }
             }
 
@@ -355,7 +352,6 @@ public class ChunkComfortClientTooltipHandler {
                 tooltip.add(I18n.format("tooltip.chunkcomfort.block.line1", pointsPerBlock, totalAmount, blockLimit));
                 tooltip.add(I18n.format("tooltip.chunkcomfort.block.line2", groupName, groupPoints, totalGroupLimit));
 
-                System.out.println("[ChunkComfort DEBUG]: Total amount for " + canonicalId + " = " + totalAmount);
             }
         }
     }
