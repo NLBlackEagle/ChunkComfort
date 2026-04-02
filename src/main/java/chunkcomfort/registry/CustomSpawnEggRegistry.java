@@ -1,8 +1,10 @@
 package chunkcomfort.registry;
 
+import chunkcomfort.ChunkComfort;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.text.translation.I18n;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,13 +22,21 @@ public class CustomSpawnEggRegistry {
     public static void reload(String[] config) {
         ENTRIES.clear();
 
+        if (config == null) return;
+
         for (String line : config) {
+
+            if (line == null || line.trim().isEmpty()) continue;
+
             try {
                 String[] split = line.split("=");
-                ResourceLocation entity =
-                        new ResourceLocation(split[0].trim());
+                if (split.length != 2) throw new IllegalArgumentException();
+
+                ResourceLocation entity = new ResourceLocation(split[0].trim());
 
                 String[] right = split[1].split(",");
+                if (right.length < 2) throw new IllegalArgumentException();
+
                 String item = right[0].trim();
                 String nbt = right[1].trim();
 
@@ -36,7 +46,15 @@ public class CustomSpawnEggRegistry {
                 e.nbtPath = nbt;
 
                 ENTRIES.add(e);
-            } catch (Exception ignored) {}
+
+            } catch (Exception e) {
+                ChunkComfort.LOGGER.warn(
+                        I18n.translateToLocalFormatted(
+                                "chunkcomfort.config.invalid_spawn_egg_entry",
+                                line
+                        )
+                );
+            }
         }
     }
 

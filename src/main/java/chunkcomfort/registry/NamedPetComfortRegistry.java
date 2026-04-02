@@ -1,5 +1,6 @@
 package chunkcomfort.registry;
 
+import chunkcomfort.ChunkComfort;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.util.ResourceLocation;
 
@@ -15,20 +16,34 @@ public class NamedPetComfortRegistry {
         if (entries == null) return;
 
         for (String line : entries) {
-            if (line == null || line.isEmpty()) continue;
+            if (line == null || line.trim().isEmpty()) continue;
 
-            String[] parts = line.split(",");
-            if (parts.length < 3) continue;
+            try {
+                String[] parts = line.split(",", 3);
+                if (parts.length < 3) throw new IllegalArgumentException();
 
-            ResourceLocation id = new ResourceLocation(parts[0].trim());
-            String[] names = parts[1].trim().replaceAll("^['\"]|['\"]$", "").split("\\|");
-            int points;
-            try { points = Integer.parseInt(parts[2].trim()); }
-            catch (NumberFormatException e) { continue; }
+                ResourceLocation id = new ResourceLocation(parts[0].trim());
+                String[] names = parts[1].trim().replaceAll("^['\"]|['\"]$", "").split("\\|");
 
-            BONUSES.computeIfAbsent(id, k -> new HashMap<>());
-            for (String name : names) {
-                BONUSES.get(id).put(name, points);
+                int points;
+                try {
+                    points = Integer.parseInt(parts[2].trim());
+                } catch (NumberFormatException e) {
+                    throw new IllegalArgumentException();
+                }
+
+                BONUSES.computeIfAbsent(id, k -> new HashMap<>());
+                for (String name : names) {
+                    BONUSES.get(id).put(name, points);
+                }
+
+            } catch (Exception e) {
+                ChunkComfort.LOGGER.warn(
+                        I18n.format(
+                                "chunkcomfort.config.invalid_named_pet_entry",
+                                line
+                        )
+                );
             }
         }
     }

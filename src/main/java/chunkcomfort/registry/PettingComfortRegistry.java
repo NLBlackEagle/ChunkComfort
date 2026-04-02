@@ -1,5 +1,6 @@
 package chunkcomfort.registry;
 
+import chunkcomfort.ChunkComfort;
 import chunkcomfort.chunk.PettingComfortData;
 
 import java.util.Collection;
@@ -12,9 +13,22 @@ public class PettingComfortRegistry {
 
     public static void loadFromConfig(String[] configLines) {
         registry.clear();
+        if (configLines == null) return;
+
         for (String line : configLines) {
-            PettingComfortData entry = new PettingComfortData(line);
-            registry.put(entry.entityId, entry);
+            if (line == null || line.trim().isEmpty()) continue;
+
+            try {
+                PettingComfortData entry = new PettingComfortData(line);
+                registry.put(entry.entityId, entry);
+            } catch (Exception e) {
+                ChunkComfort.LOGGER.warn(
+                        net.minecraft.client.resources.I18n.format(
+                                "chunkcomfort.config.invalid_petting_entry",
+                                line
+                        )
+                );
+            }
         }
     }
 

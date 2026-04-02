@@ -1,8 +1,10 @@
 package chunkcomfort.registry;
 
+import chunkcomfort.ChunkComfort;
 import net.minecraft.block.Block;
 import net.minecraft.init.Blocks;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.text.translation.I18n;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -15,35 +17,46 @@ public class FireBlockRegistry {
 
         FIRE_BLOCKS.clear();
 
-        if (fireBlocks == null) {
-            return;
-        }
+        if (fireBlocks == null) return;
 
         for (String name : fireBlocks) {
 
-            if (name == null || name.isEmpty()) {
-                continue;
-            }
+            if (name == null || name.trim().isEmpty()) continue;
 
             try {
-
                 ResourceLocation id = new ResourceLocation(name);
 
-                // Check if the block actually exists
                 if (!Block.REGISTRY.containsKey(id)) {
+                    ChunkComfort.LOGGER.warn(
+                            I18n.translateToLocalFormatted(
+                                    "chunkcomfort.config.invalid_fire_block_entry",
+                                    name
+                            )
+                    );
                     continue;
                 }
 
                 Block block = Block.REGISTRY.getObject(id);
 
-                // Reject invalid or air blocks
                 if (block == null || block == Blocks.AIR) {
+                    ChunkComfort.LOGGER.warn(
+                            I18n.translateToLocalFormatted(
+                                    "chunkcomfort.config.invalid_fire_block_entry",
+                                    name
+                            )
+                    );
                     continue;
                 }
 
                 FIRE_BLOCKS.add(block);
 
-            } catch (Exception ignored) {
+            } catch (Exception e) {
+                ChunkComfort.LOGGER.warn(
+                        I18n.translateToLocalFormatted(
+                                "chunkcomfort.config.invalid_fire_block_entry",
+                                name
+                        )
+                );
             }
         }
     }

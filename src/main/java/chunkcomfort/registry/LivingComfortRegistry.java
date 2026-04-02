@@ -1,9 +1,11 @@
 package chunkcomfort.registry;
 
+import chunkcomfort.ChunkComfort;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.text.translation.I18n;
 
 import java.util.*;
 
@@ -91,7 +93,7 @@ public class LivingComfortRegistry {
 
             try {
                 String[] parts = line.split(",", 5);
-                if (parts.length < 4) continue;
+                if (parts.length < 4) throw new IllegalArgumentException();
 
                 ResourceLocation id = new ResourceLocation(parts[0].trim());
                 int value = Integer.parseInt(parts[1].trim());
@@ -101,7 +103,14 @@ public class LivingComfortRegistry {
 
                 ENTITY_MAP.put(id, new LivingComfortEntry(id, value, group, limit, nbt));
 
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                ChunkComfort.LOGGER.warn(
+                        I18n.translateToLocalFormatted(
+                                "chunkcomfort.config.invalid_living_entry",
+                                line
+                        )
+                );
+            }
         }
     }
 

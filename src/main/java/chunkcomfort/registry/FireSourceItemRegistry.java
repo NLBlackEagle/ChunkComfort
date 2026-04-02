@@ -1,8 +1,10 @@
 package chunkcomfort.registry;
 
+import chunkcomfort.ChunkComfort;
 import net.minecraft.init.Items;
 import net.minecraft.item.Item;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.text.translation.I18n;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -24,18 +26,37 @@ public class FireSourceItemRegistry {
             try {
                 ResourceLocation id = new ResourceLocation(name.trim());
 
-                // Check if the item actually exists
-                if (!Item.REGISTRY.containsKey(id)) continue;
+                if (!Item.REGISTRY.containsKey(id)) {
+                    ChunkComfort.LOGGER.warn(
+                            I18n.translateToLocalFormatted(
+                                    "chunkcomfort.config.invalid_fire_source_item_entry",
+                                    name
+                            )
+                    );
+                    continue;
+                }
 
                 Item item = Item.REGISTRY.getObject(id);
 
-                // Reject invalid or air items
-                if (item == null || item == Items.AIR) continue;
+                if (item == null || item == Items.AIR) {
+                    ChunkComfort.LOGGER.warn(
+                            I18n.translateToLocalFormatted(
+                                    "chunkcomfort.config.invalid_fire_source_item_entry",
+                                    name
+                            )
+                    );
+                    continue;
+                }
 
                 FIRE_SOURCE_ITEMS.add(item);
 
-            } catch (Exception ignored) {
-                // optionally log invalid item
+            } catch (Exception e) {
+                ChunkComfort.LOGGER.warn(
+                        I18n.translateToLocalFormatted(
+                                "chunkcomfort.config.invalid_fire_source_item_entry",
+                                name
+                        )
+                );
             }
         }
     }

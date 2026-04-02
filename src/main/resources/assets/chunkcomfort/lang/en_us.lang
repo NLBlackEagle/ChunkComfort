@@ -169,8 +169,30 @@ debug.chunkcomfort.temperature_required=Temperature Required: true
 # %d = player temperature
 debug.chunkcomfort.temperature_range= Comfort Temp: %d to %d Player Temp: %d
 
-wake.chunkcomfort.message.1=1
-wake.chunkcomfort.message.2=2
-wake.chunkcomfort.message.3=3
-wake.chunkcomfort.message.4=4
-wake.chunkcomfort.message.5=5
+# Invalid syntax messages
+chunkcomfort.config.invalid_entry=Invalid ChunkComfort biome config entry: '%s'
+chunkcomfort.config.invalid_block_entry=Invalid ChunkComfort block config entry: '%s'
+chunkcomfort.config.invalid_block_alias=Invalid ChunkComfort block alias entry: '%s'
+chunkcomfort.config.invalid_spawn_egg_entry=Invalid ChunkComfort custom spawn egg config entry: '%s'
+chunkcomfort.config.invalid_entity_entry=Invalid ChunkComfort entity config entry: '%s'
+chunkcomfort.config.invalid_fire_block_entry=Invalid ChunkComfort fire block config entry: '%s'
+chunkcomfort.config.invalid_fire_source_item_entry=Invalid ChunkComfort fire source item config entry: '%s'
+chunkcomfort.config.invalid_living_entry=Invalid ChunkComfort living entity config entry: '%s'
+chunkcomfort.config.invalid_named_pet_entry=Invalid ChunkComfort named pet config entry: '%s'
+chunkcomfort.config.invalid_petting_entry=Invalid ChunkComfort petting comfort config entry: '%s'
+
+
+# Messages displayed for comfort levels
+chunkcomfort.config.message.1=§6You dreamt of a warm, sheltered house with a comfy fire, a pet, and a carpet on the floor
+chunkcomfort.config.message.2=§6As you wake up a thought lingers, surely a sheltered place with a bed, a fire and banners would beat this?
+chunkcomfort.config.message.3=§6You dreamt of petting your pet while watching the flames dance within the fireplace
+chunkcomfort.config.message.4=§6You feel refreshed, though your residence could use some improvements
+chunkcomfort.config.message.5=§6As you wake and look around your house, you feel somewhat established
+chunkcomfort.config.message.6=§6You had one of those fleeting dreams about building a library expansion
+chunkcomfort.config.message.7=§6Open sky, fresh air... it all sounds so romantic, but nothing beats a place like home
+chunkcomfort.config.message.8=§6You dreamt about beating the Ender Dragon and displaying its trophy egg!
+chunkcomfort.config.message.9=§6Cats, dogs, parrots!? All in the same place — wild! But also comfy!
+chunkcomfort.config.message.10=§6As you open your eyes, there is but one thing you can think of... a parrot called Eagle!
+chunkcomfort.config.message.11=§6You dreamt about a world, Dregora... and being sheltered against the probability of being smitten
+chunkcomfort.config.message.12=§6You wake and have an existential crisis: how much more comfort makes things comfier?!
+chunkcomfort.config.message.13=§6You no longer need to dream — you are living it

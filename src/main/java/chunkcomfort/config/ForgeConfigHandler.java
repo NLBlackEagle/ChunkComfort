@@ -293,37 +293,56 @@ public class ForgeConfigHandler {
         })
         @Config.Name("Comfort Waking Messages")
         public String[] stagedMessages = new String[]{
-                "0,0,'§6You dreamt of a warm, sheltered house with a comfy fire, a pet, and a carpet on the floor'",
-                "0,0,'§6As you wake up a thought lingers, surely a sheltered place with a bed, a fire and banners would beat this?'",
-                "1,10,'§6You dreamt of petting your pet while watching the flames dance within the fireplace'",
-                "10,30,'§6You feel refreshed, though your residence could use some improvements'",
-                "30,60,'§6As you wake and look around your house, you feel somewhat established'",
-                "60,100,'§6You had one of those fleeting dreams about building a library expansion'",
-                "100,150,'§6Open sky, fresh air... it all sounds so romantic, but nothing beats a place like home'",
-                "150,200,'§6You dreamt about beating the Ender Dragon and displaying its trophy egg!'",
-                "200,250,'§6Cats, dogs, parrots!? All in the same place — wild! But also comfy!'",
-                "250,300,'§6As you open your eyes, there is but one thing you can think of... a parrot called Eagle!'",
-                "300,350,'§6You dreamt about a world, Dregora... and being sheltered against the probability of being smitten'",
-                "350,425,'§6You wake and have an existential crisis: how much more comfort makes things comfier?!'",
-                "425,450,'§6You no longer need to dream — you are living it'"
+                "0,0,'chunkcomfort.config.message.1'",
+                "0,0,'chunkcomfort.config.message.2'",
+                "1,10,'chunkcomfort.config.message.3'",
+                "10,30,'chunkcomfort.config.message.4'",
+                "30,60,'chunkcomfort.config.message.5'",
+                "60,100,'chunkcomfort.config.message.6'",
+                "100,150,'chunkcomfort.config.message.7'",
+                "150,200,'chunkcomfort.config.message.8'",
+                "200,250,'chunkcomfort.config.message.9'",
+                "250,300,'chunkcomfort.config.message.10'",
+                "300,350,'chunkcomfort.config.message.11'",
+                "350,425,'chunkcomfort.config.message.12'",
+                "425,450,'chunkcomfort.config.message.13"
         };
     }
 
     public static void reloadRegistries() {
 
-        FireBlockRegistry.reload(server.fireBlocks);
-        FireSourceItemRegistry.reload(server.fireSourceItems);
-        BlockComfortRegistry.reloadAliases(server.blockAliases);
-        BlockComfortRegistry.reload(server.blockComfortEntries);
-        EntityComfortRegistry.reload(server.blockComfortEntries);
-        CustomSpawnEggRegistry.reload(server.customSpawnEggs);
-        AreaComfortCalculator.reloadGroupLimits(server.groupLimits);
-        LivingComfortRegistry.reload(server.livingComfortEntries);
-        PettingComfortRegistry.loadFromConfig(server.pettingComfortEntries);
-        BiomeComfortRegistry.reload(server.biomeComfortModifiers);
-        NamedPetComfortRegistry.reload(server.livingTooltipEntries);
+        try { FireBlockRegistry.reload(server.fireBlocks); }
+        catch (Exception e) { ChunkComfort.LOGGER.error("Failed to reload Fire Blocks", e); }
 
+        try { FireSourceItemRegistry.reload(server.fireSourceItems); }
+        catch (Exception e) { ChunkComfort.LOGGER.error("Failed to reload Fire Source Items", e); }
 
+        try { BlockComfortRegistry.reloadAliases(server.blockAliases); }
+        catch (Exception e) { ChunkComfort.LOGGER.error("Failed to reload Block Aliases", e); }
+
+        try { BlockComfortRegistry.reload(server.blockComfortEntries); }
+        catch (Exception e) { ChunkComfort.LOGGER.error("Failed to reload Block Comfort Entries", e); }
+
+        try { EntityComfortRegistry.reload(server.blockComfortEntries); }
+        catch (Exception e) { ChunkComfort.LOGGER.error("Failed to reload Entity Comfort Entries", e); }
+
+        try { CustomSpawnEggRegistry.reload(server.customSpawnEggs); }
+        catch (Exception e) { ChunkComfort.LOGGER.error("Failed to reload Custom Spawn Eggs", e); }
+
+        try { AreaComfortCalculator.reloadGroupLimits(server.groupLimits); }
+        catch (Exception e) { ChunkComfort.LOGGER.error("Failed to reload Group Limits", e); }
+
+        try { LivingComfortRegistry.reload(server.livingComfortEntries); }
+        catch (Exception e) { ChunkComfort.LOGGER.error("Failed to reload Living Comfort Entries", e); }
+
+        try { PettingComfortRegistry.loadFromConfig(server.pettingComfortEntries); }
+        catch (Exception e) { ChunkComfort.LOGGER.error("Failed to reload Petting Comfort Entries", e); }
+
+        try { BiomeComfortRegistry.reload(server.biomeComfortModifiers); }
+        catch (Exception e) { ChunkComfort.LOGGER.error("Failed to reload Biome Comfort Modifiers", e); }
+
+        try { NamedPetComfortRegistry.reload(server.livingTooltipEntries); }
+        catch (Exception e) { ChunkComfort.LOGGER.error("Failed to reload Named Pet Comfort Entries", e); }
 
         PlayerComfortManager.reloadConfig();
         ChunkComfortClientTooltipHandler.refreshFireBlocks();

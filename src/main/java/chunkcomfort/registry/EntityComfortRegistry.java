@@ -1,7 +1,9 @@
 package chunkcomfort.registry;
 
+import chunkcomfort.ChunkComfort;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.text.translation.I18n;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 
 import java.util.*;
@@ -38,54 +40,62 @@ public class EntityComfortRegistry {
         if (entries == null) return;
 
         for (String line : entries) {
-            if (line == null || line.isEmpty()) continue;
 
-            String[] parts = line.split(",");
-            if (parts.length < 3) continue;
-
-            String id = parts[0].trim();
-            int value;
-            String group = parts[2].trim();
+            if (line == null || line.trim().isEmpty()) continue;
 
             try {
-                value = Integer.parseInt(parts[1].trim());
-            } catch (NumberFormatException e) {
-                value = 0;
-            }
+                String[] parts = line.split(",");
+                if (parts.length < 3) throw new IllegalArgumentException();
 
-            int limit = value;
-            if (parts.length >= 4) {
-                try {
+                String id = parts[0].trim();
+                int value = Integer.parseInt(parts[1].trim());
+                String group = parts[2].trim();
+
+                int limit = value;
+                if (parts.length >= 4) {
                     limit = Integer.parseInt(parts[3].trim());
-                } catch (NumberFormatException ignored) {}
-            }
-
-            ResourceLocation rl = new ResourceLocation(id);
-            Class<? extends Entity> clazz = null;
-
-            // First try ForgeRegistries
-            if (ForgeRegistries.ENTITIES.containsKey(rl)) {
-                clazz = Objects.requireNonNull(ForgeRegistries.ENTITIES.getValue(rl)).getEntityClass();
-            } else {
-                // Fallback for vanilla non-living entities
-                switch (id) {
-                    case "minecraft:armor_stand":
-                        clazz = net.minecraft.entity.item.EntityArmorStand.class;
-                        break;
-                    case "minecraft:painting":
-                        clazz = net.minecraft.entity.item.EntityPainting.class;
-                        break;
-                    case "minecraft:item_frame":
-                        clazz = net.minecraft.entity.item.EntityItemFrame.class;
-                        break;
                 }
-            }
 
-            if (clazz != null) {
-                ComfortEntry entry = new ComfortEntry(value, group, limit);
-                ENTITY_ENTRIES.put(clazz, entry);
-                COMFORT_ENTITY_CLASSES.add(clazz);
-                ENTITY_ID_MAP.put(rl, entry);
+                ResourceLocation rl = new ResourceLocation(id);
+                Class<? extends Entity> clazz = null;
+
+                if (ForgeRegistries.ENTITIES.containsKey(rl)) {
+                    clazz = Objects.requireNonNull(ForgeRegistries.ENTITIES.getValue(rl)).getEntityClass();
+                } else {
+                    switch (id) {
+                        case "minecraft:armor_stand":
+                            clazz = net.minecraft.entity.item.EntityArmorStand.class;
+                            break;
+                        case "minecraft:painting":
+                            clazz = net.minecraft.entity.item.EntityPainting.class;
+                            break;
+                        case "minecraft:item_frame":
+                            clazz = net.minecraft.entity.item.EntityItemFrame.class;
+                            break;
+                    }
+                }
+
+                if (clazz != null) {
+                    ComfortEntry entry = new ComfortEntry(value, group, limit);
+                    ENTITY_ENTRIES.put(clazz, entry);
+                    COMFORT_ENTITY_CLASSES.add(clazz);
+                    ENTITY_ID_MAP.put(rl, entry);
+                } else {
+                    ChunkComfort.LOGGER.warn(
+                            I18n.translateToLocalFormatted(
+                                    "chunkcomfort.config.invalid_entity_entry",
+                                    line
+                            )
+                    );
+                }
+
+            } catch (Exception e) {
+                ChunkComfort.LOGGER.warn(
+                        I18n.translateToLocalFormatted(
+                                "chunkcomfort.config.invalid_entity_entry",
+                                line
+                        )
+                );
             }
         }
     }

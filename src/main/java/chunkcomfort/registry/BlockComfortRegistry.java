@@ -1,6 +1,9 @@
 package chunkcomfort.registry;
 
+import chunkcomfort.ChunkComfort;
 import net.minecraft.block.Block;
+import net.minecraft.util.text.translation.I18n;
+
 import java.util.*;
 
 public class BlockComfortRegistry {
@@ -19,13 +22,28 @@ public class BlockComfortRegistry {
         if (aliases == null) return;
 
         for (String line : aliases) {
-            if (line == null || line.isEmpty()) continue;
+
+            if (line == null || line.trim().isEmpty()) continue;
+
             String[] split = line.split("=");
-            if (split.length != 2) continue;
+
+            if (split.length != 2) {
+                ChunkComfort.LOGGER.warn(
+                        I18n.translateToLocalFormatted(
+                                "chunkcomfort.config.invalid_block_alias",
+                                line
+                        )
+                );
+                continue;
+            }
 
             String key = split[0].trim();
+
             String[] vals = split[1].split(",");
-            for (int i = 0; i < vals.length; i++) vals[i] = vals[i].trim();
+            for (int i = 0; i < vals.length; i++) {
+                vals[i] = vals[i].trim();
+            }
+
             BLOCK_ALIASES.put(key, vals);
         }
     }
@@ -39,32 +57,39 @@ public class BlockComfortRegistry {
         if (entries == null) return;
 
         for (String line : entries) {
-            if (line == null || line.isEmpty()) continue;
 
-            String[] parts = line.split(",");
-            if (parts.length < 3) continue;
-
-            String id = parts[0];
-            int value;
-            String group = parts[2];
+            if (line == null || line.trim().isEmpty()) continue;
 
             try {
-                value = Integer.parseInt(parts[1]);
-            } catch (NumberFormatException e) {
-                value = 0;
+
+                String[] parts = line.split(",");
+
+                if (parts.length < 3)
+                    throw new IllegalArgumentException();
+
+                String id = parts[0].trim();
+                int value = Integer.parseInt(parts[1].trim());
+                String group = parts[2].trim();
+
+                int limit = value;
+
+                if (parts.length >= 4) {
+                    limit = Integer.parseInt(parts[3].trim());
+                }
+
+                ComfortEntry entry = new ComfortEntry(value, group, limit);
+
+                registerBlockAndAliases(id, entry);
+
+            } catch (Exception e) {
+
+                ChunkComfort.LOGGER.warn(
+                        I18n.translateToLocalFormatted(
+                                "chunkcomfort.config.invalid_block_entry",
+                                line
+                        )
+                );
             }
-
-            int limit = value;
-            if (parts.length >= 4) {
-                try {
-                    limit = Integer.parseInt(parts[3]);
-                } catch (NumberFormatException ignored) {}
-            }
-
-            ComfortEntry entry = new ComfortEntry(value, group, limit);
-
-            // Register main block + aliases
-            registerBlockAndAliases(id, entry);
         }
     }
 
@@ -72,18 +97,39 @@ public class BlockComfortRegistry {
      * Registers a block and all its aliases
      */
     private static void registerBlockAndAliases(String id, ComfortEntry entry) {
-        // Register main block
-        Block block = Block.getBlockFromName(id);
-        if (block != null) BLOCK_ENTRIES.put(block, entry);
 
-        // Register aliases
+        Block block = Block.getBlockFromName(id);
+
+        if (block == null) {
+            ChunkComfort.LOGGER.warn(
+                    I18n.translateToLocalFormatted(
+                            "chunkcomfort.config.invalid_block_entry",
+                            id
+                    )
+            );
+            return;
+        }
+
+        BLOCK_ENTRIES.put(block, entry);
+
         String[] aliases = BLOCK_ALIASES.get(id);
+
         if (aliases != null) {
             for (String aliasId : aliases) {
+
                 Block aliasBlock = Block.getBlockFromName(aliasId);
-                if (aliasBlock != null) {
-                    BLOCK_ENTRIES.put(aliasBlock, entry);
+
+                if (aliasBlock == null) {
+                    ChunkComfort.LOGGER.warn(
+                            I18n.translateToLocalFormatted(
+                                    "chunkcomfort.config.invalid_block_alias",
+                                    aliasId
+                            )
+                    );
+                    continue;
                 }
+
+                BLOCK_ENTRIES.put(aliasBlock, entry);
             }
         }
     }

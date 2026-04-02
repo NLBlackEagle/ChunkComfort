@@ -1,5 +1,8 @@
 package chunkcomfort.registry;
 
+import chunkcomfort.ChunkComfort;
+import net.minecraft.util.text.translation.I18n;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -11,21 +14,27 @@ public class BiomeComfortRegistry {
         BIOME_MODIFIERS.clear();
         if (entries == null) return;
 
+
+
         for (String line : entries) {
-            if (line == null || line.isEmpty()) continue;
+
+            if (line == null || line.trim().isEmpty()) continue;
 
             String[] parts = line.split(",");
-            if (parts.length < 2) continue;
-
-            String biome = parts[0];
-            int value;
-            try {
-                value = Integer.parseInt(parts[1]);
-            } catch (NumberFormatException e) {
-                value = 0;
+            if (parts.length < 2) {
+                ChunkComfort.LOGGER.warn(I18n.translateToLocalFormatted("chunkcomfort.config.invalid_entry", line));
+                continue;
             }
 
-            BIOME_MODIFIERS.put(biome, value);
+            try {
+                String biome = parts[0].trim();
+                int value = Integer.parseInt(parts[1].trim());
+
+                BIOME_MODIFIERS.put(biome, value);
+
+            } catch (Exception e) {
+                ChunkComfort.LOGGER.warn(I18n.translateToLocalFormatted("chunkcomfort.config.invalid_entry", line));
+            }
         }
     }
 
