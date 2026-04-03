@@ -66,4 +66,17 @@ public class ChunkComfort {
 
 /*
 todo: make a potion blacklist, if comfort x is active then these potion effects can NOT be applied.
+todo: test these mods:
+waystones
+variedcommodities
+quark
+nuclearcraft
+inspirations
+iceandfire
+fish undead rising
+cookingforblockheads (old one)
+comforts
+biomesoplenty
+betternether
+todo: Fix the bloody banners again >.<!
  */
