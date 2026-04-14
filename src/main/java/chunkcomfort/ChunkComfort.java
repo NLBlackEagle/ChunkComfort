@@ -34,8 +34,6 @@ public class ChunkComfort {
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {
 
-        // Initialize Forge config
-        ForgeConfigHandler.initialize();
         NetworkHandler.register();
         PotionRegistry.registerPotions();
 
@@ -53,6 +51,10 @@ public class ChunkComfort {
 
     @Mod.EventHandler
     public void postInit(FMLPostInitializationEvent event) {
+
+        // Initialize Forge config
+        ForgeConfigHandler.initialize();
+
         completedLoading = true;
         LOGGER.info("ChunkComfort postInit complete. Mod is ready.");
     }
