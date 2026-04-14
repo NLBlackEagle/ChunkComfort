@@ -22,7 +22,7 @@ public class ComfortBlockParticleHandler {
     public static void trySpawnComfortParticles(World world, BlockPos pos, EntityPlayer player, Block block, Entity entity) {
         if (world.isRemote) return; // Only server-side
 
-        if (AreaComfortCalculator.isEnvironmentBlocked(world, player, pos)) return;
+        if (AreaComfortCalculator.isEnvironmentBlocked(world, pos)) return;
 
         boolean isBlock = block != null && BlockComfortRegistry.isComfortBlock(block);
         boolean isEntity = entity != null && EntityComfortRegistry.isComfortEntity(entity);

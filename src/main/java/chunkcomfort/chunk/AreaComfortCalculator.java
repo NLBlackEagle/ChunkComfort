@@ -80,7 +80,7 @@ public class AreaComfortCalculator {
         return comfort;
     }
 
-    public static boolean isEnvironmentBlocked(World world, EntityPlayer player, BlockPos pos) {
+    public static boolean isEnvironmentBlocked(World world, BlockPos pos) {
 
         String dimId = world.provider.getDimensionType().getName();
 
@@ -88,8 +88,13 @@ public class AreaComfortCalculator {
                 world.getBiome(pos).getRegistryName()
         ).toString();
 
-        return DimensionBiomeBlacklistRegistry.isDimensionBlocked(dimId)
-                || DimensionBiomeBlacklistRegistry.isBiomeBlocked(biomeId);
+        if (DimensionBiomeBlacklistRegistry.isDimensionBlocked(dimId)
+                || DimensionBiomeBlacklistRegistry.isBiomeBlocked(biomeId)) {
+            return true;
+        }
+
+        // Returns true if boss bar is enabled and a boss is nearby
+        return ForgeConfigHandler.server.enableBossBarDetection && ChunkBossState.isBossActive();
     }
 
     public static int calculatePlayerComfort(EntityPlayer player) {
@@ -97,7 +102,7 @@ public class AreaComfortCalculator {
         BlockPos playerPos = player.getPosition();
         int radius = getRadius();
 
-        if (isEnvironmentBlocked(world, player, playerPos)) {
+        if (isEnvironmentBlocked(world, playerPos)) {
             if (PotionRegistry.COMFORT != null) {
                 player.removePotionEffect(PotionRegistry.COMFORT);
             }

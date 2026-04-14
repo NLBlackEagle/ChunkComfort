@@ -8,7 +8,6 @@ import chunkcomfort.registry.PotionBlacklistRegistry;
 import net.minecraft.block.Block;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
-import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.item.EntityArmorStand;
 import net.minecraft.entity.passive.EntityTameable;
@@ -18,17 +17,12 @@ import net.minecraft.potion.PotionEffect;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
-import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.world.World;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
-import net.minecraftforge.event.entity.living.LivingEvent;
-import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.event.entity.living.PotionEvent;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
-import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.entity.player.PlayerWakeUpEvent;
 import net.minecraftforge.event.world.BlockEvent;
-import net.minecraftforge.fml.common.eventhandler.Event;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 
@@ -81,10 +75,7 @@ public class ChunkComfortEventHandler {
 
         EntityPlayer player = event.player;
         if (player == null || player.world == null || player.world.isRemote) return;
-
         if (player.ticksExisted % chunkcomfort.config.ForgeConfigHandler.server.comfortCheckInterval != 0) return;
-
-
 
         chunkcomfort.player.PlayerComfortManager.applyComfortEffects(player);
     }
@@ -101,6 +92,13 @@ public class ChunkComfortEventHandler {
     }
 
     @SubscribeEvent
+    public void onJoinWorld(net.minecraftforge.event.entity.EntityJoinWorldEvent event) {
+        if (event.getWorld().isRemote && event.getEntity() instanceof EntityPlayer) {
+            ChunkBossState.resetClient();
+        }
+    }
+
+    @SubscribeEvent
     public void onPlayerWakeUp(PlayerWakeUpEvent event) {
 
         if (!event.shouldSetSpawn()) return;
@@ -109,7 +107,7 @@ public class ChunkComfortEventHandler {
 
         if (player.world.isRemote) return;
 
-        if (AreaComfortCalculator.isEnvironmentBlocked(player.world, player, player.getPosition())) return;
+        if (AreaComfortCalculator.isEnvironmentBlocked(player.world, player.getPosition())) return;
 
         int chance = ForgeConfigHandler.server.messagePercentage;
 
@@ -128,7 +126,7 @@ public class ChunkComfortEventHandler {
         if (!(event.getEntity() instanceof EntityPlayer)) return;
         EntityPlayer player = (EntityPlayer) event.getEntity();
 
-        if (AreaComfortCalculator.isEnvironmentBlocked(player.world, player, player.getPosition())) return;
+        if (AreaComfortCalculator.isEnvironmentBlocked(player.world, player.getPosition())) return;
 
         ResourceLocation key = EntityList.getKey(entity);
         if (key == null) return;
@@ -190,7 +188,7 @@ public class ChunkComfortEventHandler {
 
         EntityPlayer player = (EntityPlayer) event.getEntityLiving();
 
-        if (AreaComfortCalculator.isEnvironmentBlocked(player.world, player, player.getPosition())) return;
+        if (AreaComfortCalculator.isEnvironmentBlocked(player.world, player.getPosition())) return;
 
         int comfort = AreaComfortCalculator.calculatePlayerComfort(player);
 

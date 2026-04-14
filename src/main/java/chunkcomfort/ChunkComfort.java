@@ -65,8 +65,6 @@ public class ChunkComfort {
 }
 
 /*
-todo: add a boss blacklist (check bossbar)
-todo: Use /chunkcomfort info to check dimension/biome_id
 todo: test these mods:
 waystones
 variedcommodities

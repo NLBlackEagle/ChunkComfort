@@ -14,7 +14,6 @@ import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.item.EntityArmorStand;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemBlock;
-import net.minecraft.item.ItemMonsterPlacer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
@@ -147,7 +146,7 @@ public class ChunkComfortClientTooltipHandler {
         if (player != null && player.world != null) {
             BlockPos pos = player.getPosition();
             if (pos != null) {
-                blacklisted = AreaComfortCalculator.isEnvironmentBlocked(player.world, player, pos);
+                blacklisted = AreaComfortCalculator.isEnvironmentBlocked(player.world, pos);
             }
         }
 

@@ -11,7 +11,8 @@
     "EntitySetDeadMixin"
   ],
   "client": [
-    "PotionEffectMixin"
+    "PotionEffectMixin",
+    "BossBarMixin"
   ],
   "injectors": {
     "defaultRequire": 1,

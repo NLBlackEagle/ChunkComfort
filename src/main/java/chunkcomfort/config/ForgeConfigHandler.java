@@ -23,6 +23,13 @@ public class ForgeConfigHandler {
         //Global Settings
 
         @Config.Comment({
+                "Enable boss bar based comfort blocking",
+                "If disabled, boss bars will not affect environment comfort logic"
+        })
+        @Config.Name("Enable Boss Bar Comfort Blocking")
+        public boolean enableBossBarDetection = true;
+
+        @Config.Comment({
                 "Set this to true if you do not want wine from the mod rustic to have a effect on hidden potions",
                 "and the comfort"
         })
