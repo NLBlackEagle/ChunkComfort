@@ -98,20 +98,16 @@ public class BlockComfortRegistry {
      */
     private static void registerBlockAndAliases(String id, ComfortEntry entry) {
 
-        Block block = Block.getBlockFromName(id);
+        boolean registered = false;
 
-        if (block == null) {
-            ChunkComfort.LOGGER.warn(
-                    I18n.translateToLocalFormatted(
-                            "chunkcomfort.config.invalid_block_entry",
-                            id
-                    )
-            );
-            return;
+        // Try canonical block (may not exist!)
+        Block block = Block.getBlockFromName(id);
+        if (block != null) {
+            BLOCK_ENTRIES.put(block, entry);
+            registered = true;
         }
 
-        BLOCK_ENTRIES.put(block, entry);
-
+        // ALWAYS process aliases
         String[] aliases = BLOCK_ALIASES.get(id);
 
         if (aliases != null) {
@@ -119,18 +115,15 @@ public class BlockComfortRegistry {
 
                 Block aliasBlock = Block.getBlockFromName(aliasId);
 
-                if (aliasBlock == null) {
-                    ChunkComfort.LOGGER.warn(
-                            I18n.translateToLocalFormatted(
-                                    "chunkcomfort.config.invalid_block_alias",
-                                    aliasId
-                            )
-                    );
-                    continue;
+                if (aliasBlock != null) {
+                    BLOCK_ENTRIES.put(aliasBlock, entry);
+                    registered = true;
                 }
-
-                BLOCK_ENTRIES.put(aliasBlock, entry);
             }
+        }
+
+        if (!registered) {
+            ChunkComfort.LOGGER.warn("No valid block found for {}", id);
         }
     }
 
