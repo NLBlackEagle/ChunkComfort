@@ -21,6 +21,8 @@ tooltip.chunkcomfort.fireblocks=§6A comfy fire, key to establishing a warm, lit
 # (flint & steel, fire charges, etc.)
 tooltip.chunkcomfort.firestarters=§6Used to create a comfy fire establishing a warm, lit and sheltered comfort zone.
 
+tooltip.chunkcomfort.inactive=Your surroundings don't feel very comfortable yet.
+
 
 # ============================================================
 # Decorative Entity Tooltips (paintings, item frames, etc.)

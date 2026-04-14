@@ -132,12 +132,15 @@ public class ChunkComfortClientTooltipHandler {
 
     @SubscribeEvent
     public void onItemTooltip(ItemTooltipEvent event) {
+
         ItemStack stack = event.getItemStack();
 
         List<String> tooltip = event.getToolTip();
         EntityPlayer player = event.getEntityPlayer();
         PlayerChunkComfortCache cache = player != null ? AreaComfortCalculator.getCache(player) : null;
         if (player != null) {cache.ensureUpToDate();}
+
+        boolean comfortActive = player != null && AreaComfortCalculator.isComfortActive(player.world, player);
 
         String registryName = Objects.requireNonNull(stack.getItem().getRegistryName()).toString();
         boolean handledSpawnEgg = false;
@@ -176,6 +179,11 @@ public class ChunkComfortClientTooltipHandler {
 
             String header = I18n.format("tooltip.chunkcomfort.header");
             if (!tooltip.contains(header)) tooltip.add(header);
+
+            if (!comfortActive && player != null) {
+                tooltip.add(I18n.format("tooltip.chunkcomfort.inactive"));
+                return;
+            }
 
             if (player != null) {
 
@@ -245,6 +253,11 @@ public class ChunkComfortClientTooltipHandler {
         String header = I18n.format("tooltip.chunkcomfort.header");
         if (!tooltip.contains(header)) tooltip.add(header);
 
+        if (!comfortActive && player != null) {
+            tooltip.add(I18n.format("tooltip.chunkcomfort.inactive"));
+            return;
+        }
+
         // -------------------
         // Fire Starter tooltip
         // -------------------
@@ -302,13 +315,8 @@ public class ChunkComfortClientTooltipHandler {
                 totalGroupLimit = GROUP_LIMITS.getOrDefault(group, 0);
             }
 
-            if (!AreaComfortCalculator.isComfortActive(player.world, player)) {
-                tooltip.add(I18n.format("tooltip.chunkcomfort.decorative.line1", value, 0, entityEntry != null ? entityEntry.limit : 0));
-                tooltip.add(I18n.format("tooltip.chunkcomfort.decorative.line2", group, 0, totalGroupLimit));
-            } else {
-                tooltip.add(I18n.format("tooltip.chunkcomfort.decorative.line1", value, entityCount, entityEntry != null ? entityEntry.limit : 0));
-                tooltip.add(I18n.format("tooltip.chunkcomfort.decorative.line2", group, groupPoints, totalGroupLimit));
-            }
+            tooltip.add(I18n.format("tooltip.chunkcomfort.decorative.line1", value, entityCount, entityEntry != null ? entityEntry.limit : 0));
+            tooltip.add(I18n.format("tooltip.chunkcomfort.decorative.line2", group, groupPoints, totalGroupLimit));
 
             if (petEntry != null) {
                 tooltip.add(I18n.format("tooltip.chunkcomfort.pet"));
@@ -354,13 +362,9 @@ public class ChunkComfortClientTooltipHandler {
                 int groupPoints = cache.groupTotals.getOrDefault(groupName, 0);
                 int totalGroupLimit = GROUP_LIMITS.getOrDefault(groupName, 0);
 
-                if (!AreaComfortCalculator.isComfortActive(player.world, player)) {
-                    tooltip.add(I18n.format("tooltip.chunkcomfort.block.line1", pointsPerBlock, 0, blockLimit));
-                    tooltip.add(I18n.format("tooltip.chunkcomfort.block.line2", groupName, 0, totalGroupLimit));
-                } else {
-                    tooltip.add(I18n.format("tooltip.chunkcomfort.block.line1", pointsPerBlock, totalAmount, blockLimit));
-                    tooltip.add(I18n.format("tooltip.chunkcomfort.block.line2", groupName, groupPoints, totalGroupLimit));
-                }
+                tooltip.add(I18n.format("tooltip.chunkcomfort.block.line1", pointsPerBlock, totalAmount, blockLimit));
+                tooltip.add(I18n.format("tooltip.chunkcomfort.block.line2", groupName, groupPoints, totalGroupLimit));
+
             }
         }
     }
