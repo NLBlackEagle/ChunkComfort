@@ -6,7 +6,6 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.item.EntityArmorStand;
-import net.minecraft.entity.item.EntityPainting;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.AxisAlignedBB;
@@ -62,6 +61,10 @@ public class AreaComfortCalculator {
 
             GROUP_LIMITS.put(group, limit);
         }
+    }
+
+    public static boolean isComfortActive(World world, EntityPlayer player) {
+        return player != null && player.isPotionActive(PotionRegistry.COMFORT);
     }
 
     public static int calculateComfortActivation(World world, EntityPlayer player) {

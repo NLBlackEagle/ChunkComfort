@@ -302,8 +302,13 @@ public class ChunkComfortClientTooltipHandler {
                 totalGroupLimit = GROUP_LIMITS.getOrDefault(group, 0);
             }
 
-            tooltip.add(I18n.format("tooltip.chunkcomfort.decorative.line1", value, entityCount, entityEntry != null ? entityEntry.limit : 0));
-            tooltip.add(I18n.format("tooltip.chunkcomfort.decorative.line2", group, groupPoints, totalGroupLimit));
+            if (!AreaComfortCalculator.isComfortActive(player.world, player)) {
+                tooltip.add(I18n.format("tooltip.chunkcomfort.decorative.line1", value, 0, entityEntry != null ? entityEntry.limit : 0));
+                tooltip.add(I18n.format("tooltip.chunkcomfort.decorative.line2", group, 0, totalGroupLimit));
+            } else {
+                tooltip.add(I18n.format("tooltip.chunkcomfort.decorative.line1", value, entityCount, entityEntry != null ? entityEntry.limit : 0));
+                tooltip.add(I18n.format("tooltip.chunkcomfort.decorative.line2", group, groupPoints, totalGroupLimit));
+            }
 
             if (petEntry != null) {
                 tooltip.add(I18n.format("tooltip.chunkcomfort.pet"));
@@ -349,9 +354,13 @@ public class ChunkComfortClientTooltipHandler {
                 int groupPoints = cache.groupTotals.getOrDefault(groupName, 0);
                 int totalGroupLimit = GROUP_LIMITS.getOrDefault(groupName, 0);
 
-                tooltip.add(I18n.format("tooltip.chunkcomfort.block.line1", pointsPerBlock, totalAmount, blockLimit));
-                tooltip.add(I18n.format("tooltip.chunkcomfort.block.line2", groupName, groupPoints, totalGroupLimit));
-
+                if (!AreaComfortCalculator.isComfortActive(player.world, player)) {
+                    tooltip.add(I18n.format("tooltip.chunkcomfort.block.line1", pointsPerBlock, 0, blockLimit));
+                    tooltip.add(I18n.format("tooltip.chunkcomfort.block.line2", groupName, 0, totalGroupLimit));
+                } else {
+                    tooltip.add(I18n.format("tooltip.chunkcomfort.block.line1", pointsPerBlock, totalAmount, blockLimit));
+                    tooltip.add(I18n.format("tooltip.chunkcomfort.block.line2", groupName, groupPoints, totalGroupLimit));
+                }
             }
         }
     }
