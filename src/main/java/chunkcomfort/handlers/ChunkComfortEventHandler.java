@@ -77,6 +77,9 @@ public class ChunkComfortEventHandler {
         if (player == null || player.world == null || player.world.isRemote) return;
         if (player.ticksExisted % chunkcomfort.config.ForgeConfigHandler.server.comfortCheckInterval != 0) return;
 
+        PlayerChunkComfortCache cache = player != null ? AreaComfortCalculator.getCache(player) : null;
+        if (cache.isEmpty()) {AreaComfortCalculator.calculatePlayerComfort(player);}
+
         chunkcomfort.player.PlayerComfortManager.applyComfortEffects(player);
     }
 

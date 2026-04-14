@@ -203,12 +203,7 @@ public class ChunkComfortClientTooltipHandler {
 
             if (player != null) {
 
-                Entity entity =
-                        EntityList.createEntityByIDFromName(entityID, player.world);
-
-                if (cache.isEmpty()) {
-                    AreaComfortCalculator.calculatePlayerComfort(player);
-                }
+                Entity entity = EntityList.createEntityByIDFromName(entityID, player.world);
 
                 if (entity instanceof EntityLiving) {
 
@@ -298,7 +293,6 @@ public class ChunkComfortClientTooltipHandler {
 
         if (player == null) return;
 
-        if (cache.isEmpty()) {AreaComfortCalculator.calculatePlayerComfort(player);}
         // -------------------
         // Non-living / generic entity tooltip (skip if spawn egg already handled)
         // -------------------
