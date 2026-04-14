@@ -140,7 +140,7 @@ public class ChunkComfortClientTooltipHandler {
         PlayerChunkComfortCache cache = player != null ? AreaComfortCalculator.getCache(player) : null;
         if (player != null) {cache.ensureUpToDate();}
 
-        boolean comfortActive = player != null && AreaComfortCalculator.isComfortActive(player.world, player);
+        boolean comfortActive = player != null && AreaComfortCalculator.isComfortActive(player);
 
         String registryName = Objects.requireNonNull(stack.getItem().getRegistryName()).toString();
         boolean handledSpawnEgg = false;

@@ -279,6 +279,18 @@ public class ForgeConfigHandler {
                 "425,[[minecraft:strength,2],[minecraft:resistance,2],[minecraft:regeneration,2]]"
         };
 
+        @Config.Comment({
+                "Potion blacklist per comfort tier",
+                "Format: <min_comfort>,[<potion_id>,<another_potion_id>]",
+                "Example: 60,[minecraft:poison]",
+                "Example: 100,[minecraft:wither,minecraft:mining_fatigue]"
+        })
+        @Config.Name("Comfort Potion Blacklist")
+        public String[] comfortPotionBlacklist = new String[]{
+                "60,[minecraft:poison]",
+                "100,[minecraft:wither,minecraft:mining_fatigue]"
+        };
+
         @Config.Comment("Percentage chance for messages from Comfort Waking Messages to display after waking up in-game")
         @Config.RangeInt(min = 0, max = 100)
         @Config.Name("Comfort Waking Messages Percentage")
@@ -310,6 +322,9 @@ public class ForgeConfigHandler {
     }
 
     public static void reloadRegistries() {
+
+        try { PotionBlacklistRegistry.reload(server.comfortPotionBlacklist); }
+        catch (Exception e) { ChunkComfort.LOGGER.error("Failed to reload Potion Blacklist", e); }
 
         try { FireBlockRegistry.reload(server.fireBlocks); }
         catch (Exception e) { ChunkComfort.LOGGER.error("Failed to reload Fire Blocks", e); }

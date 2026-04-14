@@ -63,7 +63,7 @@ public class AreaComfortCalculator {
         }
     }
 
-    public static boolean isComfortActive(World world, EntityPlayer player) {
+    public static boolean isComfortActive(EntityPlayer player) {
         return player != null && player.isPotionActive(PotionRegistry.COMFORT);
     }
 

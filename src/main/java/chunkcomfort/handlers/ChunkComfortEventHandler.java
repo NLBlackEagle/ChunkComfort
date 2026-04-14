@@ -4,30 +4,35 @@ import chunkcomfort.chunk.*;
 import chunkcomfort.config.ForgeConfigHandler;
 import chunkcomfort.registry.EntityComfortRegistry;
 import chunkcomfort.registry.PettingComfortRegistry;
+import chunkcomfort.registry.PotionBlacklistRegistry;
 import net.minecraft.block.Block;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
+import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.item.EntityArmorStand;
 import net.minecraft.entity.passive.EntityTameable;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.potion.Potion;
+import net.minecraft.potion.PotionEffect;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.world.World;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
+import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
+import net.minecraftforge.event.entity.living.PotionEvent;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.entity.player.PlayerWakeUpEvent;
 import net.minecraftforge.event.world.BlockEvent;
+import net.minecraftforge.fml.common.eventhandler.Event;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 public class ChunkComfortEventHandler {
 
@@ -169,6 +174,37 @@ public class ChunkComfortEventHandler {
         // --- CLIENT: visuals only ---
         if (player.world.isRemote) {
             PettingComfortManager.applyPettingBoostClient(player, entity, entry);
+        }
+    }
+
+
+
+    @SubscribeEvent
+    public void onPotionAdded(PotionEvent.PotionAddedEvent event) {
+
+        if (!(event.getEntityLiving() instanceof EntityPlayer)) return;
+
+        EntityPlayer player = (EntityPlayer) event.getEntityLiving();
+        int comfort = AreaComfortCalculator.calculatePlayerComfort(player);
+
+        List<Potion> toRemove = new ArrayList<>();
+
+        for (PotionEffect effect : player.getActivePotionEffects()) {
+
+            ResourceLocation id =
+                    Potion.REGISTRY.getNameForObject(effect.getPotion());
+
+            if (id == null) continue;
+
+            String potionId = id.toString();
+
+            if (PotionBlacklistRegistry.isBlocked(comfort, potionId)) {
+                toRemove.add(effect.getPotion());
+            }
+        }
+
+        for (Potion potion : toRemove) {
+            player.removePotionEffect(potion);
         }
     }
 }
