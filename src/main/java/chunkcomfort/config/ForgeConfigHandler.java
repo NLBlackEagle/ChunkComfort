@@ -283,7 +283,7 @@ public class ForgeConfigHandler {
                 "Dimension blacklist (comfort disabled in these dimensions)",
                 "Format: <dimension_id>",
                 "Example: the_nether",
-                "Use /chunkcomfort info to check dimension/biome_id"
+                "Use /chunkcomfort biome to check dimension/biome_id"
         })
         @Config.Name("Dimension Blacklist")
         public String[] dimensionBlacklist = new String[]{

@@ -36,7 +36,7 @@ public class CommandChunkComfort extends CommandBase {
     public String getName() { return "chunkcomfort"; }
 
     @Override
-    public String getUsage(ICommandSender sender) { return "/chunkcomfort <info|reload>"; }
+    public String getUsage(ICommandSender sender) { return "/chunkcomfort <info|reload|biome>"; }
 
     @Override
     public int getRequiredPermissionLevel() { return 2; }
@@ -55,9 +55,33 @@ public class CommandChunkComfort extends CommandBase {
             case "reload":
                 executeReload(server, sender);
                 break;
+            case "biome":
+                executeBiome(sender);
+                break;
             default:
                 sender.sendMessage(new TextComponentString(I18n.format("debug.chunkcomfort.unknown_subcommand")));
         }
+    }
+
+    private void executeBiome(ICommandSender sender) {
+        EntityPlayer player = (EntityPlayer) sender.getCommandSenderEntity();
+        if (player == null) return;
+
+        World world = player.world;
+        BlockPos pos = player.getPosition();
+
+        // Biome
+        net.minecraft.world.biome.Biome biome = world.getBiome(pos);
+        ResourceLocation biomeId = biome.getRegistryName();
+
+        // Dimension
+        int dimId = world.provider.getDimension();
+        String dimName = world.provider.getDimensionType().getName();
+
+        sender.sendMessage(new TextComponentString(
+                "Dimension: " + dimName + " (" + dimId + ")" +
+                        " | Biome: " + (biomeId != null ? biomeId.toString() : "unknown")
+        ));
     }
 
     private void executeInfo(ICommandSender sender) {

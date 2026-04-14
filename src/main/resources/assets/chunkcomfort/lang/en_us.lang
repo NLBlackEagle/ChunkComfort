@@ -100,7 +100,7 @@ chunkcomfort.petting.cooldown=§6Your pet doesn't feel like being petted. Wait %
 # ============================================================
 
 # Usage hint for /chunkcomfort command
-debug.chunkcomfort.usage=§cUsage: /chunkcomfort <info|reload>
+debug.chunkcomfort.usage=§cUsage: /chunkcomfort <info|reload|biome>
 
 # Unknown subcommand warning
 debug.chunkcomfort.unknown_subcommand=§cUnknown subcommand.
