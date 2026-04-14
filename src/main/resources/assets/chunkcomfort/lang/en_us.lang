@@ -31,12 +31,12 @@ tooltip.chunkcomfort.inactive=Your surroundings don't feel very comfortable yet.
 # Shows total comfort points contributed by this decorative entity
 # %d = entity points added
 # %d/%d = current group total / group limit
-tooltip.chunkcomfort.decorative.line1=§aEntity points: %d  Limit: %d/%d
+tooltip.chunkcomfort.decorative.line1=§aEntity points: %1$s  Limit: %2$s/%3$s
 
 # Displays which decorative group the entity belongs to
 # %s = group name
 # %d/%d = points in group / max allowed points
-tooltip.chunkcomfort.decorative.line2=§bGroup: %s  Points: %d/%d
+tooltip.chunkcomfort.decorative.line2=§bGroup: %1$s  Points: %2$s/%3$s
 
 
 # ============================================================
@@ -46,10 +46,10 @@ tooltip.chunkcomfort.decorative.line2=§bGroup: %s  Points: %d/%d
 # Displays comfort value contributed by a placed block
 # %d = block points added
 # %d/%d = current group total / group limit
-tooltip.chunkcomfort.block.line1=§aBlock points: %d  Limit: %d/%d
+tooltip.chunkcomfort.block.line1=§aBlock points: %1$s  Limit: %2$s/%3$s
 
 # Shows block comfort group information
-tooltip.chunkcomfort.block.line2=§bGroup: %s  Points: %d/%d
+tooltip.chunkcomfort.block.line2=§bGroup: %1$s  Points: %2$s/%3$s
 
 
 # ============================================================
@@ -57,15 +57,15 @@ tooltip.chunkcomfort.block.line2=§bGroup: %s  Points: %d/%d
 # ============================================================
 
 # Comfort contribution from living entities (pets, villagers, animals)
-tooltip.chunkcomfort.living.line1=§aEntity points: %d  Limit: %d/%d
+tooltip.chunkcomfort.living.line1=§aEntity points: %1$s  Limit: %2$s/%3$s
 
 # Living entity group breakdown
-tooltip.chunkcomfort.living.line2=§bGroup: %s  Points: %d/%d
+tooltip.chunkcomfort.living.line2=§bGroup: %1$s  Points: %2$s/%3$s
 
 # Bonus comfort granted when entities are named
 # %s = list of names detected
 # %d = bonus points awarded
-tooltip.chunkcomfort.named_pets=Names: %s + %d points
+tooltip.chunkcomfort.named_pets=Names: %1$s + %2$s points
 
 
 # ============================================================
@@ -77,12 +77,12 @@ tooltip.chunkcomfort.pet=§d§oShift + Left Click to pet your pet!
 
 # Chat message shown when petting succeeds
 # %s = entity name
-tooltip.chunkcomfort.petting.message.line1=§6Petting your pet %s comforts you.
+tooltip.chunkcomfort.petting.message.line1=§6Petting your pet %1$s comforts you.
 
 # Displays temporary comfort bonus
 # %d = comfort gained
 # %d = duration in seconds
-tooltip.chunkcomfort.petting.message.line2=§6Comfort increased by %d point(s) for %d seconds!
+tooltip.chunkcomfort.petting.message.line2=§6Comfort increased by %1$s point(s) for %2$s seconds!
 
 
 # ============================================================
@@ -108,7 +108,7 @@ debug.chunkcomfort.reload_config=§a[ChunkComfort] Config reloaded.
 
 # Per-world cache cleared
 # %d = world/dimension id
-debug.chunkcomfort.reload_world=§a[ChunkComfort] Cleared caches for world: %d
+debug.chunkcomfort.reload_world=§a[ChunkComfort] Cleared caches for world: %1$s
 
 # Comfort recalculation finished for all players
 debug.chunkcomfort.reload_complete=§a[ChunkComfort] Comfort recalculated for all players.
@@ -120,7 +120,7 @@ debug.chunkcomfort.reload_complete=§a[ChunkComfort] Comfort recalculated for al
 
 # Printed when comfort system is disabled or inactive
 # %s = reason
-debug.chunkcomfort.inactive=Comfort system inactive: %s
+debug.chunkcomfort.inactive=Comfort system inactive: %1$s
 
 
 # ============================================================
@@ -134,7 +134,7 @@ debug.chunkcomfort.separator=-------------------
 debug.chunkcomfort.activation_header=Comfort Activation:
 
 # Shows total comfort points vs required activation threshold
-debug.chunkcomfort.group_breakdown=Group Breakdown: [Total Comfort: %d/%d]
+debug.chunkcomfort.group_breakdown=Group Breakdown: [Total Comfort: %1$s/%2$s]
 
 # Explains debug output formatting
 debug.chunkcomfort.group_breakdown_syntax=Syntax: Group, Points, Limit | Entity, Count, Limit
@@ -148,19 +148,19 @@ debug.chunkcomfort.group_breakdown_syntax=Syntax: Group, Points, Limit | Entity,
 debug.chunkcomfort.shelter_required=Shelter Required: true
 
 # Whether valid shelter was detected
-debug.chunkcomfort.shelter_found= Shelter Found: %s
+debug.chunkcomfort.shelter_found= Shelter Found: %1$s
 
 # Required minimum light level
-debug.chunkcomfort.light_required=Light Level Required: %d
+debug.chunkcomfort.light_required=Light Level Required: %1$s
 
 # Player's current light level
-debug.chunkcomfort.light_level= Light Level: %d
+debug.chunkcomfort.light_level= Light Level: %1$s
 
 # Fire requirement enabled
 debug.chunkcomfort.fire_required=Fire Required: true
 
 # Whether valid fire source was found nearby
-debug.chunkcomfort.fire_found= Fire Found: %s
+debug.chunkcomfort.fire_found= Fire Found: %1$s
 
 # Temperature requirement enabled
 debug.chunkcomfort.temperature_required=Temperature Required: true
@@ -169,19 +169,19 @@ debug.chunkcomfort.temperature_required=Temperature Required: true
 # %d = minimum comfort temp
 # %d = maximum comfort temp
 # %d = player temperature
-debug.chunkcomfort.temperature_range= Comfort Temp: %d to %d Player Temp: %d
+debug.chunkcomfort.temperature_range= Comfort Temp: %1$s to %2$s Player Temp: %3$s
 
 # Invalid syntax messages
-chunkcomfort.config.invalid_entry=Invalid ChunkComfort biome config entry: '%s'
-chunkcomfort.config.invalid_block_entry=Invalid ChunkComfort block config entry: '%s'
-chunkcomfort.config.invalid_block_alias=Invalid ChunkComfort block alias entry: '%s'
-chunkcomfort.config.invalid_spawn_egg_entry=Invalid ChunkComfort custom spawn egg config entry: '%s'
-chunkcomfort.config.invalid_entity_entry=Invalid ChunkComfort entity config entry: '%s'
-chunkcomfort.config.invalid_fire_block_entry=Invalid ChunkComfort fire block config entry: '%s'
-chunkcomfort.config.invalid_fire_source_item_entry=Invalid ChunkComfort fire source item config entry: '%s'
-chunkcomfort.config.invalid_living_entry=Invalid ChunkComfort living entity config entry: '%s'
-chunkcomfort.config.invalid_named_pet_entry=Invalid ChunkComfort named pet config entry: '%s'
-chunkcomfort.config.invalid_petting_entry=Invalid ChunkComfort petting comfort config entry: '%s'
+chunkcomfort.config.invalid_entry=Invalid ChunkComfort biome config entry: '%1$s'
+chunkcomfort.config.invalid_block_entry=Invalid ChunkComfort block config entry: '%1$s'
+chunkcomfort.config.invalid_block_alias=Invalid ChunkComfort block alias entry: '%1$s'
+chunkcomfort.config.invalid_spawn_egg_entry=Invalid ChunkComfort custom spawn egg config entry: '%1$s'
+chunkcomfort.config.invalid_entity_entry=Invalid ChunkComfort entity config entry: '%1$s'
+chunkcomfort.config.invalid_fire_block_entry=Invalid ChunkComfort fire block config entry: '%1$s'
+chunkcomfort.config.invalid_fire_source_item_entry=Invalid ChunkComfort fire source item config entry: '%1$s'
+chunkcomfort.config.invalid_living_entry=Invalid ChunkComfort living entity config entry: '%1$s'
+chunkcomfort.config.invalid_named_pet_entry=Invalid ChunkComfort named pet config entry: '%1$s'
+chunkcomfort.config.invalid_petting_entry=Invalid ChunkComfort petting comfort config entry: '%1$s'
 
 
 # Messages displayed for comfort levels
