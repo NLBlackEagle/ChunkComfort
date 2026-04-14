@@ -17,6 +17,7 @@ import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemMonsterPlacer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
@@ -140,6 +141,16 @@ public class ChunkComfortClientTooltipHandler {
         PlayerChunkComfortCache cache = player != null ? AreaComfortCalculator.getCache(player) : null;
         if (player != null) {cache.ensureUpToDate();}
 
+
+        boolean blacklisted = false;
+
+        if (player != null && player.world != null) {
+            BlockPos pos = player.getPosition();
+            if (pos != null) {
+                blacklisted = AreaComfortCalculator.isEnvironmentBlocked(player.world, player, pos);
+            }
+        }
+
         boolean comfortActive = player != null && AreaComfortCalculator.isComfortActive(player);
 
         String registryName = Objects.requireNonNull(stack.getItem().getRegistryName()).toString();
@@ -180,7 +191,13 @@ public class ChunkComfortClientTooltipHandler {
             String header = I18n.format("tooltip.chunkcomfort.header");
             if (!tooltip.contains(header)) tooltip.add(header);
 
-            if (!comfortActive && player != null) {
+            if (blacklisted) {
+                tooltip.add(I18n.format("tooltip.chunkcomfort.blacklisted"));
+                return;
+            }
+
+
+            if (!comfortActive && player != null && !blacklisted) {
                 tooltip.add(I18n.format("tooltip.chunkcomfort.inactive"));
                 return;
             }
@@ -253,7 +270,12 @@ public class ChunkComfortClientTooltipHandler {
         String header = I18n.format("tooltip.chunkcomfort.header");
         if (!tooltip.contains(header)) tooltip.add(header);
 
-        if (!comfortActive && player != null) {
+        if (blacklisted) {
+            tooltip.add(I18n.format("tooltip.chunkcomfort.blacklisted"));
+            return;
+        }
+
+        if (!comfortActive && player != null && !blacklisted) {
             tooltip.add(I18n.format("tooltip.chunkcomfort.inactive"));
             return;
         }

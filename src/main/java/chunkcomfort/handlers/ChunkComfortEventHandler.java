@@ -109,6 +109,8 @@ public class ChunkComfortEventHandler {
 
         if (player.world.isRemote) return;
 
+        if (AreaComfortCalculator.isEnvironmentBlocked(player.world, player, player.getPosition())) return;
+
         int chance = ForgeConfigHandler.server.messagePercentage;
 
         if (player.world.rand.nextInt(100) >= chance) return;
@@ -125,6 +127,8 @@ public class ChunkComfortEventHandler {
 
         if (!(event.getEntity() instanceof EntityPlayer)) return;
         EntityPlayer player = (EntityPlayer) event.getEntity();
+
+        if (AreaComfortCalculator.isEnvironmentBlocked(player.world, player, player.getPosition())) return;
 
         ResourceLocation key = EntityList.getKey(entity);
         if (key == null) return;
@@ -185,6 +189,9 @@ public class ChunkComfortEventHandler {
         if (!(event.getEntityLiving() instanceof EntityPlayer)) return;
 
         EntityPlayer player = (EntityPlayer) event.getEntityLiving();
+
+        if (AreaComfortCalculator.isEnvironmentBlocked(player.world, player, player.getPosition())) return;
+
         int comfort = AreaComfortCalculator.calculatePlayerComfort(player);
 
         List<Potion> toRemove = new ArrayList<>();

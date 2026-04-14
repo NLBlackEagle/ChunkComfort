@@ -80,10 +80,29 @@ public class AreaComfortCalculator {
         return comfort;
     }
 
+    public static boolean isEnvironmentBlocked(World world, EntityPlayer player, BlockPos pos) {
+
+        String dimId = world.provider.getDimensionType().getName();
+
+        String biomeId = Objects.requireNonNull(
+                world.getBiome(pos).getRegistryName()
+        ).toString();
+
+        return DimensionBiomeBlacklistRegistry.isDimensionBlocked(dimId)
+                || DimensionBiomeBlacklistRegistry.isBiomeBlocked(biomeId);
+    }
+
     public static int calculatePlayerComfort(EntityPlayer player) {
         World world = player.world;
         BlockPos playerPos = player.getPosition();
         int radius = getRadius();
+
+        if (isEnvironmentBlocked(world, player, playerPos)) {
+            if (PotionRegistry.COMFORT != null) {
+                player.removePotionEffect(PotionRegistry.COMFORT);
+            }
+            return 0;
+        }
 
 
         int comfortActive = calculateComfortActivation(world, player);

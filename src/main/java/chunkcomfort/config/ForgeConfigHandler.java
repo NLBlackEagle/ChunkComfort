@@ -280,6 +280,27 @@ public class ForgeConfigHandler {
         };
 
         @Config.Comment({
+                "Dimension blacklist (comfort disabled in these dimensions)",
+                "Format: <dimension_id>",
+                "Example: the_nether",
+                "Use /chunkcomfort info to check dimension/biome_id"
+        })
+        @Config.Name("Dimension Blacklist")
+        public String[] dimensionBlacklist = new String[]{
+                "the_nether"
+        };
+
+        @Config.Comment({
+                "Biome blacklist (comfort disabled in these biomes)",
+                "Format: <biome_id>",
+                "Example: minecraft:hell"
+        })
+        @Config.Name("Biome Blacklist")
+        public String[] biomeBlacklist = new String[]{
+                "minecraft:hell"
+        };
+
+        @Config.Comment({
                 "Potion blacklist per comfort tier",
                 "Format: <min_comfort>,[<potion_id>,<another_potion_id>]",
                 "Example: 60,[minecraft:poison]",
@@ -322,6 +343,9 @@ public class ForgeConfigHandler {
     }
 
     public static void reloadRegistries() {
+
+        try { DimensionBiomeBlacklistRegistry.reload(server.dimensionBlacklist,server.biomeBlacklist); }
+        catch (Exception e) { ChunkComfort.LOGGER.error("Failed to reload Dimension and Biome Blacklist", e); }
 
         try { PotionBlacklistRegistry.reload(server.comfortPotionBlacklist); }
         catch (Exception e) { ChunkComfort.LOGGER.error("Failed to reload Potion Blacklist", e); }
