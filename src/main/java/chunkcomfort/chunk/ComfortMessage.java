@@ -3,6 +3,7 @@ package chunkcomfort.chunk;
 import chunkcomfort.config.ForgeConfigHandler;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.text.TextComponentString;
+import net.minecraft.util.text.TextComponentTranslation;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -55,7 +56,7 @@ public class ComfortMessage {
         }
 
         if (selected != null) {
-            player.sendMessage(new TextComponentString(selected));
+            player.sendMessage(new TextComponentTranslation(selected));
         }
     }
 }

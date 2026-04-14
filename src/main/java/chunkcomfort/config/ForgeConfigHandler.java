@@ -293,19 +293,19 @@ public class ForgeConfigHandler {
         })
         @Config.Name("Comfort Waking Messages")
         public String[] stagedMessages = new String[]{
-                "0,0,'chunkcomfort.config.message.1'",
-                "0,0,'chunkcomfort.config.message.2'",
-                "1,10,'chunkcomfort.config.message.3'",
-                "10,30,'chunkcomfort.config.message.4'",
-                "30,60,'chunkcomfort.config.message.5'",
-                "60,100,'chunkcomfort.config.message.6'",
-                "100,150,'chunkcomfort.config.message.7'",
-                "150,200,'chunkcomfort.config.message.8'",
-                "200,250,'chunkcomfort.config.message.9'",
-                "250,300,'chunkcomfort.config.message.10'",
-                "300,350,'chunkcomfort.config.message.11'",
-                "350,425,'chunkcomfort.config.message.12'",
-                "425,450,'chunkcomfort.config.message.13"
+                "0,0,chunkcomfort.config.message.1",
+                "0,0,chunkcomfort.config.message.2",
+                "1,10,chunkcomfort.config.message.3",
+                "10,30,chunkcomfort.config.message.4",
+                "30,60,chunkcomfort.config.message.5",
+                "60,100,chunkcomfort.config.message.6",
+                "100,150,chunkcomfort.config.message.7",
+                "150,200,chunkcomfort.config.message.8",
+                "200,250,chunkcomfort.config.message.9",
+                "250,300,chunkcomfort.config.message.10",
+                "300,350,chunkcomfort.config.message.11",
+                "350,425,chunkcomfort.config.message.12",
+                "425,450,chunkcomfort.config.message.13"
         };
     }
 

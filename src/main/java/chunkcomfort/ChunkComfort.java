@@ -78,8 +78,5 @@ cookingforblockheads (old one)
 comforts
 biomesoplenty
 betternether
-todo: Make comfort display default values when comfort is not active
 todo: make petting have feedback (Display Comfort still active if > 0 else cooldown still active if > 0)
-todo: localization does not work in wake up message
-
  */
