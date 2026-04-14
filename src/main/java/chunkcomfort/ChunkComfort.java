@@ -68,6 +68,7 @@ public class ChunkComfort {
 todo: make a potion blacklist, if comfort x is active then these potion effects can NOT be applied.
 todo: add a dimension blacklist/whitelist
 todo: add a biome blacklist/whitelist
+todo: add a boss blacklist (check bossbar)
 todo: test these mods:
 waystones
 variedcommodities

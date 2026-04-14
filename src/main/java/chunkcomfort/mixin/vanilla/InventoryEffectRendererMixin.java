@@ -161,12 +161,18 @@ public abstract class InventoryEffectRendererMixin {
             List<String> tooltip = new ArrayList<>();
 
             tooltip.add(I18n.format("tooltip.chunkcomfort.positive.effects"));
-            tooltip.addAll(effects);
+
+            for (String effect : effects) {
+                tooltip.add(I18n.format("tooltip.chunkcomfort.positive.effects.plus") + " " + effect);
+            }
 
             if (!negated.isEmpty()) {
                 tooltip.add("");
                 tooltip.add(I18n.format("tooltip.chunkcomfort.negative.effects"));
-                tooltip.addAll(negated);
+
+                for (String effect : negated) {
+                    tooltip.add(I18n.format("tooltip.chunkcomfort.positive.effects.minus") + " " + effect);
+                }
             }
 
             GuiUtils.drawHoveringText(
