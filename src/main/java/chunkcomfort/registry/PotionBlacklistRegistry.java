@@ -11,14 +11,16 @@ public class PotionBlacklistRegistry {
 
     private static final Map<Integer, Set<String>> blacklist = new HashMap<>();
 
+    public static Map<Integer, Set<String>> getBlacklist() {
+        return blacklist;
+    }
+
     public static boolean isBlocked(int comfort, String potion) {
 
         for (Map.Entry<Integer, Set<String>> entry : blacklist.entrySet()) {
 
             if (comfort >= entry.getKey()) {
-                System.out.println("[ChunkComfort] DEBUG: " + entry.getValue() + " Contains " + potion);
                 if (entry.getValue().contains(potion)) {
-                    System.out.println("[ChunkComfort] DEBUG: 3");
                     return true;
                 }
             }
