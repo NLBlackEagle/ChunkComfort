@@ -29,13 +29,13 @@ tooltip.chunkcomfort.inactive=Your surroundings don't feel very comfortable yet.
 # ============================================================
 
 # Shows total comfort points contributed by this decorative entity
-# %d = entity points added
-# %d/%d = current group total / group limit
+# %1$s = entity points added
+# %2$s/%3$s = current group total / group limit
 tooltip.chunkcomfort.decorative.line1=§aEntity points: %1$s  Limit: %2$s/%3$s
 
 # Displays which decorative group the entity belongs to
-# %s = group name
-# %d/%d = points in group / max allowed points
+# %1$s = group name
+# %2$s/%3$s = points in group / max allowed points
 tooltip.chunkcomfort.decorative.line2=§bGroup: %1$s  Points: %2$s/%3$s
 
 
@@ -44,8 +44,8 @@ tooltip.chunkcomfort.decorative.line2=§bGroup: %1$s  Points: %2$s/%3$s
 # ============================================================
 
 # Displays comfort value contributed by a placed block
-# %d = block points added
-# %d/%d = current group total / group limit
+# %1$s = block points added
+# %2$s/%3$s = current group total / group limit
 tooltip.chunkcomfort.block.line1=§aBlock points: %1$s  Limit: %2$s/%3$s
 
 # Shows block comfort group information
@@ -63,8 +63,8 @@ tooltip.chunkcomfort.living.line1=§aEntity points: %1$s  Limit: %2$s/%3$s
 tooltip.chunkcomfort.living.line2=§bGroup: %1$s  Points: %2$s/%3$s
 
 # Bonus comfort granted when entities are named
-# %s = list of names detected
-# %d = bonus points awarded
+# %1$s = list of names detected
+# %2$s = bonus points awarded
 tooltip.chunkcomfort.named_pets=Names: %1$s + %2$s points
 
 
@@ -76,13 +76,17 @@ tooltip.chunkcomfort.named_pets=Names: %1$s + %2$s points
 tooltip.chunkcomfort.pet=§d§oShift + Left Click to pet your pet!
 
 # Chat message shown when petting succeeds
-# %s = entity name
+# %1$s = entity name
 tooltip.chunkcomfort.petting.message.line1=§6Petting your pet %1$s comforts you.
 
 # Displays temporary comfort bonus
-# %d = comfort gained
-# %d = duration in seconds
+# %1$s = comfort gained
+# %2$s = duration in seconds
 tooltip.chunkcomfort.petting.message.line2=§6Comfort increased by %1$s point(s) for %2$s seconds!
+
+# Cooldown Message for when your pet does not want to be petted just yet
+# %1$s = seconds cooldown remaining
+chunkcomfort.petting.cooldown=§6Your pet doesn't feel like being petted. Wait %1$s second(s).
 
 
 # ============================================================
@@ -107,7 +111,7 @@ debug.chunkcomfort.reload_start=§a[ChunkComfort] Clearing caches and reloading.
 debug.chunkcomfort.reload_config=§a[ChunkComfort] Config reloaded.
 
 # Per-world cache cleared
-# %d = world/dimension id
+# %1$s = world/dimension id
 debug.chunkcomfort.reload_world=§a[ChunkComfort] Cleared caches for world: %1$s
 
 # Comfort recalculation finished for all players
@@ -119,7 +123,7 @@ debug.chunkcomfort.reload_complete=§a[ChunkComfort] Comfort recalculated for al
 # ============================================================
 
 # Printed when comfort system is disabled or inactive
-# %s = reason
+# %1$s = reason
 debug.chunkcomfort.inactive=Comfort system inactive: %1$s
 
 
@@ -166,9 +170,9 @@ debug.chunkcomfort.fire_found= Fire Found: %1$s
 debug.chunkcomfort.temperature_required=Temperature Required: true
 
 # Comfort temperature range comparison
-# %d = minimum comfort temp
-# %d = maximum comfort temp
-# %d = player temperature
+# %1$s = minimum comfort temp
+# %2$s = maximum comfort temp
+# %3$s = player temperature
 debug.chunkcomfort.temperature_range= Comfort Temp: %1$s to %2$s Player Temp: %3$s
 
 # Invalid syntax messages

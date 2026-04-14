@@ -5,6 +5,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.text.TextComponentString;
+import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.world.World;
 
 import java.util.HashMap;
@@ -88,7 +89,14 @@ public class PettingComfortManager {
         long now = System.currentTimeMillis();
 
         Map<UUID, Long> playerCooldowns = cooldowns.getOrDefault(playerId, new HashMap<>());
-        Long nextPetTime = playerCooldowns.get(entityId);
+        Long nextPetTime = playerCooldowns.get(entityId); //Represents timestamp when the player can pet the entity again.
+
+        //nextPetTime - now = time remaining until player can pet again
+        if (nextPetTime != null && now < nextPetTime && !player.world.isRemote) {
+            long remainingCooldown = nextPetTime - now;
+            long seconds = remainingCooldown / 1000;
+            player.sendMessage(new TextComponentTranslation("chunkcomfort.petting.cooldown", seconds));
+        }
 
         return nextPetTime == null || now >= nextPetTime;
     }

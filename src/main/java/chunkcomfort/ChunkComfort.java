@@ -78,5 +78,4 @@ cookingforblockheads (old one)
 comforts
 biomesoplenty
 betternether
-todo: make petting have feedback (Display Comfort still active if > 0 else cooldown still active if > 0)
  */
