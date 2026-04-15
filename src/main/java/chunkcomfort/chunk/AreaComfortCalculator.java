@@ -23,7 +23,7 @@ public class AreaComfortCalculator {
     public static void incrementCacheVersion() {CACHE_VERSION++;}
     public static int getCacheVersion() {return CACHE_VERSION;}
 
-    private static final boolean DEBUG_COMFORT = false;
+    private static final boolean DEBUG_COMFORT = true;
 
     private static final Map<String, Integer> GROUP_LIMITS = new HashMap<>();
     private static final Map<UUID, PlayerChunkComfortCache> PLAYER_CACHES = new HashMap<>();
@@ -280,6 +280,7 @@ public class AreaComfortCalculator {
         System.out.println("======================================");
         System.out.println("[ComfortDebug] Player: " + player.getName());
         System.out.println("[ComfortDebug] TotalComfort: " + totalComfort);
+        System.out.println("[ComfortDebug] PettingBoost: " + PettingComfortManager.getActivePettingPoints(player.getUniqueID()));
 
         for (String group : allGroups) {
 
