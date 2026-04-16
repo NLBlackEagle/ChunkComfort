@@ -21,6 +21,15 @@ import java.util.stream.Collectors;
 public class PlayerComfortManager {
 
     private static final Logger LOGGER = LogManager.getLogger("ChunkComfort");
+    private static final Map<UUID, Integer> COMFORT_CACHE = new HashMap<>();
+
+    public static void setCachedComfort(UUID id, int value) {
+        COMFORT_CACHE.put(id, value);
+    }
+
+    public static int getCachedComfort(EntityPlayer player) {
+        return COMFORT_CACHE.getOrDefault(player.getUniqueID(), 0);
+    }
 
     private static class EffectEntry {
         final Potion potion;

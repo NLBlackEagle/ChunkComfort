@@ -269,4 +269,16 @@ public class LivingComfortRegistry {
         }
         return total;
     }
+
+    public static Set<String> getAllGroups() {
+        Set<String> groups = new HashSet<>();
+
+        for (LivingComfortEntry entry : ENTITY_MAP.values()) {
+            if (entry.group != null) {
+                groups.add(entry.group);
+            }
+        }
+
+        return groups;
+    }
 }

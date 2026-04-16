@@ -25,6 +25,8 @@ tooltip.chunkcomfort.inactive=Your surroundings don't feel very comfortable yet.
 
 tooltip.chunkcomfort.blacklisted=Dread clings to the air here, everything feels wrong and strained.
 
+tooltip.chunkcomfort.level=§6Comfort: %1$s/%2$s
+
 tooltip.chunkcomfort.positive.effects=§2Comfort Effects:
 tooltip.chunkcomfort.positive.effects.plus=§a+
 tooltip.chunkcomfort.negative.effects=§4Negated Effects:

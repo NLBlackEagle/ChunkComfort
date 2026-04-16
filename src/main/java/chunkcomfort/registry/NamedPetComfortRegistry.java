@@ -66,4 +66,25 @@ public class NamedPetComfortRegistry {
         if (map == null) return 0;
         return map.getOrDefault(name, 0);
     }
+
+    public static int getMaxPossibleComfort() {
+
+        int total = 0;
+
+        for (Map<String, Integer> nameMap : BONUSES.values()) {
+
+            if (nameMap == null || nameMap.isEmpty()) continue;
+
+            // assume each entity contributes only ONE named bonus at a time
+            int maxForEntity = nameMap.values()
+                    .stream()
+                    .mapToInt(i -> i)
+                    .max()
+                    .orElse(0);
+
+            total += maxForEntity;
+        }
+
+        return total;
+    }
 }

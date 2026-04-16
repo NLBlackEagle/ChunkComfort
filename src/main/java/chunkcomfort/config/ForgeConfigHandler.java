@@ -375,9 +375,6 @@ public class ForgeConfigHandler {
         try { CustomSpawnEggRegistry.reload(server.customSpawnEggs); }
         catch (Exception e) { ChunkComfort.LOGGER.error("Failed to reload Custom Spawn Eggs", e); }
 
-        try { AreaComfortCalculator.reloadGroupLimits(server.groupLimits); }
-        catch (Exception e) { ChunkComfort.LOGGER.error("Failed to reload Group Limits", e); }
-
         try { LivingComfortRegistry.reload(server.livingComfortEntries); }
         catch (Exception e) { ChunkComfort.LOGGER.error("Failed to reload Living Comfort Entries", e); }
 
@@ -396,6 +393,7 @@ public class ForgeConfigHandler {
         ChunkComfortClientTooltipHandler.refreshConfiguredBlocks();
         ChunkComfortClientTooltipHandler.refreshGroupLimits();
         ChunkComfortClientTooltipHandler.refreshNonBlockEntities();
+        AreaComfortCalculator.invalidateMaxComfortCache();
     }
 
     @Mod.EventBusSubscriber(modid = ChunkComfort.MODID)

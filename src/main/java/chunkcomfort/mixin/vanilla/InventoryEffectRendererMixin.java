@@ -50,6 +50,7 @@ public abstract class InventoryEffectRendererMixin {
         Minecraft mc = Minecraft.getMinecraft();
         if (mc.player == null) return;
 
+
         // --- Build visible effects EXACTLY like vanilla ---
         List<PotionEffect> visibleEffects =
                 mc.player.getActivePotionEffects().stream()
@@ -86,7 +87,8 @@ public abstract class InventoryEffectRendererMixin {
 
         // --- Compute comfort ONCE ---
         EntityPlayer player = mc.player;
-        int comfort = AreaComfortCalculator.calculatePlayerComfort(player);
+        int comfort = PlayerComfortManager.getCachedComfort(player);
+        int maxComfort = AreaComfortCalculator.getMaxComfort();
 
         // --- Build NEGATED effects ---
         List<String> negated = new ArrayList<>();
@@ -159,6 +161,10 @@ public abstract class InventoryEffectRendererMixin {
                 mouseY >= hoverY && mouseY <= hoverY + hoverHeight) {
 
             List<String> tooltip = new ArrayList<>();
+
+            tooltip.add(I18n.format("tooltip.chunkcomfort.level", comfort, maxComfort));
+
+            tooltip.add("");
 
             tooltip.add(I18n.format("tooltip.chunkcomfort.positive.effects"));
 

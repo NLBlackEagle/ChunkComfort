@@ -1,6 +1,7 @@
 package chunkcomfort.chunk;
 
 import chunkcomfort.config.ForgeConfigHandler;
+import chunkcomfort.player.PlayerComfortManager;
 import chunkcomfort.registry.*;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
@@ -20,10 +21,11 @@ import static chunkcomfort.chunk.ComfortWorldData.hasFireNearby;
 public class AreaComfortCalculator {
 
     private static int CACHE_VERSION = 0;
+    private static int cachedMaxComfort = -1;
     public static void incrementCacheVersion() {CACHE_VERSION++;}
     public static int getCacheVersion() {return CACHE_VERSION;}
 
-    private static final boolean DEBUG_COMFORT = true;
+    private static final boolean DEBUG_COMFORT = false;
 
     private static final Map<UUID, PlayerChunkComfortCache> PLAYER_CACHES = new HashMap<>();
 
@@ -169,6 +171,8 @@ public class AreaComfortCalculator {
 
         debugComfortBreakdown(player, cache, allGroups, biomeModifier, finalComfort);
 
+
+        PlayerComfortManager.setCachedComfort(player.getUniqueID(), finalComfort);
         return finalComfort;
     }
 
@@ -216,6 +220,8 @@ public class AreaComfortCalculator {
         }
     }
 
+
+
     public static void addDecorativeEntityComfort(World world, BlockPos center, int radius,
                                                   PlayerChunkComfortCache cache) {
         AxisAlignedBB box = getAxisAlignedBB(world, center, radius);
@@ -254,6 +260,57 @@ public class AreaComfortCalculator {
                 center.getX() - blockRadius, minY, center.getZ() - blockRadius,
                 center.getX() + blockRadius, maxY, center.getZ() + blockRadius
         );
+    }
+
+    public static void invalidateMaxComfortCache() {
+        cachedMaxComfort = -1;
+    }
+
+    public static int getMaxComfort() {
+
+        if (cachedMaxComfort >= 0) {
+            return cachedMaxComfort;
+        }
+
+        int max = 0;
+
+        // ---------------------------------------
+        // GROUP LIMITS (blocks + living entities)
+        // ---------------------------------------
+
+        Set<String> allGroups = new HashSet<>();
+
+        allGroups.addAll(BlockComfortRegistry.getAllGroups());
+        allGroups.addAll(LivingComfortRegistry.getAllGroups());
+
+        for (String group : allGroups) {
+
+            int blockLimit = BlockComfortRegistry.getGroupLimit(group);
+            int livingLimit = LivingComfortRegistry.getGroupLimit(group);
+
+            max += blockLimit + livingLimit;
+        }
+
+        // ---------------------------------------
+        // BIOME BONUS
+        // ---------------------------------------
+
+        max += BiomeComfortRegistry.getMaxModifier();
+
+        // ---------------------------------------
+        // NAMED PET BONUSES
+        // ---------------------------------------
+
+        max += NamedPetComfortRegistry.getMaxPossibleComfort();
+
+        // ---------------------------------------
+        // PETTING SYSTEM
+        // ---------------------------------------
+
+        max += PettingComfortRegistry.getMaxPossibleComfort();
+
+        cachedMaxComfort = Math.max(max, 0);
+        return cachedMaxComfort;
     }
 
     private static void debugComfortBreakdown(

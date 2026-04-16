@@ -67,10 +67,9 @@ public class ChunkComfort {
 }
 
 /*
-todo: make negative potions visible & comfort level
 todo: run a system wide diagnostics and see where I can patch things up
-todo: test these mods:
 todo: fix IF skulls not working, should be entities & comforts beds
+todo: test these mods:
 waystones
 variedcommodities
 quark

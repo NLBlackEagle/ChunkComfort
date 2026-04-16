@@ -38,6 +38,19 @@ public class BiomeComfortRegistry {
         }
     }
 
+    public static int getMaxModifier() {
+
+        int max = 0;
+
+        for (int value : BIOME_MODIFIERS.values()) {
+            if (value > 0) {
+                max = Math.max(max, value);
+            }
+        }
+
+        return max;
+    }
+
     public static int getBiomeModifier(String biomeName) {
         return BIOME_MODIFIERS.getOrDefault(biomeName, 0);
     }

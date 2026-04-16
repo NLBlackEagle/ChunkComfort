@@ -32,6 +32,17 @@ public class PettingComfortRegistry {
         }
     }
 
+    public static int getMaxPossibleComfort() {
+
+        int total = 0;
+
+        for (PettingComfortData data : registry.values()) {
+            total += data.comfortBoost * data.maxPettable;
+        }
+
+        return total;
+    }
+
     public static PettingComfortData getEntry(String entityId) {
         return registry.get(entityId);
     }

@@ -214,4 +214,16 @@ public class BlockComfortRegistry {
         }
         return totalLimit;
     }
+
+    public static Set<String> getAllGroups() {
+        Set<String> groups = new HashSet<>();
+
+        for (ComfortEntry entry : BLOCK_ENTRIES.values()) {
+            if (entry.group != null) {
+                groups.add(entry.group);
+            }
+        }
+
+        return groups;
+    }
 }
