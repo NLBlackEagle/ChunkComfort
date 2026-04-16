@@ -16,7 +16,6 @@ import net.minecraft.potion.Potion;
 import net.minecraft.potion.PotionEffect;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.entity.living.PotionEvent;
@@ -29,7 +28,6 @@ import net.minecraftforge.fml.common.gameevent.TickEvent;
 import java.util.*;
 
 public class ChunkComfortEventHandler {
-
 
     @SubscribeEvent
     public void onBlockPlaced(BlockEvent.PlaceEvent event) {
@@ -47,8 +45,6 @@ public class ChunkComfortEventHandler {
         BlockPos pos = event.getPos();
         Block block = event.getState().getBlock();
 
-        if (world == null || pos == null || block == null) return;
-
         ChunkUpdateManager.onBlockBroken(world, pos, block);
     }
 
@@ -61,13 +57,12 @@ public class ChunkComfortEventHandler {
         if (world == null || world.isRemote) return;
 
         if (entity instanceof EntityLivingBase) {
-            if (!(entity instanceof EntityArmorStand)) return; // skip living
+            if (!(entity instanceof EntityArmorStand)) return;
         }
-        if (!EntityComfortRegistry.isComfortEntity(entity)) return; // only comfort entities
+        if (!EntityComfortRegistry.isComfortEntity(entity)) return;
 
         ComfortBlockParticleSpawner.trySpawnComfortParticles(world, entity.getPosition(), null, null, entity);
     }
-
 
     @SubscribeEvent
     public void onPlayerTick(TickEvent.PlayerTickEvent event) {
@@ -75,23 +70,11 @@ public class ChunkComfortEventHandler {
 
         EntityPlayer player = event.player;
         if (player == null || player.world == null || player.world.isRemote) return;
-        if (player.ticksExisted % chunkcomfort.config.ForgeConfigHandler.server.comfortCheckInterval != 0) return;
+        if (player.ticksExisted % ForgeConfigHandler.server.comfortCheckInterval != 0) return;
 
-        PlayerChunkComfortCache cache = player != null ? AreaComfortCalculator.getCache(player) : null;
-        if (cache.isEmpty()) {AreaComfortCalculator.calculatePlayerComfort(player);}
 
-        chunkcomfort.player.PlayerComfortManager.applyComfortEffects(player);
-    }
-
-    @SubscribeEvent
-    public void onPlayerMove(TickEvent.PlayerTickEvent event) {
-
-        EntityPlayer player = event.player;
-        if (player == null || player.world == null || player.world.isRemote) return;
-
-        ChunkPos pos = new ChunkPos(event.player.getPosition());
-        ComfortWorldData.get(event.player.world).getChunkData(pos);
-        // this triggers self-healing if the chunk cache is empty
+        int comfort = AreaComfortCalculator.calculatePlayerComfort(player);
+        chunkcomfort.player.PlayerComfortManager.applyComfortEffects(player, comfort);
     }
 
     @SubscribeEvent
@@ -101,23 +84,26 @@ public class ChunkComfortEventHandler {
         }
     }
 
+
+    @SubscribeEvent
+    public void onPlayerLogout(net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerLoggedOutEvent event) {
+        if (event.player != null) {
+            AreaComfortCalculator.removePlayerCache(event.player.getUniqueID());
+        }
+    }
+
     @SubscribeEvent
     public void onPlayerWakeUp(PlayerWakeUpEvent event) {
-
         if (!event.shouldSetSpawn()) return;
 
         EntityPlayer player = event.getEntityPlayer();
-
         if (player.world.isRemote) return;
-
         if (AreaComfortCalculator.isEnvironmentBlocked(player.world, player.getPosition())) return;
 
         int chance = ForgeConfigHandler.server.messagePercentage;
-
         if (player.world.rand.nextInt(100) >= chance) return;
 
         int comfort = AreaComfortCalculator.calculatePlayerComfort(player);
-
         ComfortMessage.send(player, comfort);
     }
 
@@ -125,17 +111,15 @@ public class ChunkComfortEventHandler {
     public void onEntityAttacked(AttackEntityEvent event) {
         Entity entity = event.getTarget();
         if (entity == null) return;
-
         if (!(event.getEntity() instanceof EntityPlayer)) return;
-        EntityPlayer player = (EntityPlayer) event.getEntity();
 
+        EntityPlayer player = (EntityPlayer) event.getEntity();
         if (AreaComfortCalculator.isEnvironmentBlocked(player.world, player.getPosition())) return;
 
         ResourceLocation key = EntityList.getKey(entity);
         if (key == null) return;
 
-        String entityId = key.toString();
-        PettingComfortData entry = PettingComfortRegistry.getEntry(entityId);
+        PettingComfortData entry = PettingComfortRegistry.getEntry(key.toString());
         if (entry == null) return;
 
         // --- Tamed / owner checks ---
@@ -162,13 +146,9 @@ public class ChunkComfortEventHandler {
         // --- Cooldown ---
         if (!PettingComfortManager.canPet(player, entity)) return;
 
-        // --- Max pettable enforcement ---
-        int activeCount =
-                PettingComfortManager.countActivePets(
-                        player.getUniqueID(),
-                        entity.getClass()
+        int activeCount = PettingComfortManager.countActivePets(
+                player.getUniqueID(), entity.getClass()
                 );
-
         if (activeCount >= entry.maxPettable) return;
 
         // --- SERVER: register + cooldown ---
@@ -182,14 +162,12 @@ public class ChunkComfortEventHandler {
         }
     }
 
-
-
     @SubscribeEvent
     public void onPotionAdded(PotionEvent.PotionAddedEvent event) {
-
         if (!(event.getEntityLiving() instanceof EntityPlayer)) return;
 
         EntityPlayer player = (EntityPlayer) event.getEntityLiving();
+        if (player.world.isRemote) return;
 
         if (AreaComfortCalculator.isEnvironmentBlocked(player.world, player.getPosition())) return;
 
@@ -198,15 +176,10 @@ public class ChunkComfortEventHandler {
         List<Potion> toRemove = new ArrayList<>();
 
         for (PotionEffect effect : player.getActivePotionEffects()) {
-
-            ResourceLocation id =
-                    Potion.REGISTRY.getNameForObject(effect.getPotion());
-
+            ResourceLocation id = Potion.REGISTRY.getNameForObject(effect.getPotion());
             if (id == null) continue;
 
-            String potionId = id.toString();
-
-            if (PotionBlacklistRegistry.isBlocked(comfort, potionId)) {
+            if (PotionBlacklistRegistry.isBlocked(comfort, id.toString())) {
                 toRemove.add(effect.getPotion());
             }
         }

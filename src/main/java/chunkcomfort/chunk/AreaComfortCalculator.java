@@ -25,7 +25,6 @@ public class AreaComfortCalculator {
 
     private static final boolean DEBUG_COMFORT = true;
 
-    private static final Map<String, Integer> GROUP_LIMITS = new HashMap<>();
     private static final Map<UUID, PlayerChunkComfortCache> PLAYER_CACHES = new HashMap<>();
 
     public static PlayerChunkComfortCache getCache(EntityPlayer player) {
@@ -36,31 +35,13 @@ public class AreaComfortCalculator {
         PLAYER_CACHES.clear();
     }
 
-    public static int getRadius() {
-        return Math.min(Math.max(ForgeConfigHandler.server.chunkRadius, 0), 3);
+
+    public static void removePlayerCache(UUID playerId) {
+        PLAYER_CACHES.remove(playerId);
     }
 
-    public static void reloadGroupLimits(String[] limits) {
-        GROUP_LIMITS.clear();
-        if (limits == null) return;
-
-        for (String line : limits) {
-            if (line == null || line.isEmpty()) continue;
-
-            String[] parts = line.split(",");
-            if (parts.length < 2) continue;
-
-            String group = parts[0];
-            int limit;
-
-            try {
-                limit = Integer.parseInt(parts[1]);
-            } catch (NumberFormatException e) {
-                limit = Integer.MAX_VALUE;
-            }
-
-            GROUP_LIMITS.put(group, limit);
-        }
+    public static int getRadius() {
+        return Math.min(Math.max(ForgeConfigHandler.server.chunkRadius, 0), 3);
     }
 
     public static boolean isComfortActive(EntityPlayer player) {
@@ -81,19 +62,24 @@ public class AreaComfortCalculator {
     }
 
     public static boolean isEnvironmentBlocked(World world, BlockPos pos) {
-
         String dimId = world.provider.getDimensionType().getName();
 
-        String biomeId = Objects.requireNonNull(
-                world.getBiome(pos).getRegistryName()
-        ).toString();
+        // REASON: replaced Objects.requireNonNull() with an explicit null check.
+        // requireNonNull() with no message produces an NPE with no context if a modded
+        // biome lacks a registry name. Now we log a warning and return false (unblocked)
+        // rather than crashing the server tick.
+        ResourceLocation biomeReg = world.getBiome(pos).getRegistryName();
+        if (biomeReg == null) {
+            chunkcomfort.ChunkComfort.LOGGER.warn("[ChunkComfort] Biome at {} has no registry name, skipping blacklist check", pos);
+            return false;
+        }
+        String biomeId = biomeReg.toString();
 
         if (DimensionBiomeBlacklistRegistry.isDimensionBlocked(dimId)
                 || DimensionBiomeBlacklistRegistry.isBiomeBlocked(biomeId)) {
             return true;
         }
 
-        // Returns true if boss bar is enabled and a boss is nearby
         return ForgeConfigHandler.server.enableBossBarDetection && ChunkBossState.isBossActive();
     }
 
@@ -102,9 +88,7 @@ public class AreaComfortCalculator {
         BlockPos playerPos = player.getPosition();
         int radius = getRadius();
 
-        if (world.isRemote) {
-            return 0;
-        }
+        if (world.isRemote) return 0;
 
         if (isEnvironmentBlocked(world, playerPos)) {
             if (PotionRegistry.COMFORT != null) {
@@ -113,14 +97,12 @@ public class AreaComfortCalculator {
             return 0;
         }
 
-
         int comfortActive = calculateComfortActivation(world, player);
         int requiredConditions = 0;
         if (ForgeConfigHandler.server.requireShelter) requiredConditions++;
         if (ForgeConfigHandler.server.minLightLevel > 0) requiredConditions++;
         if (ForgeConfigHandler.server.requireFire) requiredConditions++;
         if (ForgeConfigHandler.server.enableTemperatureComfort) requiredConditions++;
-
 
         if (comfortActive < requiredConditions) {
             if (PotionRegistry.COMFORT != null) {
@@ -137,13 +119,12 @@ public class AreaComfortCalculator {
         boolean fireNearby = hasFireNearby(world, playerPos, radius);
         cache.clear();
 
-        // Collect block and group totals from nearby chunks
         for (int dx = -radius; dx <= radius; dx++) {
             for (int dz = -radius; dz <= radius; dz++) {
                 ChunkPos chunkPos = new ChunkPos(centerChunkX + dx, centerChunkZ + dz);
                 ChunkComfortData data = worldData.getChunkData(chunkPos);
 
-                if (!data.initialized && (fireNearby)) {
+                if (!data.initialized && fireNearby) {
                     worldData.recalcChunkWithFire(world, chunkPos);
                     data = worldData.getChunkData(chunkPos);
                 }
@@ -173,12 +154,15 @@ public class AreaComfortCalculator {
             totalComfort += Math.min(value, totalLimit);
         }
 
-        // --- Include biome modifier ---
-        String biomeName = Objects.requireNonNull(world.getBiome(playerPos).getRegistryName()).toString();
-        int biomeModifier = BiomeComfortRegistry.getBiomeModifier(biomeName);
+        ResourceLocation biomeReg = world.getBiome(playerPos).getRegistryName();
+        int biomeModifier = 0;
+        if (biomeReg != null) {
+            biomeModifier = BiomeComfortRegistry.getBiomeModifier(biomeReg.toString());
+        } else {
+            chunkcomfort.ChunkComfort.LOGGER.warn("[ChunkComfort] Biome at {} has no registry name, skipping biome modifier", playerPos);
+        }
         totalComfort += biomeModifier;
 
-        // --- Include temporary petting boosts ---
         totalComfort += PettingComfortManager.getActivePettingPoints(player.getUniqueID());
 
         int finalComfort = Math.max(totalComfort, 0);
@@ -206,8 +190,7 @@ public class AreaComfortCalculator {
                         chunkPos.getXEnd() + 1, maxY, chunkPos.getZEnd() + 1
                 );
 
-                // Reset per-chunk so the per-entity limit applies within each chunk,
-                // matching the behaviour of the info command.
+
                 Map<ResourceLocation, Integer> livingCount = new HashMap<>();
 
                 for (Entity entity : world.getEntitiesWithinAABB(Entity.class, chunkBox)) {
@@ -221,7 +204,6 @@ public class AreaComfortCalculator {
                     int count = livingCount.getOrDefault(id, 0);
                     if (count >= entry.limit) continue;
 
-                    // Add bonus based on name
                     int bonus = NamedPetComfortRegistry.getBonus(id, entity.getCustomNameTag());
                     if (bonus > 0) {
                         cache.addEntityGroupTotal(entry.group, bonus);
@@ -243,26 +225,21 @@ public class AreaComfortCalculator {
         Set<UUID> countedDecoratives = new HashSet<>();
 
         for (Entity entity : entities) {
-            // Only handle non-living "decorative" comfort entities
-            if (entity instanceof net.minecraft.entity.EntityLiving) continue;
-
+            if (entity instanceof EntityLiving) continue;
             if (!EntityComfortRegistry.isComfortEntity(entity)) continue;
+
             EntityComfortRegistry.ComfortEntry entry = EntityComfortRegistry.getEntityEntry(entity);
             if (entry == null) continue;
 
-            Class<? extends Entity> clazz = entity.getClass();
-
-            // Handle multi-block or duplicate entities like paintings
             UUID entityId = entity.getUniqueID();
             if (countedDecoratives.contains(entityId)) continue;
             countedDecoratives.add(entityId);
 
-            // Respect per-entity limits
-            int currentCount = cache.getDecorativeEntityCount(clazz);
+            int currentCount = cache.getDecorativeEntityCount(entity.getClass());
             if (currentCount >= entry.limit) continue;
 
-            cache.addDecorativeEntityCount(clazz, 1);
-            cache.addEntityGroupTotal(entry.group, entry.value); // Keep group totals separate from living entities
+            cache.addDecorativeEntityCount(entity.getClass(), 1);
+            cache.addEntityGroupTotal(entry.group, entry.value);
         }
     }
 
@@ -294,7 +271,6 @@ public class AreaComfortCalculator {
         System.out.println("[ComfortDebug] PettingBoost: " + PettingComfortManager.getActivePettingPoints(player.getUniqueID()));
 
         for (String group : allGroups) {
-
             int blockValue = cache.groupTotals.getOrDefault(group, 0);
             int entityValue = cache.entityGroupTotals.getOrDefault(group, 0);
             int combined = blockValue + entityValue;

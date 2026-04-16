@@ -15,10 +15,7 @@ import net.minecraft.util.ResourceLocation;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class PlayerComfortManager {
@@ -26,8 +23,8 @@ public class PlayerComfortManager {
     private static final Logger LOGGER = LogManager.getLogger("ChunkComfort");
 
     private static class EffectEntry {
-        Potion potion;
-        int amplifier;
+        final Potion potion;
+        final int amplifier;
 
         EffectEntry(Potion potion, int amplifier) {
             this.potion = potion;
@@ -78,14 +75,8 @@ public class PlayerComfortManager {
         TIERS.sort(Comparator.comparingInt(t -> t.comfort));
     }
 
-    public static void applyComfortEffects(EntityPlayer player) {
-        int comfort = AreaComfortCalculator.calculatePlayerComfort(player);
 
-        // --- DEBUG OUTPUT ---
-        //LOGGER.info("Player {} comfort level: {}", player.getName(), comfort);
-        //System.out.println("Player " + player.getName() + " comfort level: " + comfort);
-        // -------------------
-
+    public static void applyComfortEffects(EntityPlayer player, int comfort) {
         ComfortTier activeTier = null;
         int tierIndex = 0;
 
@@ -99,19 +90,21 @@ public class PlayerComfortManager {
 
         if (activeTier == null) return;
 
-        // Apply configured tier effects (hidden)
         for (EffectEntry entry : activeTier.effects) {
-
-            PotionEffect effect = new PotionEffect(entry.potion, ForgeConfigHandler.server.comfortCheckInterval * 2, entry.amplifier, true, false);
+            PotionEffect effect = new PotionEffect(
+                    entry.potion,
+                    ForgeConfigHandler.server.comfortCheckInterval * 2,
+                    entry.amplifier,
+                    true,
+                    false
+            );
 
             player.addPotionEffect(effect);
 
             PotionEffect active = player.getActivePotionEffect(entry.potion);
             if (active != null) {
-
                 ((ICanBeHidden) active).chunkcomfort$setHidden(true);
 
-                // Send hidden state to client
                 if (!player.world.isRemote) {
                     NetworkHandler.INSTANCE.sendTo(
                             new PacketSyncHiddenEffect(
@@ -125,7 +118,6 @@ public class PlayerComfortManager {
             }
         }
 
-        // Apply COMFORT potion for HUD (always visible)
         applyComfortPotion(player, tierIndex);
     }
 
@@ -133,8 +125,7 @@ public class PlayerComfortManager {
         if (PotionRegistry.COMFORT == null) return;
 
         PotionEffect current = player.getActivePotionEffect(PotionRegistry.COMFORT);
-        int duration = 600; // ticks
-
+        int duration = 600;
 
         if (current == null || current.getAmplifier() != tierIndex || current.getDuration() < 220) {
             player.removePotionEffect(PotionRegistry.COMFORT);
@@ -145,9 +136,7 @@ public class PlayerComfortManager {
     public static List<String> getEffectsForTier(int tierIndex) {
         if (tierIndex < 0 || tierIndex >= TIERS.size()) return Collections.emptyList();
 
-        ComfortTier tier = TIERS.get(tierIndex);
-
-        return tier.effects.stream()
+        return TIERS.get(tierIndex).effects.stream()
                 .map(entry -> I18n.format(entry.potion.getName()) + " " + (entry.amplifier + 1))
                 .collect(Collectors.toList());
     }

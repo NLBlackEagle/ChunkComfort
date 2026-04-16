@@ -67,16 +67,19 @@ public class ChunkComfort {
 }
 
 /*
+todo: make negative potions visible & comfort level
+todo: run a system wide diagnostics and see where I can patch things up
 todo: test these mods:
+todo: fix IF skulls not working, should be entities & comforts beds
 waystones
 variedcommodities
 quark
 nuclearcraft
 inspirations
-iceandfire
+iceandfire (skulls not working)
 fish undead rising
 cookingforblockheads (old one)
-comforts
+comforts (Beds not working)
 biomesoplenty
 betternether
  */

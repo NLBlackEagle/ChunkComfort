@@ -25,44 +25,32 @@ public class LivingComfortRegistry {
         public final List<Map<String, NBTCondition>> nbtGroups;
 
         private final boolean alwaysMatch;
-        private final boolean requiresNBT;
 
         public LivingComfortEntry(ResourceLocation entityId,
                                   int value,
                                   String group,
                                   int limit,
                                   String nbtRaw) {
-
             this.entityId = entityId;
             this.value = value;
             this.group = group;
             this.limit = limit;
-
             this.nbtGroups = parseNBT(nbtRaw);
-
             this.alwaysMatch = isAlwaysMatch(nbtGroups);
-            this.requiresNBT = !alwaysMatch;
-        }
-
-        public boolean requiresNBT() {
-            return requiresNBT;
         }
 
         public boolean matches(NBTTagCompound nbt) {
-
             if (alwaysMatch) return true;
 
             for (Map<String, NBTCondition> group : nbtGroups) {
-
-                if (group.isEmpty()) {
-                    return false;
-                }
-
-                if (matchesGroup(nbt, group)) {
+                // REASON: removed the early `if (group.isEmpty()) return false` that was here.
+                // An empty group inside a multi-group OR expression should simply not match
+                // (it contributes nothing), but it should not short-circuit the whole check.
+                // The real guard is isAlwaysMatch() at construction time.
+                if (!group.isEmpty() && matchesGroup(nbt, group)) {
                     return true;
                 }
             }
-
             return false;
         }
     }
@@ -73,11 +61,11 @@ public class LivingComfortRegistry {
 
     private static class NBTCondition {
 
-        enum Type { BYTE, INT, STRING, WILDCARD, EXISTS }
+        enum Type { BYTE, INT, STRING, EXISTS }
 
         final Type type;
         final Object value;
-        boolean negate = false; // <-- add this field
+        boolean negate = false;
 
         NBTCondition(Type type, Object value) {
             this.type = type;
@@ -100,7 +88,7 @@ public class LivingComfortRegistry {
 
             try {
                 String[] parts = line.split(",", 5);
-                if (parts.length < 4) throw new IllegalArgumentException();
+                if (parts.length < 4) throw new IllegalArgumentException("Too few fields");
 
                 ResourceLocation id = new ResourceLocation(parts[0].trim());
                 int value = Integer.parseInt(parts[1].trim());
@@ -138,6 +126,7 @@ public class LivingComfortRegistry {
 
         for (String groupStr : splitGroups) {
             groupStr = groupStr.replaceAll("^\\{", "").replaceAll("\\}$", "").trim();
+
             if (groupStr.isEmpty()) {
                 groups.add(Collections.emptyMap());
                 continue;
@@ -155,18 +144,15 @@ public class LivingComfortRegistry {
                 }
 
                 String[] kv = part.split(":", 2);
+                String key = kv[0].trim().replaceAll("^\"|\"| '|'$", "");
 
-                String key;
                 NBTCondition cond;
 
                 if (kv.length == 1) {
-                    // {OwnerId} → EXISTS condition
-                    key = kv[0].trim().replaceAll("^\"|\"|'|'$", "");
                     cond = new NBTCondition(NBTCondition.Type.EXISTS, null);
                 } else {
-                    key = kv[0].trim().replaceAll("^\"|\"|'|'$", "");
-                    String value = kv[1].trim().replaceAll("^\"|\"|'|'$", "");
-                    cond = parseCondition(value);
+                    String val = kv[1].trim().replaceAll("^\"|\"| '|'$", "");
+                    cond = parseCondition(val);
                 }
 
                 cond.negate = negate;
@@ -181,7 +167,7 @@ public class LivingComfortRegistry {
 
     private static NBTCondition parseCondition(String raw) {
         if ("*".equals(raw)) {
-            return new NBTCondition(NBTCondition.Type.WILDCARD, null);
+            return new NBTCondition(NBTCondition.Type.EXISTS, null);
         }
 
         try {
@@ -194,10 +180,7 @@ public class LivingComfortRegistry {
             for (int i = 0; i < raw.length(); i++) {
                 char c = raw.charAt(i);
                 if (i == 0 && c == '-') continue;
-                if (c < '0' || c > '9') {
-                    isInt = false;
-                    break;
-                }
+                if (c < '0' || c > '9') { isInt = false; break; }
             }
 
             if (isInt) {
@@ -222,26 +205,18 @@ public class LivingComfortRegistry {
             NBTCondition cond = entry.getValue();
 
             boolean exists = nbt.hasKey(key);
-            boolean valueMatches = exists && cond.type != NBTCondition.Type.WILDCARD && matchesValue(nbt, key, cond);
             boolean match;
-
             switch (cond.type) {
-
                 case EXISTS:
                     match = exists;
                     break;
-
-                case WILDCARD:
-                    match = exists; // IMPORTANT: must exist
-                    break;
-
                 default:
                     match = exists && matchesValue(nbt, key, cond);
+                    break;
             }
 
-            if (cond.negate) match = !match; // handle ! prefix
-
-            if (!match) return false; // AND logic for all keys in this group
+            if (cond.negate) match = !match;
+            if (!match) return false; // AND logic
         }
         return true;
     }
@@ -253,10 +228,8 @@ public class LivingComfortRegistry {
             case STRING: {
                 String actual = nbt.getString(key);
                 String expected = (String) cond.value;
-                if ("*".equals(expected)) return true; // single * wildcard
                 if (expected.contains("*")) {
-                    String regex = expected.replace("*", ".*");
-                    return actual.matches(regex);
+                    return actual.matches(expected.replace("*", ".*"));
                 }
                 return expected.equals(actual);
             }
@@ -277,7 +250,7 @@ public class LivingComfortRegistry {
         LivingComfortEntry entry = getEntry(entity);
         if (entry == null) return null;
 
-        if (!entry.requiresNBT()) return entry;
+        if (entry.alwaysMatch) return entry;
 
         NBTTagCompound nbt = new NBTTagCompound();
         entity.writeToNBTOptional(nbt);
