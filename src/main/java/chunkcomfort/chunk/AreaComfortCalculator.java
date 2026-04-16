@@ -102,6 +102,10 @@ public class AreaComfortCalculator {
         BlockPos playerPos = player.getPosition();
         int radius = getRadius();
 
+        if (world.isRemote) {
+            return 0;
+        }
+
         if (isEnvironmentBlocked(world, playerPos)) {
             if (PotionRegistry.COMFORT != null) {
                 player.removePotionEffect(PotionRegistry.COMFORT);
