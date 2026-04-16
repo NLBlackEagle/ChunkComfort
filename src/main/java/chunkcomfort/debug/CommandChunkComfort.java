@@ -35,7 +35,7 @@ public class CommandChunkComfort extends CommandBase {
     public String getName() { return "chunkcomfort"; }
 
     @Override
-    public String getUsage(ICommandSender sender) { return "/chunkcomfort <info|reload|biome>"; }
+    public String getUsage(ICommandSender sender) { return "/chunkcomfort <info|reload|biome|Block>"; }
 
     @Override
     public int getRequiredPermissionLevel() { return 2; }
@@ -56,6 +56,9 @@ public class CommandChunkComfort extends CommandBase {
                 break;
             case "biome":
                 executeBiome(sender);
+                break;
+            case "block":
+                executeBlock(sender);
                 break;
             default:
                 sender.sendMessage(new TextComponentString(I18n.format("debug.chunkcomfort.unknown_subcommand")));
@@ -81,6 +84,28 @@ public class CommandChunkComfort extends CommandBase {
                 "Dimension: " + dimName + " (" + dimId + ")" +
                         " | Biome: " + (biomeId != null ? biomeId.toString() : "unknown")
         ));
+    }
+
+    private void executeBlock(ICommandSender sender) {
+        EntityPlayer player = (EntityPlayer) sender.getCommandSenderEntity();
+        if (player == null) return;
+
+        BlockPos pos = player.getPosition().down(); // block beneath feet
+        Block block = player.world.getBlockState(pos).getBlock();
+        ResourceLocation blockName = Block.REGISTRY.getNameForObject(block);
+        net.minecraft.item.Item item = net.minecraft.item.Item.getItemFromBlock(block);
+        ResourceLocation itemName = item != null ? item.getRegistryName() : null;
+
+        boolean isComfort = BlockComfortRegistry.isComfortBlock(block);
+
+        sender.sendMessage(new TextComponentString("--- Block at feet ---"));
+        sender.sendMessage(new TextComponentString("Block registry name: " + (blockName != null ? blockName : "null")));
+        sender.sendMessage(new TextComponentString("Item registry name:  " + (itemName != null ? itemName : "null/no item")));
+        sender.sendMessage(new TextComponentString("In comfort registry: " + (isComfort ? "§aYES" : "§cNO")));
+        if (isComfort) {
+            BlockComfortRegistry.ComfortEntry entry = BlockComfortRegistry.getBlockEntry(block);
+            sender.sendMessage(new TextComponentString("Group: " + entry.group + " | Value: " + entry.value + " | Limit: " + entry.limit));
+        }
     }
 
     private void executeInfo(ICommandSender sender) {
