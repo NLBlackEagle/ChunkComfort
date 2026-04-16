@@ -30,6 +30,7 @@ public class ChunkComfortClientTooltipHandler {
     private static final Map<String, Integer> GROUP_LIMITS = new HashMap<>();
     private static final Set<String> FIRE_BLOCKS = new HashSet<>();
     private static final Set<String> FIRE_SOURCE_ITEMS = new HashSet<>();
+    private static final Set<String> GROUP_TOOLTIP_CACHE = new HashSet<>();
 
     /** Call this if the config is reloaded */
     public static void refreshConfiguredBlocks() {
@@ -68,6 +69,22 @@ public class ChunkComfortClientTooltipHandler {
             if (entry == null || entry.trim().isEmpty()) continue;
 
             FIRE_BLOCKS.add(entry.trim());
+        }
+    }
+
+    public static void refreshGroupTooltips() {
+
+        GROUP_TOOLTIP_CACHE.clear();
+
+        for (String group : ForgeConfigHandler.getDefinedGroups()) {
+
+            String key = "tooltip.chunkcomfort.hidden." + group;
+
+            String translated = I18n.format(key);
+
+            if (!translated.equals(key)) {
+                GROUP_TOOLTIP_CACHE.add(group);
+            }
         }
     }
 
@@ -130,6 +147,40 @@ public class ChunkComfortClientTooltipHandler {
         }
     }
 
+    public static String getGroupFromItem(ItemStack stack) {
+
+        ResourceLocation id = stack.getItem().getRegistryName();
+        if (id == null) return null;
+
+        String name = id.toString();
+
+        // 1. Block-based lookup
+        Block block = Block.getBlockFromName(name);
+        if (block != null) {
+            BlockComfortRegistry.ComfortEntry entry = BlockComfortRegistry.getBlockEntry(block);
+            if (entry != null) return entry.group;
+        }
+
+        // 2. Entity-style entries (armor stands, frames, etc)
+        EntityComfortRegistry.ComfortEntry entityEntry =
+                EntityComfortRegistry.getEntityEntryFromId(id);
+
+        if (entityEntry != null) {
+            return entityEntry.group;
+        }
+
+        // 3. Living items (spawn eggs etc)
+        ResourceLocation entityId = CustomSpawnEggRegistry.resolve(stack);
+        if (entityId != null) {
+            LivingComfortRegistry.LivingComfortEntry living =
+                    LivingComfortRegistry.ENTITY_MAP.get(entityId);
+
+            if (living != null) return living.group;
+        }
+
+        return null;
+    }
+
     @SubscribeEvent
     public void onItemTooltip(ItemTooltipEvent event) {
 
@@ -137,6 +188,7 @@ public class ChunkComfortClientTooltipHandler {
 
         List<String> tooltip = event.getToolTip();
         EntityPlayer player = event.getEntityPlayer();
+        boolean ctrlDown = net.minecraft.client.gui.GuiScreen.isCtrlKeyDown();
         PlayerChunkComfortCache cache = player != null ? AreaComfortCalculator.getCache(player) : null;
         if (player != null) {cache.ensureUpToDate();}
 
@@ -263,6 +315,19 @@ public class ChunkComfortClientTooltipHandler {
         // Add JEI header if it wasn’t added yet
         String header = I18n.format("tooltip.chunkcomfort.header");
         if (!tooltip.contains(header)) tooltip.add(header);
+
+        if (ctrlDown && player != null) {
+
+            String group = getGroupFromItem(stack);
+
+            if (group != null && GROUP_TOOLTIP_CACHE.contains(group)) {
+
+                String key = "tooltip.chunkcomfort.hidden." + group;
+                tooltip.add(I18n.format(key));
+            }
+        } else {
+            tooltip.add(I18n.format("tooltip.chunkcomfort.ctrl"));
+        }
 
         if (blacklisted) {
             tooltip.add(I18n.format("tooltip.chunkcomfort.blacklisted"));

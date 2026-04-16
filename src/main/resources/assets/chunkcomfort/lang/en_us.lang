@@ -33,6 +33,44 @@ tooltip.chunkcomfort.negative.effects=§4Negated Effects:
 tooltip.chunkcomfort.positive.effects.minus=§c-
 
 # ============================================================
+# Group Tooltip Descriptions (Ctrl + Hover over tooltip shows this description)
+# ============================================================
+
+tooltip.chunkcomfort.ctrl=§7§oHold CTRL to show the description.
+
+tooltip.chunkcomfort.hidden.furniture=§7You settle into the quiet of your home, where every chair, table, and shelf feels like it has learned your rhythm. Nothing rushes here, only the soft certainty of being where you belong.
+
+tooltip.chunkcomfort.hidden.workstation=§7Tools rest where they were last used, as if the work never truly stopped. There is purpose in the air here, a quiet promise that anything you need can be made with time and effort.
+
+tooltip.chunkcomfort.hidden.enchanting=§7The air feels thinner here, like reality is holding its breath. Soft whispers of forgotten knowledge linger at the edges of your thoughts, just out of understanding.
+
+tooltip.chunkcomfort.hidden.luxury=§7Everything here feels intentional. Not necessary, but chosen. The space reminds you that comfort is not survival, but something greater you build for yourself.
+
+tooltip.chunkcomfort.hidden.lightsources=§7Warm light spills across the walls, pushing back the uncertainty beyond them. In its glow, the world feels smaller, safer, and easier to understand.
+
+tooltip.chunkcomfort.hidden.wild=§7It's been like any other day as the sun sets and you close the shutters, light the candles, and just before the last light fades, you pause. Outside, your eyes meet something alive: a rabbit on the hill, still for a moment, before it turns away to the safety of night. For a brief instant, you are part of the same quiet world.
+
+tooltip.chunkcomfort.hidden.pets=§7Somewhere nearby, a familiar presence shifts or breathes. You don’t look up, you don’t need to. The comfort is in knowing you are not alone here.
+
+tooltip.chunkcomfort.hidden.mounts=§7Resting nearby, strength waits patiently for the next journey. There is trust here, earned through distance traveled and paths survived together.
+
+tooltip.chunkcomfort.hidden.legendary=§7Even still, this place feels different. As if something rare once stood here and left a trace behind that refuses to fade.
+
+tooltip.chunkcomfort.hidden.collectibles=§7Small reminders of where you’ve been and what you’ve survived line the space around you. None are necessary, but all of them matter.
+
+tooltip.chunkcomfort.hidden.kitchen=§7The air carries traces of meals shared and meals yet to come. Hunger feels distant here, replaced by the quiet rhythm of preparation and care.
+
+tooltip.chunkcomfort.hidden.brewery=§7Strange scents linger in the air, sharp, warm, unfamiliar. Time feels slightly distorted here, as if patience itself has been distilled into liquid form.
+
+tooltip.chunkcomfort.hidden.machinery=§7Machines hum quietly in the background, turning effort into motion. There is comfort in knowing something keeps working even when you stop.
+
+tooltip.chunkcomfort.hidden.nuclear=§7Deep within the hum of impossible power, there is both awe and unease. Something vast is contained here and both the separation as the benefits comfort you.
+
+tooltip.chunkcomfort.hidden.villagers=§7Voices drift through the space, carrying trades, complaints, and daily life. Civilization feels close enough to touch, even if you are not part of it.
+
+tooltip.chunkcomfort.hidden.farm=§7Life repeats itself here in quiet cycles. Growth, harvest, rest, each one a reminder that survival can be gentle when given time.
+
+# ============================================================
 # Decorative Entity Tooltips (paintings, item frames, etc.)
 # ============================================================
 

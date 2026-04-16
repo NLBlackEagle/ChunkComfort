@@ -12,6 +12,9 @@ import net.minecraftforge.fml.client.event.ConfigChangedEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
+import java.util.HashSet;
+import java.util.Set;
+
 @Config(modid = ChunkComfort.MODID)
 public class ForgeConfigHandler {
 
@@ -378,6 +381,9 @@ public class ForgeConfigHandler {
         try { LivingComfortRegistry.reload(server.livingComfortEntries); }
         catch (Exception e) { ChunkComfort.LOGGER.error("Failed to reload Living Comfort Entries", e); }
 
+        try { Set<String> groups = getDefinedGroups(); ChunkComfortGroupTooltipRegistry.reload(groups); }
+        catch (Exception e) {ChunkComfort.LOGGER.error("Failed to reload Group Tooltip Registry", e);}
+
         try { PettingComfortRegistry.loadFromConfig(server.pettingComfortEntries); }
         catch (Exception e) { ChunkComfort.LOGGER.error("Failed to reload Petting Comfort Entries", e); }
 
@@ -393,7 +399,34 @@ public class ForgeConfigHandler {
         ChunkComfortClientTooltipHandler.refreshConfiguredBlocks();
         ChunkComfortClientTooltipHandler.refreshGroupLimits();
         ChunkComfortClientTooltipHandler.refreshNonBlockEntities();
+        ChunkComfortClientTooltipHandler.refreshGroupTooltips();
         AreaComfortCalculator.invalidateMaxComfortCache();
+
+
+
+    }
+
+    public static Set<String> getDefinedGroups() {
+        Set<String> groups = new HashSet<>();
+
+        collectGroups(groups, server.blockComfortEntries, 2);
+        collectGroups(groups, server.livingComfortEntries, 2);
+        collectGroups(groups, server.pettingComfortEntries, 2);
+
+        return groups;
+    }
+
+    private static void collectGroups(Set<String> out, String[] entries, int groupIndex) {
+        if (entries == null) return;
+
+        for (String entry : entries) {
+            if (entry == null) continue;
+
+            String[] parts = entry.split(",");
+            if (parts.length > groupIndex) {
+                out.add(parts[groupIndex].trim());
+            }
+        }
     }
 
     @Mod.EventBusSubscriber(modid = ChunkComfort.MODID)
