@@ -49,13 +49,20 @@ public class LivingComfortRegistry {
         }
 
         public boolean matches(NBTTagCompound nbt) {
+
             if (alwaysMatch) return true;
 
             for (Map<String, NBTCondition> group : nbtGroups) {
+
+                if (group.isEmpty()) {
+                    return false;
+                }
+
                 if (matchesGroup(nbt, group)) {
                     return true;
                 }
             }
+
             return false;
         }
     }
@@ -66,7 +73,7 @@ public class LivingComfortRegistry {
 
     private static class NBTCondition {
 
-        enum Type { BYTE, INT, STRING, WILDCARD }
+        enum Type { BYTE, INT, STRING, WILDCARD, EXISTS }
 
         final Type type;
         final Object value;
@@ -148,14 +155,21 @@ public class LivingComfortRegistry {
                 }
 
                 String[] kv = part.split(":", 2);
-                if (kv.length != 2) continue;
 
-                String key = kv[0].trim().replaceAll("^\"|\"|'|'$", "");
-                String value = kv[1].trim().replaceAll("^\"|\"|'|'$", "");
+                String key;
+                NBTCondition cond;
 
-                NBTCondition cond = parseCondition(value);
+                if (kv.length == 1) {
+                    // {OwnerId} → EXISTS condition
+                    key = kv[0].trim().replaceAll("^\"|\"|'|'$", "");
+                    cond = new NBTCondition(NBTCondition.Type.EXISTS, null);
+                } else {
+                    key = kv[0].trim().replaceAll("^\"|\"|'|'$", "");
+                    String value = kv[1].trim().replaceAll("^\"|\"|'|'$", "");
+                    cond = parseCondition(value);
+                }
+
                 cond.negate = negate;
-
                 group.put(key, cond);
             }
 
@@ -209,7 +223,21 @@ public class LivingComfortRegistry {
 
             boolean exists = nbt.hasKey(key);
             boolean valueMatches = exists && cond.type != NBTCondition.Type.WILDCARD && matchesValue(nbt, key, cond);
-            boolean match = (exists && valueMatches) || cond.type == NBTCondition.Type.WILDCARD;
+            boolean match;
+
+            switch (cond.type) {
+
+                case EXISTS:
+                    match = exists;
+                    break;
+
+                case WILDCARD:
+                    match = exists; // IMPORTANT: must exist
+                    break;
+
+                default:
+                    match = exists && matchesValue(nbt, key, cond);
+            }
 
             if (cond.negate) match = !match; // handle ! prefix
 

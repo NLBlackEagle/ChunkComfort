@@ -5,16 +5,15 @@ import chunkcomfort.chunk.ChunkComfortData;
 import chunkcomfort.chunk.ComfortRequirementCheck;
 import chunkcomfort.chunk.ComfortWorldData;
 import chunkcomfort.config.ForgeConfigHandler;
-import chunkcomfort.registry.BlockComfortRegistry;
-import chunkcomfort.registry.ComfortRequirements;
-import chunkcomfort.registry.EntityComfortRegistry;
-import chunkcomfort.registry.LivingComfortRegistry;
+import chunkcomfort.registry.*;
 import net.minecraft.block.Block;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
+import net.minecraft.entity.EntityLiving;
+import net.minecraft.entity.item.EntityArmorStand;
 import net.minecraft.entity.item.EntityPainting;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.server.MinecraftServer;
@@ -104,7 +103,7 @@ public class CommandChunkComfort extends CommandBase {
 
         displayComfortActivationDetails(sender, player);
         displayPerChunkInfo(sender, player.getPosition(), radius, chunkGroupPoints);
-        displayGroupBreakdown(sender, groupTotals, groupContents);
+        displayGroupBreakdown(sender, player, groupTotals, groupContents);
     }
 
     private void executeReload(MinecraftServer server, ICommandSender sender) {
@@ -227,12 +226,14 @@ public class CommandChunkComfort extends CommandBase {
                                         Map<String,Integer> perChunkGroup,
                                         Map<String,Integer> groupTotals,
                                         Map<String,Map<String,Integer>> groupContents,
-                                        Set<UUID> countedPaintings) { // <- use shared
+                                        Set<UUID> countedPaintings) {
 
         AxisAlignedBB chunkBox = new AxisAlignedBB(
                 chunkPos.getXStart(), 0, chunkPos.getZStart(),
                 chunkPos.getXEnd() + 1, 256, chunkPos.getZEnd() + 1
         );
+
+        Map<ResourceLocation, Integer> livingCount = new HashMap<>();
 
         for (Entity entity : world.getEntitiesWithinAABB(Entity.class, chunkBox)) {
             int points = 0;
@@ -240,13 +241,51 @@ public class CommandChunkComfort extends CommandBase {
             String id = null;
 
             // --- Living entities ---
-            LivingComfortRegistry.LivingComfortEntry livingEntry = LivingComfortRegistry.getEntry(entity);
-            if (livingEntry != null) {
-                if (LivingComfortRegistry.getMatchingEntry(entity) != null) {
-                    points = livingEntry.value;
-                    group = livingEntry.group;
-                    id = livingEntry.entityId.toString();
+            if (entity instanceof EntityLiving && !(entity instanceof EntityArmorStand)) {
+
+                LivingComfortRegistry.LivingComfortEntry livingEntry =
+                        LivingComfortRegistry.getMatchingEntry(entity);
+
+                ResourceLocation entityKey = EntityList.getKey(entity);
+
+                if (livingEntry == null || entityKey == null) {
+                    continue;
                 }
+
+                // -----------------------------
+                // Per-entity limit (MATCH calculator)
+                // -----------------------------
+                int count = livingCount.getOrDefault(entityKey, 0);
+                if (count >= livingEntry.limit) continue;
+
+                // -----------------------------
+                // Base values
+                // -----------------------------
+                points = livingEntry.value;
+                group = livingEntry.group;
+                id = entityKey.toString();
+
+                // -----------------------------
+                // Named pet bonus
+                // -----------------------------
+                int bonus = NamedPetComfortRegistry.getBonus(
+                        entityKey,
+                        entity.getCustomNameTag()
+                );
+
+                if (bonus > 0) {
+                    perChunkGroup.merge(group, bonus, Integer::sum);
+                    groupTotals.merge(group, bonus, Integer::sum);
+
+                    groupContents
+                            .computeIfAbsent(group, k -> new HashMap<>())
+                            .merge(id + " (named)", 1, Integer::sum);
+                }
+
+                // -----------------------------
+                // Update counters
+                // -----------------------------
+                livingCount.put(entityKey, count + 1);
             } else {
                 // --- Non-living entities ---
                 EntityComfortRegistry.ComfortEntry entityEntry = EntityComfortRegistry.getEntityEntry(entity);
@@ -336,7 +375,7 @@ public class CommandChunkComfort extends CommandBase {
                 for (Map.Entry<String,Integer> entry : perChunkGroup.entrySet()) {
                     String group = entry.getKey();
                     int value = entry.getValue();
-                    int limit = getGlobalGroupLimit(group);
+                    int limit = BlockComfortRegistry.getGroupLimit(group) + LivingComfortRegistry.getGroupLimit(group);
                     int displayValue = Math.min(value, limit);
                     chunkTotal += displayValue;
                     String color = (value > limit) ? "§c" : "§a";
@@ -353,15 +392,31 @@ public class CommandChunkComfort extends CommandBase {
 
     }
 
-    private void displayGroupBreakdown(ICommandSender sender,
-                                       Map<String,Integer> groupTotals,
-                                       Map<String,Map<String,Integer>> groupContents) {
+    private void displayGroupBreakdown(
+            ICommandSender sender,
+            EntityPlayer player,
+            Map<String,Integer> groupTotals,
+            Map<String,Map<String,Integer>> groupContents) {
 
         int totalComfort = 0;
         for (Map.Entry<String,Integer> entry : groupTotals.entrySet()) {
-            int limit = getGlobalGroupLimit(entry.getKey());
+            int limit =
+                    BlockComfortRegistry.getGroupLimit(entry.getKey())
+                            + LivingComfortRegistry.getGroupLimit(entry.getKey());
             totalComfort += Math.min(entry.getValue(), limit);
         }
+
+        // ---- Biome Modifier (MATCH calculatePlayerComfort) ----
+        String biomeName = "";
+        ResourceLocation biomeId =
+                player.world.getBiome(player.getPosition()).getRegistryName();
+
+        if (biomeId != null) biomeName = biomeId.toString();
+
+        int biomeModifier =
+                BiomeComfortRegistry.getBiomeModifier(biomeName);
+
+        totalComfort += biomeModifier;
 
         int maxComfort = calculateMaxComfort();
 
@@ -380,11 +435,20 @@ public class CommandChunkComfort extends CommandBase {
         sender.sendMessage(new TextComponentString(I18n.format("debug.chunkcomfort.group_breakdown", totalComfort, maxComfort)));
         sender.sendMessage(new TextComponentString(I18n.format("debug.chunkcomfort.group_breakdown_syntax")));
 
+        if (biomeModifier != 0) {
+            String color = biomeModifier > 0 ? "§a" : "§c";
+            sender.sendMessage(new TextComponentString(
+                    color + "Biome Modifier: " + biomeModifier + "§r"
+            ));
+        }
+
         for (Map.Entry<String,Map<String,Integer>> groupEntry : groupContents.entrySet()) {
             String group = groupEntry.getKey();
             Map<String,Integer> content = groupEntry.getValue();
             int groupPointsRaw = groupTotals.getOrDefault(group, 0);
-            int groupLimit = getGlobalGroupLimit(group);
+            int groupLimit =
+                    BlockComfortRegistry.getGroupLimit(group)
+                            + LivingComfortRegistry.getGroupLimit(group);
             int groupPointsDisplay = Math.min(groupPointsRaw, groupLimit);
             String groupColor = (groupPointsRaw > groupLimit) ? "§c" : "§a";
 
@@ -434,18 +498,6 @@ public class CommandChunkComfort extends CommandBase {
         }
 
         sender.sendMessage(new TextComponentString(I18n.format("debug.chunkcomfort.separator")));
-    }
-
-    // ---------------- Utility Helpers ----------------
-    private int getGlobalGroupLimit(String groupName) {
-        if (groupName == null || groupName.isEmpty()) return 0;
-        for (String s : ForgeConfigHandler.server.groupLimits) {
-            String[] split = s.split(",");
-            if (split.length == 2 && split[0].trim().equalsIgnoreCase(groupName.trim())) {
-                try { return Integer.parseInt(split[1].trim()); } catch (NumberFormatException ignored) {}
-            }
-        }
-        return Integer.MAX_VALUE;
     }
 
     private int calculateMaxComfort() {

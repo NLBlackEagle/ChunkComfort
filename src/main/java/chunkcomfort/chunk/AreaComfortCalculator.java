@@ -186,39 +186,46 @@ public class AreaComfortCalculator {
 
     public static void addLivingEntityComfort(World world, BlockPos center, int radius,
                                               PlayerChunkComfortCache cache) {
-        AxisAlignedBB box = getAxisAlignedBB(world, center, radius);
-        List<Entity> entities = world.getEntitiesWithinAABB(Entity.class, box);
+        int centerChunkX = center.getX() >> 4;
+        int centerChunkZ = center.getZ() >> 4;
 
-        Map<ResourceLocation, Integer> livingCount = new HashMap<>();
+        int verticalRange = ForgeConfigHandler.server.fireScanVerticalRange;
+        int minY = Math.max(0, center.getY() - verticalRange);
+        int maxY = Math.min(world.getHeight() - 1, center.getY() + verticalRange);
 
-        for (Entity entity : entities) {
-            // -----------------------------
-            // Living entities (excluding armor stands)
-            // -----------------------------
-            if (entity instanceof EntityLiving && !(entity instanceof EntityArmorStand)) {
-                LivingComfortRegistry.LivingComfortEntry entry = LivingComfortRegistry.getMatchingEntry(entity);
-                ResourceLocation id = EntityList.getKey(entity);
+        for (int dx = -radius; dx <= radius; dx++) {
+            for (int dz = -radius; dz <= radius; dz++) {
+                ChunkPos chunkPos = new ChunkPos(centerChunkX + dx, centerChunkZ + dz);
 
-                if (entry == null || id == null) continue;
+                AxisAlignedBB chunkBox = new AxisAlignedBB(
+                        chunkPos.getXStart(), minY, chunkPos.getZStart(),
+                        chunkPos.getXEnd() + 1, maxY, chunkPos.getZEnd() + 1
+                );
 
-                int count = livingCount.getOrDefault(id, 0);
-                if (count >= entry.limit) continue;
+                // Reset per-chunk so the per-entity limit applies within each chunk,
+                // matching the behaviour of the info command.
+                Map<ResourceLocation, Integer> livingCount = new HashMap<>();
 
-                int cacheCount = cache.getEntityCount(entity.getClass());
-                if (cacheCount >= entry.limit) continue;
+                for (Entity entity : world.getEntitiesWithinAABB(Entity.class, chunkBox)) {
+                    if (!(entity instanceof EntityLiving) || entity instanceof EntityArmorStand) continue;
 
-                // Add bonus based on name
-                int bonus = NamedPetComfortRegistry.getBonus(EntityList.getKey(entity), entity.getCustomNameTag());
-                if (bonus > 0) {
-                    cache.addEntityGroupTotal(entry.group, bonus);
+                    LivingComfortRegistry.LivingComfortEntry entry = LivingComfortRegistry.getMatchingEntry(entity);
+                    ResourceLocation id = EntityList.getKey(entity);
+
+                    if (entry == null || id == null) continue;
+
+                    int count = livingCount.getOrDefault(id, 0);
+                    if (count >= entry.limit) continue;
+
+                    // Add bonus based on name
+                    int bonus = NamedPetComfortRegistry.getBonus(id, entity.getCustomNameTag());
+                    if (bonus > 0) {
+                        cache.addEntityGroupTotal(entry.group, bonus);
+                    }
+
+                    cache.addEntityGroupTotal(entry.group, entry.value);
+                    livingCount.put(id, count + 1);
                 }
-
-                cache.addEntityCount(entity.getClass(), 1);
-                cache.addEntityGroupTotal(entry.group, entry.value);
-
-
-
-                livingCount.put(id, count + 1);
             }
         }
     }
