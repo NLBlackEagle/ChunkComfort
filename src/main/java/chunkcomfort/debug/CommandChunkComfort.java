@@ -5,6 +5,7 @@ import chunkcomfort.chunk.ChunkComfortData;
 import chunkcomfort.chunk.ComfortRequirementCheck;
 import chunkcomfort.chunk.ComfortWorldData;
 import chunkcomfort.config.ForgeConfigHandler;
+import chunkcomfort.handlers.ChunkComfortClientTooltipHandler;
 import chunkcomfort.registry.*;
 import net.minecraft.block.Block;
 import net.minecraft.client.resources.I18n;
@@ -342,8 +343,7 @@ public class CommandChunkComfort extends CommandBase {
 
     private void displayComfortActivationDetails(ICommandSender sender, EntityPlayer player) {
         BlockPos pos = player.getPosition();
-        ComfortRequirements reqs =
-                ComfortRequirementCheck.getRequirementsPresent(player.world, pos, player);
+        ComfortRequirements reqs = ComfortRequirementCheck.getRequirementsPresent(player.world, pos, player);
 
         StringBuilder sb = new StringBuilder();
         sb.append(I18n.format("debug.chunkcomfort.separator") + "\n");
@@ -351,28 +351,28 @@ public class CommandChunkComfort extends CommandBase {
 
         // Shelter
         if (ForgeConfigHandler.server.requireShelter) {
-            sb.append(I18n.format("debug.chunkcomfort.shelter_required"));
-            sb.append(I18n.format("debug.chunkcomfort.shelter_found", reqs.shelterOk));
+            sb.append(I18n.format("debug.chunkcomfort.shelter_required") + "\n");
+            sb.append(I18n.format("debug.chunkcomfort.shelter_found", reqs.shelterOk) + "\n");
         }
 
         // Light
         if (ForgeConfigHandler.server.minLightLevel > 0) {
             int light = player.world.getLight(pos);
-            sb.append(I18n.format("debug.chunkcomfort.light_required", ForgeConfigHandler.server.minLightLevel));
-            sb.append(I18n.format("debug.chunkcomfort.light_level", light));
+            sb.append(I18n.format("debug.chunkcomfort.light_required", ForgeConfigHandler.server.minLightLevel) + "\n");
+            sb.append(I18n.format("debug.chunkcomfort.light_level", light) + "\n");
         }
 
         // Fire
         if (ForgeConfigHandler.server.requireFire) {
-            sb.append(I18n.format("debug.chunkcomfort.fire_required"));
-            sb.append(I18n.format("debug.chunkcomfort.fire_found", reqs.fireOk));
+            sb.append(I18n.format("debug.chunkcomfort.fire_required") + "\n");
+            sb.append(I18n.format("debug.chunkcomfort.fire_found", reqs.fireOk) + "\n");
         }
 
         // Temperature
         if (ForgeConfigHandler.server.enableTemperatureComfort) {
-            sb.append(I18n.format("debug.chunkcomfort.temperature_required"));
+            sb.append(I18n.format("debug.chunkcomfort.temperature_required") + "\n");
             if (reqs.temperatureOk) {
-                sb.append(I18n.format("debug.chunkcomfort.temperature_range", ForgeConfigHandler.server.minComfortTemperature, ForgeConfigHandler.server.maxComfortTemperature, reqs.playerTemperature));
+                sb.append(I18n.format("debug.chunkcomfort.temperature_range", ForgeConfigHandler.server.minComfortTemperature, ForgeConfigHandler.server.maxComfortTemperature, String.format("%.1f", reqs.playerTemperature)) + "\n");
             }
         }
 
@@ -400,7 +400,7 @@ public class CommandChunkComfort extends CommandBase {
                 for (Map.Entry<String,Integer> entry : perChunkGroup.entrySet()) {
                     String group = entry.getKey();
                     int value = entry.getValue();
-                    int limit = BlockComfortRegistry.getGroupLimit(group) + LivingComfortRegistry.getGroupLimit(group);
+                    int limit = ChunkComfortClientTooltipHandler.getGroupLimit(group);
                     int displayValue = Math.min(value, limit);
                     chunkTotal += displayValue;
                     String color = (value > limit) ? "§c" : "§a";
@@ -425,9 +425,7 @@ public class CommandChunkComfort extends CommandBase {
 
         int totalComfort = 0;
         for (Map.Entry<String,Integer> entry : groupTotals.entrySet()) {
-            int limit =
-                    BlockComfortRegistry.getGroupLimit(entry.getKey())
-                            + LivingComfortRegistry.getGroupLimit(entry.getKey());
+            int limit = ChunkComfortClientTooltipHandler.getGroupLimit(entry.getKey());
             totalComfort += Math.min(entry.getValue(), limit);
         }
 
@@ -443,7 +441,7 @@ public class CommandChunkComfort extends CommandBase {
 
         totalComfort += biomeModifier;
 
-        int maxComfort = calculateMaxComfort();
+        int maxComfort = AreaComfortCalculator.getMaxComfort();
 
         // ---------------- Precompute maps ----------------
         // Map: ComfortEntry -> canonicalId
@@ -471,9 +469,7 @@ public class CommandChunkComfort extends CommandBase {
             String group = groupEntry.getKey();
             Map<String,Integer> content = groupEntry.getValue();
             int groupPointsRaw = groupTotals.getOrDefault(group, 0);
-            int groupLimit =
-                    BlockComfortRegistry.getGroupLimit(group)
-                            + LivingComfortRegistry.getGroupLimit(group);
+            int groupLimit = ChunkComfortClientTooltipHandler.getGroupLimit(group);
             int groupPointsDisplay = Math.min(groupPointsRaw, groupLimit);
             String groupColor = (groupPointsRaw > groupLimit) ? "§c" : "§a";
 
@@ -523,18 +519,5 @@ public class CommandChunkComfort extends CommandBase {
         }
 
         sender.sendMessage(new TextComponentString(I18n.format("debug.chunkcomfort.separator")));
-    }
-
-    private int calculateMaxComfort() {
-        int maxComfort = 0;
-        for (String s : ForgeConfigHandler.server.groupLimits) {
-            String[] split = s.split(",");
-            if (split.length == 2) {
-                try {
-                    maxComfort += Integer.parseInt(split[1].trim());
-                } catch (NumberFormatException ignored) {}
-            }
-        }
-        return maxComfort;
     }
 }

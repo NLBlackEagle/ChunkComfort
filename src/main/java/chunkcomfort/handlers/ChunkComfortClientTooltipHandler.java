@@ -49,6 +49,10 @@ public class ChunkComfortClientTooltipHandler {
         }
     }
 
+    public static int getGroupLimit(String group) {
+        return GROUP_LIMITS.getOrDefault(group, 0);
+    }
+
     public static void refreshFireSourceItems() {
         FIRE_SOURCE_ITEMS.clear();
 
