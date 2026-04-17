@@ -69,6 +69,7 @@ public class ChunkComfort {
 /*
 todo: run a system wide diagnostics and see where I can patch things up
 todo: fix IF skulls not working, should be entities & comforts beds
+todo: drinking/eating things increase comfort temporarily (DARN SCOPE CREEP!)
 todo: test these mods:
 waystones
 variedcommodities
