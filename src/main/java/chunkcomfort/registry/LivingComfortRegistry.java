@@ -262,14 +262,6 @@ public class LivingComfortRegistry {
         return getEntry(entity) != null;
     }
 
-    public static int getGroupLimit(String groupName) {
-        int total = 0;
-        for (LivingComfortEntry entry : ENTITY_MAP.values()) {
-            if (entry.group.equals(groupName)) total += entry.limit;
-        }
-        return total;
-    }
-
     public static Set<String> getAllGroups() {
         Set<String> groups = new HashSet<>();
 

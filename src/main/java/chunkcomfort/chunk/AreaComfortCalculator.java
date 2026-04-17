@@ -149,9 +149,7 @@ public class AreaComfortCalculator {
             int value = cache.groupTotals.getOrDefault(group, 0)
                     + cache.entityGroupTotals.getOrDefault(group, 0);
 
-            int blockLimit = BlockComfortRegistry.getGroupLimit(group);
-            int livingLimit = LivingComfortRegistry.getGroupLimit(group);
-            int totalLimit = blockLimit + livingLimit;
+            int totalLimit = BlockComfortRegistry.getGroupLimit(group);
 
             totalComfort += Math.min(value, totalLimit);
         }
@@ -214,6 +212,7 @@ public class AreaComfortCalculator {
                     }
 
                     cache.addEntityGroupTotal(entry.group, entry.value);
+                    cache.addEntityCount(entity.getClass(), 1);
                     livingCount.put(id, count + 1);
                 }
             }
@@ -285,10 +284,7 @@ public class AreaComfortCalculator {
 
         for (String group : allGroups) {
 
-            int blockLimit = BlockComfortRegistry.getGroupLimit(group);
-            int livingLimit = LivingComfortRegistry.getGroupLimit(group);
-
-            max += blockLimit + livingLimit;
+            max += BlockComfortRegistry.getGroupLimit(group);
         }
 
         // ---------------------------------------
@@ -332,9 +328,7 @@ public class AreaComfortCalculator {
             int entityValue = cache.entityGroupTotals.getOrDefault(group, 0);
             int combined = blockValue + entityValue;
 
-            int blockLimit = BlockComfortRegistry.getGroupLimit(group);
-            int livingLimit = LivingComfortRegistry.getGroupLimit(group);
-            int totalLimit = blockLimit + livingLimit;
+            int totalLimit = BlockComfortRegistry.getGroupLimit(group);
 
             int applied = Math.min(combined, totalLimit);
 

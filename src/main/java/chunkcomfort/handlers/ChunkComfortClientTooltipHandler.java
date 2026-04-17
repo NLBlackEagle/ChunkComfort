@@ -231,9 +231,7 @@ public class ChunkComfortClientTooltipHandler {
         // -------------------
         if (entityID != null) {
 
-
-            LivingComfortRegistry.LivingComfortEntry livingEntry =
-                    LivingComfortRegistry.ENTITY_MAP.get(entityID);
+            LivingComfortRegistry.LivingComfortEntry livingEntry = LivingComfortRegistry.ENTITY_MAP.get(entityID);
 
             // ONLY continue if this entity is configured for comfort
             if (livingEntry == null) {
@@ -261,16 +259,22 @@ public class ChunkComfortClientTooltipHandler {
 
                 Entity entity = EntityList.createEntityByIDFromName(entityID, player.world);
 
-                if (entity instanceof EntityLiving) {
+                // REASON: previously only EntityLiving instances triggered the tooltip,
+                // which meant entities registered via the direct CustomSpawnEggRegistry path
+                // (dragon skulls, trophies) always silently fell through — their entityID
+                // resolves fine but createEntityByIDFromName returns null or a non-living
+                // entity because the entity ID is a logical identifier, not a spawnable mob.
+                // We now show the tooltip for any entity that has a LivingComfortEntry,
+                // regardless of whether it can be spawned as a living entity.
+                // entityCount falls back to 0 for non-living — skulls count via the
+                // block scanner, not the entity scanner, so 0 is correct here.
+                boolean isSpawnableLiving = entity instanceof EntityLiving;
 
-                    int entityCount =
-                            cache.livingEntityCounts.getOrDefault(entity.getClass(), 0);
+                int entityCount = isSpawnableLiving ? cache.livingEntityCounts.getOrDefault(entity.getClass(), 0) : 0;
 
-                    int groupPoints =
-                            cache.entityGroupTotals.getOrDefault(livingEntry.group, 0);
+                    int groupPoints = cache.entityGroupTotals.getOrDefault(livingEntry.group, 0);
 
-                    int totalGroupLimit =
-                            LivingComfortRegistry.getGroupLimit(livingEntry.group);
+                    int totalGroupLimit = getGroupLimit(livingEntry.group);
 
                     tooltip.add(I18n.format(
                             "tooltip.chunkcomfort.living.line1",
@@ -295,7 +299,6 @@ public class ChunkComfortClientTooltipHandler {
                         tooltip.add(I18n.format("tooltip.chunkcomfort.pet"));
                     }
                 }
-            }
 
             handledSpawnEgg = true;
             NON_BLOCK_ENTITIES.add(registryName);
