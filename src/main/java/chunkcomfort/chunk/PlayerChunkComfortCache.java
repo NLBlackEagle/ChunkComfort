@@ -19,6 +19,14 @@ public class PlayerChunkComfortCache {
     public final Map<String, Integer> entityGroupTotals = new HashMap<>();
     public final Map<Class<? extends Entity>, Integer> decorativeEntityCounts = new HashMap<>();
 
+    // REASON: livingEntityCounts is keyed on Java Class, which is the same object
+    // for all NBT variants of the same entity (e.g. all if_mob_skull types share
+    // one class). This means the tooltip count is the total of ALL skull types
+    // combined, not per-type. contextEntityCounts is keyed on "entityId|SkullType:1"
+    // (matching the CONTEXT_MAP format in LivingComfortRegistry) so each variant
+    // is counted independently and the tooltip shows the correct per-type count.
+    public final Map<String, Integer> contextEntityCounts = new HashMap<>();
+
     public int cacheVersion = 0; // default
     public void ensureUpToDate() {
         if (cacheVersion != AreaComfortCalculator.getCacheVersion()) {
@@ -36,6 +44,7 @@ public class PlayerChunkComfortCache {
         livingEntityCounts.clear();
         entityGroupTotals.clear();
         decorativeEntityCounts.clear();
+        contextEntityCounts.clear();
         lastPos = null;
     }
 
@@ -62,6 +71,14 @@ public class PlayerChunkComfortCache {
 
     public void addEntityCount(Class<? extends Entity> entityClass, int count) {
         livingEntityCounts.put(entityClass, livingEntityCounts.getOrDefault(entityClass, 0) + count);
+    }
+
+    public void addContextEntityCount(String contextKey, int count) {
+        contextEntityCounts.put(contextKey, contextEntityCounts.getOrDefault(contextKey, 0) + count);
+    }
+
+    public int getContextEntityCount(String contextKey) {
+        return contextEntityCounts.getOrDefault(contextKey, 0);
     }
 
     public void addEntityGroupTotal(String group, int total) {

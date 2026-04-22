@@ -175,14 +175,55 @@ public class ChunkComfortClientTooltipHandler {
 
         // 3. Living items (spawn eggs etc)
         ResourceLocation entityId = CustomSpawnEggRegistry.resolve(stack);
-        if (entityId != null) {
+        if (entityId != null &&
+                LivingComfortRegistry.hasEntries(entityId)) {
+
+            String context = CustomSpawnEggRegistry.resolveNBTContext(stack);
             LivingComfortRegistry.LivingComfortEntry living =
-                    LivingComfortRegistry.ENTITY_MAP.get(entityId);
+                    LivingComfortRegistry.getEntryForContext(entityId, context);
 
             if (living != null) return living.group;
         }
 
         return null;
+    }
+
+    /**
+     * Returns true if the given item registry name corresponds to a living entity
+     * that is registered in LivingComfortRegistry under any entity ID.
+     *
+     * This covers cases like I&F skull items: "iceandfire:amphithere_skull" is not
+     * itself a living entity ID, but when placed it becomes "iceandfire:if_mob_skull"
+     * which IS in LivingComfortRegistry. We check both the item name directly and
+     * whether any CustomSpawnEggRegistry entry maps this item to a living entity.
+     *
+     * REASON: used to suppress the block tooltip path for skull-type items that
+     * are backed by living entities. Without this, any skull item whose name appears
+     * in blockComfortEntries (even indirectly) would show a block comfort tooltip
+     * when held, regardless of whether it is configured in CustomSpawnEggRegistry.
+     */
+    private static boolean isRegisteredLivingEntity(String itemRegistryName) {
+        // Direct check: item name is itself a living entity ID with entries
+        ResourceLocation directId = new ResourceLocation(itemRegistryName);
+        if (LivingComfortRegistry.hasEntries(directId)) return true;
+
+        // Indirect check: item maps to a living entity via CustomSpawnEggRegistry
+        // We check DIRECT_ENTRIES by looking for any entry whose item ID matches.
+        // We do this by attempting to resolve a synthetic stack — but we only have
+        // the registry name here, not a stack. Instead check if the item's registry
+        // name is a key in CustomSpawnEggRegistry's direct entries by checking if
+        // any resolved entity ID has living entries.
+        // We use ForgeRegistries to build a minimal ItemStack for resolution.
+        try {
+            net.minecraft.item.Item item = net.minecraft.item.Item.REGISTRY.getObject(directId);
+            if (item != null) {
+                net.minecraft.item.ItemStack synthetic = new net.minecraft.item.ItemStack(item);
+                ResourceLocation resolved = CustomSpawnEggRegistry.resolve(synthetic);
+                if (resolved != null && LivingComfortRegistry.hasEntries(resolved)) return true;
+            }
+        } catch (Exception ignored) {}
+
+        return false;
     }
 
     @SubscribeEvent
@@ -231,7 +272,9 @@ public class ChunkComfortClientTooltipHandler {
         // -------------------
         if (entityID != null) {
 
-            LivingComfortRegistry.LivingComfortEntry livingEntry = LivingComfortRegistry.ENTITY_MAP.get(entityID);
+            String nbtContext = CustomSpawnEggRegistry.resolveNBTContext(stack);
+            LivingComfortRegistry.LivingComfortEntry livingEntry =
+                    LivingComfortRegistry.getEntryForContext(entityID, nbtContext);
 
             // ONLY continue if this entity is configured for comfort
             if (livingEntry == null) {
@@ -270,35 +313,48 @@ public class ChunkComfortClientTooltipHandler {
                 // block scanner, not the entity scanner, so 0 is correct here.
                 boolean isSpawnableLiving = entity instanceof EntityLiving;
 
-                int entityCount = isSpawnableLiving ? cache.livingEntityCounts.getOrDefault(entity.getClass(), 0) : 0;
-
-                    int groupPoints = cache.entityGroupTotals.getOrDefault(livingEntry.group, 0);
-
-                    int totalGroupLimit = getGroupLimit(livingEntry.group);
-
-                    tooltip.add(I18n.format(
-                            "tooltip.chunkcomfort.living.line1",
-                            livingEntry.value,
-                            entityCount,
-                            livingEntry.limit));
-
-                    tooltip.add(I18n.format(
-                            "tooltip.chunkcomfort.living.line2",
-                            livingEntry.group,
-                            groupPoints,
-                            totalGroupLimit));
-
-                    String nameLine =
-                            NamedPetComfortRegistry.formatNamesWithPoints(entityID);
-
-                    if (nameLine != null) {
-                        tooltip.add(nameLine);
-                    }
-
-                    if (petEntry != null) {
-                        tooltip.add(I18n.format("tooltip.chunkcomfort.pet"));
-                    }
+                // REASON: livingEntityCounts is keyed on Java Class, which is shared
+                // across all NBT variants of the same entity (all if_mob_skull types
+                // use one class). When nbtContext is available we use contextEntityCounts
+                // instead — keyed on "entityId|SkullType:1" — so each variant shows its
+                // own independent count rather than the combined count of all variants.
+                int entityCount;
+                if (nbtContext != null && !nbtContext.isEmpty()) {
+                    String contextKey = entityID.toString() + "|" + nbtContext;
+                    entityCount = cache.getContextEntityCount(contextKey);
+                } else {
+                    entityCount = isSpawnableLiving
+                            ? cache.livingEntityCounts.getOrDefault(entity.getClass(), 0)
+                            : 0;
                 }
+
+                int groupPoints = cache.entityGroupTotals.getOrDefault(livingEntry.group, 0);
+
+                int totalGroupLimit = getGroupLimit(livingEntry.group);
+
+                tooltip.add(I18n.format(
+                        "tooltip.chunkcomfort.living.line1",
+                        livingEntry.value,
+                        entityCount,
+                        livingEntry.limit));
+
+                tooltip.add(I18n.format(
+                        "tooltip.chunkcomfort.living.line2",
+                        livingEntry.group,
+                        groupPoints,
+                        totalGroupLimit));
+
+                String nameLine =
+                        NamedPetComfortRegistry.formatNamesWithPoints(entityID);
+
+                if (nameLine != null) {
+                    tooltip.add(nameLine);
+                }
+
+                if (petEntry != null) {
+                    tooltip.add(I18n.format("tooltip.chunkcomfort.pet"));
+                }
+            }
 
             handledSpawnEgg = true;
             NON_BLOCK_ENTITIES.add(registryName);
@@ -309,8 +365,20 @@ public class ChunkComfortClientTooltipHandler {
         // Generic entity / block handling
         // -------------------
         boolean isAliasBlock = CONFIGURED_ALIAS_BLOCKS.contains(registryName);
-        boolean isConfiguredBlock = CONFIGURED_COMFORT_BLOCKS.contains(registryName);
-        boolean isEntityItem = entityID != null && LivingComfortRegistry.ENTITY_MAP.containsKey(entityID);
+        boolean isConfiguredBlock = CONFIGURED_COMFORT_BLOCKS.contains(registryName)
+                && (stack.getItem() instanceof net.minecraft.item.ItemBlock || isAliasBlock)
+                // REASON: if_mob_skull-type items (amphithere_skull, cyclops_skull, etc.)
+                // may register their placed block under "iceandfire:if_mob_skull" in block
+                // comfort entries, but in I&F these are living entities, not static blocks.
+                // Their item registry name (e.g. "iceandfire:amphithere_skull") could match
+                // CONFIGURED_COMFORT_BLOCKS if added there, causing an unregistered skull
+                // item to show a block comfort tooltip when held. We suppress the block
+                // tooltip path for any item that, when resolved as a living entity,
+                // has entries in LivingComfortRegistry — those items must go through the
+                // spawn egg path exclusively. If they're unregistered in CustomSpawnEggRegistry
+                // they should show no tooltip at all.
+                && !isRegisteredLivingEntity(registryName);
+        boolean isEntityItem = entityID != null && LivingComfortRegistry.hasEntries(entityID);
         boolean isFireBlock = FIRE_BLOCKS.contains(registryName);
         boolean isFireSourceItem = FIRE_SOURCE_ITEMS.contains(registryName);
         EntityComfortRegistry.ComfortEntry entityEntry = EntityComfortRegistry.getEntityEntryFromId(new ResourceLocation(registryName));

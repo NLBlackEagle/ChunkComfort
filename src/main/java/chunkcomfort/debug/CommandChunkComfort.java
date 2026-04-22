@@ -491,8 +491,10 @@ public class CommandChunkComfort extends CommandBase {
                     name = blockEntryToCanonicalId.get(blockEntry); // canonical name
                 } else {
                     // --- Living entity ---
-                    LivingComfortRegistry.LivingComfortEntry livingEntry = LivingComfortRegistry.ENTITY_MAP.get(new ResourceLocation(name));
-                    if (livingEntry != null) {
+                    List<LivingComfortRegistry.LivingComfortEntry> livingEntries = LivingComfortRegistry.ENTITY_MAP.get(new ResourceLocation(name));
+                    if (livingEntries != null && !livingEntries.isEmpty()) {
+                        LivingComfortRegistry.LivingComfortEntry livingEntry = livingEntries.get(0);
+
                         itemLimit = livingEntry.limit;
                         displayCount = Math.min(count, itemLimit);
                         if (count > itemLimit) color = "§c";

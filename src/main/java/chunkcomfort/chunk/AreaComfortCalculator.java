@@ -149,7 +149,7 @@ public class AreaComfortCalculator {
             int value = cache.groupTotals.getOrDefault(group, 0)
                     + cache.entityGroupTotals.getOrDefault(group, 0);
 
-            int totalLimit = BlockComfortRegistry.getGroupLimit(group);
+            int totalLimit = GroupLimitRegistry.getCap(group);
 
             totalComfort += Math.min(value, totalLimit);
         }
@@ -193,7 +193,13 @@ public class AreaComfortCalculator {
                 );
 
 
-                Map<ResourceLocation, Integer> livingCount = new HashMap<>();
+                // REASON: previously keyed on ResourceLocation, which meant all NBT
+                // variants of the same entity ID (e.g. every if_mob_skull type) shared
+                // one counter. After counting 1 cyclops skull the limit was hit and
+                // stymphalian skulls were blocked even though they are separate config
+                // entries with their own limit. Keying on the LivingComfortEntry object
+                // itself gives each config line its own independent counter.
+                Map<LivingComfortRegistry.LivingComfortEntry, Integer> livingCount = new HashMap<>();
 
                 for (Entity entity : world.getEntitiesWithinAABB(Entity.class, chunkBox)) {
                     if (!(entity instanceof EntityLiving) || entity instanceof EntityArmorStand) continue;
@@ -203,7 +209,7 @@ public class AreaComfortCalculator {
 
                     if (entry == null || id == null) continue;
 
-                    int count = livingCount.getOrDefault(id, 0);
+                    int count = livingCount.getOrDefault(entry, 0);
                     if (count >= entry.limit) continue;
 
                     int bonus = NamedPetComfortRegistry.getBonus(id, entity.getCustomNameTag());
@@ -213,7 +219,14 @@ public class AreaComfortCalculator {
 
                     cache.addEntityGroupTotal(entry.group, entry.value);
                     cache.addEntityCount(entity.getClass(), 1);
-                    livingCount.put(id, count + 1);
+
+                    // Populate per-variant count so tooltip shows correct count per skull type
+                    String contextKey = LivingComfortRegistry.extractEntityContextKey(id, entity);
+                    if (contextKey != null) {
+                        cache.addContextEntityCount(contextKey, 1);
+                    }
+
+                    livingCount.put(entry, count + 1);
                 }
             }
         }
@@ -284,7 +297,7 @@ public class AreaComfortCalculator {
 
         for (String group : allGroups) {
 
-            max += BlockComfortRegistry.getGroupLimit(group);
+            max += GroupLimitRegistry.getCap(group);
         }
 
         // ---------------------------------------
@@ -328,7 +341,7 @@ public class AreaComfortCalculator {
             int entityValue = cache.entityGroupTotals.getOrDefault(group, 0);
             int combined = blockValue + entityValue;
 
-            int totalLimit = BlockComfortRegistry.getGroupLimit(group);
+            int totalLimit = GroupLimitRegistry.getCap(group);
 
             int applied = Math.min(combined, totalLimit);
 

@@ -401,6 +401,7 @@ public class ForgeConfigHandler {
         ChunkComfortClientTooltipHandler.refreshNonBlockEntities();
         ChunkComfortClientTooltipHandler.refreshGroupTooltips();
         AreaComfortCalculator.invalidateMaxComfortCache();
+        GroupLimitRegistry.reload();
 
 
 
