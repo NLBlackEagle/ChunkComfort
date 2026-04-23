@@ -16,6 +16,9 @@ public class NamedPetComfortRegistry {
         if (entries == null) return;
 
         for (String line : entries) {
+
+            line = line.split("#", 2)[0].trim();
+
             if (line == null || line.trim().isEmpty()) continue;
 
             try {

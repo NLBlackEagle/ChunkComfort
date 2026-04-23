@@ -34,6 +34,7 @@ public class PotionBlacklistRegistry {
         blacklist.clear();
 
         for (String entry : entries) {
+
             try {
                 String[] parts = entry.split(",", 2);
 

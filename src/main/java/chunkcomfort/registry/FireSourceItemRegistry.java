@@ -21,6 +21,8 @@ public class FireSourceItemRegistry {
 
         for (String name : fireSourceItems) {
 
+            name = name.split("#", 2)[0].trim();
+
             if (name == null || name.trim().isEmpty()) continue;
 
             try {

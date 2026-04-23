@@ -75,6 +75,38 @@ public class CustomSpawnEggRegistry {
     // Reload
     // -------------------------------------------------------
 
+    /**
+     * Builds the DIRECT_ENTRIES key from an item string that may include metadata.
+     *
+     * "iceandfire:dragon_skull"   -> "iceandfire:dragon_skull:0"  (normalised, meta 0)
+     * "iceandfire:dragon_skull:1" -> "iceandfire:dragon_skull:1"
+     * "iceandfire:dragon_skull:2" -> "iceandfire:dragon_skull:2"
+     *
+     * REASON: getRegistryName() returns only the item ID without metadata. Including
+     * metadata in the key allows different dragon skull variants (fire/ice/lightning)
+     * to be registered as separate entries rather than all collapsing to the same key.
+     * Normalising meta-0 entries to ":0" means resolve() can always use the same
+     * "id:meta" format without special-casing the zero case.
+     */
+    private static String toItemKey(String itemId) {
+        // Count colons: "mod:item" has 1, "mod:item:meta" has 2
+        int firstColon = itemId.indexOf(':');
+        int secondColon = itemId.indexOf(':', firstColon + 1);
+        if (secondColon == -1) {
+            // No metadata specified — normalise to :0
+            return itemId + ":0";
+        }
+        // Validate the metadata part is actually a number
+        String metaPart = itemId.substring(secondColon + 1);
+        try {
+            Integer.parseInt(metaPart);
+            return itemId; // already in "mod:item:meta" form
+        } catch (NumberFormatException e) {
+            // Not a metadata suffix — treat whole string as item ID with meta 0
+            return itemId + ":0";
+        }
+    }
+
     public static void reload(String[] config) {
         ENTRIES.clear();
         DIRECT_ENTRIES.clear();
@@ -82,6 +114,9 @@ public class CustomSpawnEggRegistry {
         if (config == null) return;
 
         for (String line : config) {
+
+            line = line.split("#", 2)[0].trim();
+
             if (line == null || line.trim().isEmpty()) continue;
 
             try {
@@ -109,24 +144,20 @@ public class CustomSpawnEggRegistry {
 
                     } else {
                         // NBT-discriminated direct: second part is a flat Key:Value pair
-                        // REASON: previously this branch didn't exist — any entry with a
-                        // comma was treated as a Lycanites path, so "SkullType:1" became
-                        // an nbtPath, readNBTPath looked for a tag literally named
-                        // "SkullType:1", found nothing, and resolve() returned null.
-                        // Now flat Key:Value entries are stored as DirectEntry with an
-                        // nbtContext that the tooltip uses to pick the right living entry.
-                        DIRECT_ENTRIES.put(itemId, new DirectEntry(entity, secondPart));
+                        String key = toItemKey(itemId);
+                        DIRECT_ENTRIES.put(key, new DirectEntry(entity, secondPart));
                         ChunkComfort.LOGGER.debug(
                                 "[ChunkComfort] Registered NBT-discriminated direct entry: {} -> {} (context: {})",
-                                itemId, entity, secondPart);
+                                key, entity, secondPart);
                     }
 
                 } else {
                     // Simple direct: no comma, item alone identifies the entity
-                    DIRECT_ENTRIES.put(right, new DirectEntry(entity, null));
+                    String key = toItemKey(right);
+                    DIRECT_ENTRIES.put(key, new DirectEntry(entity, null));
                     ChunkComfort.LOGGER.debug(
                             "[ChunkComfort] Registered direct entry: {} -> {}",
-                            right, entity);
+                            key, entity);
                 }
 
             } catch (Exception e) {
@@ -150,31 +181,27 @@ public class CustomSpawnEggRegistry {
     public static ResourceLocation resolve(ItemStack stack) {
         if (stack == null || stack.getItem() == null) return null;
 
-        String itemId = stack.getItem().getRegistryName().toString();
+        // REASON: include metadata in the lookup key so different metadata values
+        // of the same item (dragon_skull:0, dragon_skull:1, dragon_skull:2) resolve
+        // to separate entries rather than all collapsing to the same key.
+        String itemKey = stack.getItem().getRegistryName().toString() + ":" + stack.getMetadata();
 
-        DirectEntry direct = DIRECT_ENTRIES.get(itemId);
+        DirectEntry direct = DIRECT_ENTRIES.get(itemKey);
         if (direct != null) {
-            ChunkComfort.LOGGER.info(
-                    "[ChunkComfort][SpawnEgg] resolve: item='{}' -> entityId='{}' (direct)",
-                    itemId, direct.entityId);
             return direct.entityId;
         }
 
+        // Lycanites NBT-path entries use item ID without metadata
+        String itemId = stack.getItem().getRegistryName().toString();
         for (Entry entry : ENTRIES) {
             if (!entry.itemId.equals(itemId)) continue;
             if (!stack.hasTagCompound()) continue;
             String result = readNBTPath(stack.getTagCompound(), entry.nbtPath);
             if (result != null && result.equals(entry.entityId.getPath())) {
-                ChunkComfort.LOGGER.info(
-                        "[ChunkComfort][SpawnEgg] resolve: item='{}' -> entityId='{}' (NBT-path)",
-                        itemId, entry.entityId);
                 return entry.entityId;
             }
         }
 
-        ChunkComfort.LOGGER.info(
-                "[ChunkComfort][SpawnEgg] resolve: item='{}' -> null (not registered)",
-                itemId);
         return null;
     }
 
@@ -188,12 +215,9 @@ public class CustomSpawnEggRegistry {
      */
     public static String resolveNBTContext(ItemStack stack) {
         if (stack == null || stack.getItem() == null) return null;
-        String itemId = stack.getItem().getRegistryName().toString();
-        DirectEntry direct = DIRECT_ENTRIES.get(itemId);
+        String itemKey = stack.getItem().getRegistryName().toString() + ":" + stack.getMetadata();
+        DirectEntry direct = DIRECT_ENTRIES.get(itemKey);
         String context = direct != null ? direct.nbtContext : null;
-        ChunkComfort.LOGGER.info(
-                "[ChunkComfort][SpawnEgg] resolveNBTContext: item='{}' -> context='{}'",
-                itemId, context);
         return context;
     }
 
@@ -212,7 +236,11 @@ public class CustomSpawnEggRegistry {
      * the block path should never fire for it.
      */
     public static boolean isKnownItem(String itemRegistryName) {
-        if (DIRECT_ENTRIES.containsKey(itemRegistryName)) return true;
+        // Keys are stored as "id:meta" — match on the base id part
+        for (String key : DIRECT_ENTRIES.keySet()) {
+            String keyBase = key.substring(0, key.lastIndexOf(':'));
+            if (keyBase.equals(itemRegistryName)) return true;
+        }
         for (Entry e : ENTRIES) {
             if (e.itemId.equals(itemRegistryName)) return true;
         }

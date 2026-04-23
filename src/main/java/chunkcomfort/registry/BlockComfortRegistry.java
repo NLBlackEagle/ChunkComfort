@@ -2,6 +2,7 @@ package chunkcomfort.registry;
 
 import chunkcomfort.ChunkComfort;
 import net.minecraft.block.Block;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.translation.I18n;
 
 import java.util.*;
@@ -58,6 +59,8 @@ public class BlockComfortRegistry {
 
         for (String line : entries) {
 
+            line = line.split("#", 2)[0].trim();
+
             if (line == null || line.trim().isEmpty()) continue;
 
             try {
@@ -98,13 +101,10 @@ public class BlockComfortRegistry {
      */
     private static void registerBlockAndAliases(String id, ComfortEntry entry) {
 
-        boolean registered = false;
-
         // Try canonical block (may not exist!)
         Block block = Block.getBlockFromName(id);
         if (block != null) {
             BLOCK_ENTRIES.put(block, entry);
-            registered = true;
         }
 
         // ALWAYS process aliases
@@ -117,13 +117,8 @@ public class BlockComfortRegistry {
 
                 if (aliasBlock != null) {
                     BLOCK_ENTRIES.put(aliasBlock, entry);
-                    registered = true;
                 }
             }
-        }
-
-        if (!registered) {
-            ChunkComfort.LOGGER.warn("No valid block found for {}", id);
         }
     }
 

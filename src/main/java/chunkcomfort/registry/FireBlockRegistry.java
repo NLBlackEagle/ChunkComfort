@@ -21,6 +21,8 @@ public class FireBlockRegistry {
 
         for (String name : fireBlocks) {
 
+            name = name.split("#", 2)[0].trim();
+
             if (name == null || name.trim().isEmpty()) continue;
 
             try {

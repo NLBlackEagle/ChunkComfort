@@ -68,13 +68,6 @@ public class LivingComfortRegistry {
         String lookupKey = id.toString() + "|" + normalised;
         LivingComfortEntry direct = CONTEXT_MAP.get(lookupKey);
 
-        ChunkComfort.LOGGER.info(
-                "[ChunkComfort][ContextMap] Lookup: key='{}' -> {}",
-                lookupKey,
-                direct != null
-                        ? "HIT (group=" + direct.group + " value=" + direct.value + ")"
-                        : "MISS, falling back to getDefaultEntry");
-
         if (direct != null) return direct;
         return getDefaultEntry(id);
     }
@@ -176,6 +169,9 @@ public class LivingComfortRegistry {
         if (entries == null) return;
 
         for (String line : entries) {
+
+            line = line.split("#", 2)[0].trim();
+
             if (line == null || line.trim().isEmpty()) continue;
 
             try {
@@ -202,14 +198,7 @@ public class LivingComfortRegistry {
                 // simple Key:Value NBT condition (e.g. {SkullType:1})
                 String contextKey = extractContextKey(nbt);
                 if (contextKey != null) {
-                    CONTEXT_MAP.put(id.toString() + "|" + contextKey, entry);
-                    ChunkComfort.LOGGER.info(
-                            "[ChunkComfort][ContextMap] Registered: key='{}|{}' group={} value={}",
-                            id, contextKey, group, value);
-                } else {
-                    ChunkComfort.LOGGER.info(
-                            "[ChunkComfort][ContextMap] Skipped (complex NBT): entity={} nbt={}",
-                            id, nbt);
+                    CONTEXT_MAP.put(id + "|" + contextKey, entry);
                 }
 
             } catch (Exception e) {

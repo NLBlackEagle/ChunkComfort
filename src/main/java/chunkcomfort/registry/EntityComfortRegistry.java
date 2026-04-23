@@ -1,6 +1,7 @@
 package chunkcomfort.registry;
 
 import chunkcomfort.ChunkComfort;
+import net.minecraft.block.Block;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.translation.I18n;
@@ -41,6 +42,8 @@ public class EntityComfortRegistry {
 
         for (String line : entries) {
 
+            line = line.split("#", 2)[0].trim();
+
             if (line == null || line.trim().isEmpty()) continue;
 
             try {
@@ -80,7 +83,11 @@ public class EntityComfortRegistry {
                     ENTITY_ENTRIES.put(clazz, entry);
                     COMFORT_ENTITY_CLASSES.add(clazz);
                     ENTITY_ID_MAP.put(rl, entry);
-                } else {
+                } else if (!BlockComfortRegistry.isComfortBlock(Block.getBlockFromName(id))) {
+                    // REASON: only warn if the block registry also didn't claim this entry.
+                    // If BlockComfortRegistry registered it (bookshelf, bed, etc.) there is
+                    // no problem and no warn should fire. If both registries failed, the
+                    // combined validation pass in ForgeConfigHandler produces the real warn.
                     ChunkComfort.LOGGER.warn(
                             I18n.translateToLocalFormatted(
                                     "chunkcomfort.config.invalid_entity_entry",

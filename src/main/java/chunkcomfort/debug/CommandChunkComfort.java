@@ -36,7 +36,7 @@ public class CommandChunkComfort extends CommandBase {
     public String getName() { return "chunkcomfort"; }
 
     @Override
-    public String getUsage(ICommandSender sender) { return "/chunkcomfort <info|reload|biome|Block>"; }
+    public String getUsage(ICommandSender sender) { return "/chunkcomfort <info|reload|biome|block|item>"; }
 
     @Override
     public int getRequiredPermissionLevel() { return 2; }
@@ -61,8 +61,58 @@ public class CommandChunkComfort extends CommandBase {
             case "block":
                 executeBlock(sender);
                 break;
+            case "item":
+                executeItem(sender);
+                break;
             default:
                 sender.sendMessage(new TextComponentString(I18n.format("debug.chunkcomfort.unknown_subcommand")));
+        }
+    }
+
+    private void executeItem(ICommandSender sender) {
+        EntityPlayer player = (EntityPlayer) sender.getCommandSenderEntity();
+        if (player == null) return;
+
+        net.minecraft.item.ItemStack stack = player.getHeldItemMainhand();
+
+        if (stack.isEmpty()) {
+            sender.sendMessage(new TextComponentString("§cYou are not holding an item."));
+            return;
+        }
+
+        net.minecraft.item.Item item = stack.getItem();
+        ResourceLocation itemId = item.getRegistryName();
+
+        sender.sendMessage(new TextComponentString("§6--- Held Item Debug ---"));
+
+        // Registry name
+        sender.sendMessage(new TextComponentString(
+                "Item: " + (itemId != null ? itemId.toString() : "null")
+        ));
+
+        // Metadata
+        sender.sendMessage(new TextComponentString(
+                "Meta: " + stack.getMetadata()
+        ));
+
+        // Display name
+        sender.sendMessage(new TextComponentString(
+                "Name: " + stack.getDisplayName()
+        ));
+
+        // Count
+        sender.sendMessage(new TextComponentString(
+                "Count: " + stack.getCount()
+        ));
+
+        // NBT
+        if (stack.hasTagCompound()) {
+            sender.sendMessage(new TextComponentString("NBT:"));
+            sender.sendMessage(new TextComponentString(
+                    stack.getTagCompound().toString()
+            ));
+        } else {
+            sender.sendMessage(new TextComponentString("NBT: none"));
         }
     }
 
@@ -259,7 +309,11 @@ public class CommandChunkComfort extends CommandBase {
                 chunkPos.getXEnd() + 1, 256, chunkPos.getZEnd() + 1
         );
 
-        Map<ResourceLocation, Integer> livingCount = new HashMap<>();
+        // REASON: keyed on LivingComfortEntry (not ResourceLocation) so NBT variants
+        // of the same entity ID (e.g. if_mob_skull cyclops vs stymphalian) each get
+        // their own counter. Previously keyed on ResourceLocation meant one variant
+        // hitting its limit blocked all others sharing the same entity ID.
+        Map<LivingComfortRegistry.LivingComfortEntry, Integer> livingCount = new HashMap<>();
 
         for (Entity entity : world.getEntitiesWithinAABB(Entity.class, chunkBox)) {
             int points = 0;
@@ -278,18 +332,18 @@ public class CommandChunkComfort extends CommandBase {
                     continue;
                 }
 
-                // -----------------------------
-                // Per-entity limit (MATCH calculator)
-                // -----------------------------
-                int count = livingCount.getOrDefault(entityKey, 0);
+                int count = livingCount.getOrDefault(livingEntry, 0);
                 if (count >= livingEntry.limit) continue;
 
-                // -----------------------------
-                // Base values
-                // -----------------------------
                 points = livingEntry.value;
                 group = livingEntry.group;
-                id = entityKey.toString();
+
+                // REASON: use a discriminated ID so NBT variants appear as separate
+                // entries in groupContents. extractEntityContextKey returns a string
+                // like "iceandfire:if_mob_skull|SkullType:1" for variants, or null
+                // for single-entry entities (falls back to plain entity ID).
+                String contextKey = LivingComfortRegistry.extractEntityContextKey(entityKey, entity);
+                id = contextKey != null ? contextKey : entityKey.toString();
 
                 // -----------------------------
                 // Named pet bonus
@@ -311,7 +365,7 @@ public class CommandChunkComfort extends CommandBase {
                 // -----------------------------
                 // Update counters
                 // -----------------------------
-                livingCount.put(entityKey, count + 1);
+                livingCount.put(livingEntry, count + 1);
             } else {
                 // --- Non-living entities ---
                 EntityComfortRegistry.ComfortEntry entityEntry = EntityComfortRegistry.getEntityEntry(entity);
@@ -351,26 +405,26 @@ public class CommandChunkComfort extends CommandBase {
 
         // Shelter
         if (ForgeConfigHandler.server.requireShelter) {
-            sb.append(I18n.format("debug.chunkcomfort.shelter_required") + "\n");
+            sb.append(I18n.format("debug.chunkcomfort.shelter_required"));
             sb.append(I18n.format("debug.chunkcomfort.shelter_found", reqs.shelterOk) + "\n");
         }
 
         // Light
         if (ForgeConfigHandler.server.minLightLevel > 0) {
             int light = player.world.getLight(pos);
-            sb.append(I18n.format("debug.chunkcomfort.light_required", ForgeConfigHandler.server.minLightLevel) + "\n");
+            sb.append(I18n.format("debug.chunkcomfort.light_required", ForgeConfigHandler.server.minLightLevel));
             sb.append(I18n.format("debug.chunkcomfort.light_level", light) + "\n");
         }
 
         // Fire
         if (ForgeConfigHandler.server.requireFire) {
-            sb.append(I18n.format("debug.chunkcomfort.fire_required") + "\n");
+            sb.append(I18n.format("debug.chunkcomfort.fire_required"));
             sb.append(I18n.format("debug.chunkcomfort.fire_found", reqs.fireOk) + "\n");
         }
 
         // Temperature
         if (ForgeConfigHandler.server.enableTemperatureComfort) {
-            sb.append(I18n.format("debug.chunkcomfort.temperature_required") + "\n");
+            sb.append(I18n.format("debug.chunkcomfort.temperature_required"));
             if (reqs.temperatureOk) {
                 sb.append(I18n.format("debug.chunkcomfort.temperature_range", ForgeConfigHandler.server.minComfortTemperature, ForgeConfigHandler.server.maxComfortTemperature, String.format("%.1f", reqs.playerTemperature)) + "\n");
             }
@@ -491,13 +545,24 @@ public class CommandChunkComfort extends CommandBase {
                     name = blockEntryToCanonicalId.get(blockEntry); // canonical name
                 } else {
                     // --- Living entity ---
-                    List<LivingComfortRegistry.LivingComfortEntry> livingEntries = LivingComfortRegistry.ENTITY_MAP.get(new ResourceLocation(name));
+                    // REASON: the key may be a discriminated ID like
+                    // "iceandfire:if_mob_skull|SkullType:1" (from extractEntityContextKey)
+                    // or a plain entity ID. We strip the context suffix to get the base
+                    // ResourceLocation, then use getEntryForContext() to find the right entry.
+                    String baseName = name.contains("|") ? name.substring(0, name.indexOf("|")) : name;
+                    String context = name.contains("|") ? name.substring(name.indexOf("|") + 1) : null;
+                    List<LivingComfortRegistry.LivingComfortEntry> livingEntries =
+                            LivingComfortRegistry.ENTITY_MAP.get(new ResourceLocation(baseName));
                     if (livingEntries != null && !livingEntries.isEmpty()) {
-                        LivingComfortRegistry.LivingComfortEntry livingEntry = livingEntries.get(0);
+                        LivingComfortRegistry.LivingComfortEntry livingEntry =
+                                LivingComfortRegistry.getEntryForContext(new ResourceLocation(baseName), context);
+                        if (livingEntry == null) livingEntry = livingEntries.get(0);
 
                         itemLimit = livingEntry.limit;
                         displayCount = Math.min(count, itemLimit);
                         if (count > itemLimit) color = "§c";
+                        // Display a readable name: use context suffix if present
+                        name = context != null ? baseName + " (" + context + ")" : baseName;
                     } else {
                         // --- Other entities ---
                         EntityComfortRegistry.ComfortEntry entityEntry = EntityComfortRegistry.getEntityEntryFromId(new ResourceLocation(name));
@@ -509,7 +574,7 @@ public class CommandChunkComfort extends CommandBase {
                     }
                 }
 
-                contentDisplay.append(color).append("§9").append(name).append("§r ")
+                contentDisplay.append(color).append("§b").append(name).append("§r ")
                         .append(displayCount).append("/").append(itemLimit).append("§r, ");
             }
 

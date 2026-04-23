@@ -67,18 +67,18 @@ public class ComfortWorldData extends WorldSavedData {
         // recalcChunkWithFire scans comfort blocks — it never throws StopScanException
         // because no comfort block scan calls throw(). The catch was dead code left over
         // from an earlier version that used fire detection inside this scan.
-            ChunkScanner.scanChunk(world, chunkPos, minY, maxY, (pos, block) -> {
-                IBlockState state = world.getBlockState(pos);
+        ChunkScanner.scanChunk(world, chunkPos, minY, maxY, (pos, block) -> {
+            IBlockState state = world.getBlockState(pos);
 
             if (!isPrimaryBlock(state)) return;
 
-                if (BlockComfortRegistry.isComfortBlock(block)) {
-                    String group = BlockComfortRegistry.getGroup(block);
-                    int value = BlockComfortRegistry.getValue(block);
-                    data.groupTotals.put(group, data.groupTotals.getOrDefault(group, 0) + value);
-                    data.blockCounts.put(block, data.blockCounts.getOrDefault(block, 0) + 1);
-                }
-            });
+            if (BlockComfortRegistry.isComfortBlock(block)) {
+                String group = BlockComfortRegistry.getGroup(block);
+                int value = BlockComfortRegistry.getValue(block);
+                data.groupTotals.put(group, data.groupTotals.getOrDefault(group, 0) + value);
+                data.blockCounts.put(block, data.blockCounts.getOrDefault(block, 0) + 1);
+            }
+        });
 
         for (Entity entity : world.loadedEntityList) {
             BlockPos ePos = entity.getPosition();
@@ -173,6 +173,26 @@ public class ComfortWorldData extends WorldSavedData {
         if (block instanceof BlockBed) {
             return state.getValue(BlockBed.PART) == BlockBed.EnumPartType.FOOT;
         }
+
+        // REASON: Comforts sleeping bags and hammocks are two-block structures like beds.
+        // They use a PART block state property ("head"/"foot") to distinguish the two halves.
+        // Without this check both halves get counted, doubling the comfort value.
+        // We check by class name to avoid a hard dependency on the Comforts mod.
+        String className = block.getClass().getName();
+        if (className.startsWith("com.teamabnormals.comforts") || className.startsWith("net.minecraftforge.fml") ) {
+            // Intentional no-op — fallthrough to property check below
+        }
+        try {
+            // Check for a "part" or "PART" property with a "head"/"foot" value
+            for (net.minecraft.block.properties.IProperty<?> prop : state.getPropertyKeys()) {
+                String propName = prop.getName().toLowerCase();
+                if (propName.equals("part")) {
+                    String val = state.getValue(prop).toString().toLowerCase();
+                    // Only count the foot/bottom half to avoid double-counting
+                    return val.equals("foot") || val.equals("bottom");
+                }
+            }
+        } catch (Exception ignored) {}
 
         return true;
     }

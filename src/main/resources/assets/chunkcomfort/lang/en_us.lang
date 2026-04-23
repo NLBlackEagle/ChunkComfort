@@ -140,7 +140,7 @@ chunkcomfort.petting.cooldown=§6Your pet doesn't feel like being petted. Wait %
 # ============================================================
 
 # Usage hint for /chunkcomfort command
-debug.chunkcomfort.usage=§cUsage: /chunkcomfort <info|reload|biome|block>
+debug.chunkcomfort.usage=§cUsage: /chunkcomfort <info|reload|biome|block|item>
 
 # Unknown subcommand warning
 debug.chunkcomfort.unknown_subcommand=§cUnknown subcommand.
@@ -198,19 +198,19 @@ debug.chunkcomfort.group_breakdown_syntax=Syntax: Group, Points, Limit | Entity,
 debug.chunkcomfort.shelter_required=Shelter Required: true
 
 # Whether valid shelter was detected
-debug.chunkcomfort.shelter_found= Shelter Found: %1$s
+debug.chunkcomfort.shelter_found=, Found: %1$s
 
 # Required minimum light level
 debug.chunkcomfort.light_required=Light Level Required: %1$s
 
 # Player's current light level
-debug.chunkcomfort.light_level= Light Level: %1$s
+debug.chunkcomfort.light_level=, Level: %1$s
 
 # Fire requirement enabled
 debug.chunkcomfort.fire_required=Fire Required: true
 
 # Whether valid fire source was found nearby
-debug.chunkcomfort.fire_found= Fire Found: %1$s
+debug.chunkcomfort.fire_found=, Found: %1$s
 
 # Temperature requirement enabled
 debug.chunkcomfort.temperature_required=Temperature Required: true

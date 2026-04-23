@@ -96,6 +96,9 @@ public class AreaComfortCalculator {
             if (PotionRegistry.COMFORT != null) {
                 player.removePotionEffect(PotionRegistry.COMFORT);
             }
+            // REASON: early returns previously skipped setCachedComfort, leaving a
+            // stale value in the cache that the client-side render kept displaying.
+            PlayerComfortManager.setCachedComfort(player.getUniqueID(), 0);
             return 0;
         }
 
@@ -110,6 +113,7 @@ public class AreaComfortCalculator {
             if (PotionRegistry.COMFORT != null) {
                 player.removePotionEffect(PotionRegistry.COMFORT);
             }
+            PlayerComfortManager.setCachedComfort(player.getUniqueID(), 0);
             return 0;
         }
 

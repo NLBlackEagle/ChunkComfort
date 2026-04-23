@@ -365,18 +365,14 @@ public class ChunkComfortClientTooltipHandler {
         // Generic entity / block handling
         // -------------------
         boolean isAliasBlock = CONFIGURED_ALIAS_BLOCKS.contains(registryName);
-        boolean isConfiguredBlock = CONFIGURED_COMFORT_BLOCKS.contains(registryName)
-                && (stack.getItem() instanceof net.minecraft.item.ItemBlock || isAliasBlock)
-                // REASON: if_mob_skull-type items (amphithere_skull, cyclops_skull, etc.)
-                // may register their placed block under "iceandfire:if_mob_skull" in block
-                // comfort entries, but in I&F these are living entities, not static blocks.
-                // Their item registry name (e.g. "iceandfire:amphithere_skull") could match
-                // CONFIGURED_COMFORT_BLOCKS if added there, causing an unregistered skull
-                // item to show a block comfort tooltip when held. We suppress the block
-                // tooltip path for any item that, when resolved as a living entity,
-                // has entries in LivingComfortRegistry — those items must go through the
-                // spawn egg path exclusively. If they're unregistered in CustomSpawnEggRegistry
-                // they should show no tooltip at all.
+        // REASON: two fixes here:
+        // 1. (CONFIGURED_COMFORT_BLOCKS || isAliasBlock) so alias color variants
+        //    like comforts:sleeping_bag_red trigger the block tooltip.
+        // 2. Block.getBlockFromName instead of instanceof ItemBlock so vanilla
+        //    items like ItemBed/ItemBanner still get tooltips.
+        // 3. isRegisteredLivingEntity still suppresses skull living-entity items.
+        boolean isConfiguredBlock = (CONFIGURED_COMFORT_BLOCKS.contains(registryName) || isAliasBlock)
+                && (Block.getBlockFromName(registryName) != null || isAliasBlock)
                 && !isRegisteredLivingEntity(registryName);
         boolean isEntityItem = entityID != null && LivingComfortRegistry.hasEntries(entityID);
         boolean isFireBlock = FIRE_BLOCKS.contains(registryName);

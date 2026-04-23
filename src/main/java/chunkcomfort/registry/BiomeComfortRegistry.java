@@ -18,6 +18,8 @@ public class BiomeComfortRegistry {
 
         for (String line : entries) {
 
+            line = line.split("#", 2)[0].trim();
+
             if (line == null || line.trim().isEmpty()) continue;
 
             String[] parts = line.split(",");

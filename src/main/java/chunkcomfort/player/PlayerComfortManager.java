@@ -27,6 +27,10 @@ public class PlayerComfortManager {
         COMFORT_CACHE.put(id, value);
     }
 
+    public static void clearComfortCache() {
+        COMFORT_CACHE.clear();
+    }
+
     public static int getCachedComfort(EntityPlayer player) {
         return COMFORT_CACHE.getOrDefault(player.getUniqueID(), 0);
     }

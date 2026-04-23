@@ -6,6 +6,7 @@ import chunkcomfort.chunk.AreaComfortCalculator;
 import chunkcomfort.handlers.ChunkComfortClientTooltipHandler;
 import chunkcomfort.player.PlayerComfortManager;
 import chunkcomfort.registry.*;
+import net.minecraft.block.Block;
 import net.minecraftforge.common.config.Config;
 import net.minecraftforge.common.config.ConfigManager;
 import net.minecraftforge.fml.client.event.ConfigChangedEvent;
@@ -375,6 +376,26 @@ public class ForgeConfigHandler {
         try { EntityComfortRegistry.reload(server.blockComfortEntries); }
         catch (Exception e) { ChunkComfort.LOGGER.error("Failed to reload Entity Comfort Entries", e); }
 
+        // REASON: both registries share the same blockComfortEntries array. An entry
+        // that fails block registration may still be a valid entity (rustic:vase,
+        // variedcommodities:chair), and vice versa. Warn only after both have had
+        // a chance to claim the entry — if neither registered it, it's genuinely invalid.
+        for (String line : server.blockComfortEntries) {
+            if (line == null || line.trim().isEmpty() || line.trim().startsWith("#")) continue;
+            try {
+                String id = line.split(",")[0].trim();
+                Block block = net.minecraft.block.Block.getBlockFromName(id);
+                boolean inBlock = block != null && BlockComfortRegistry.isComfortBlock(block);
+                boolean inEntity = EntityComfortRegistry.getEntityEntryFromId(new net.minecraft.util.ResourceLocation(id)) != null;
+                if (!inBlock && !inEntity) {
+                    ChunkComfort.LOGGER.warn(
+                            "[ChunkComfort] Entry '{}' was not registered as a block or entity — check the ID is correct and the mod is loaded.",
+                            id
+                    );
+                }
+            } catch (Exception ignored) {}
+        }
+
         try { CustomSpawnEggRegistry.reload(server.customSpawnEggs); }
         catch (Exception e) { ChunkComfort.LOGGER.error("Failed to reload Custom Spawn Eggs", e); }
 
@@ -402,6 +423,11 @@ public class ForgeConfigHandler {
         ChunkComfortClientTooltipHandler.refreshGroupTooltips();
         AreaComfortCalculator.invalidateMaxComfortCache();
         GroupLimitRegistry.reload();
+
+        // REASON: clear cached comfort values so the next tick recalculates with
+        // fresh caps. Without this, stale values from before a reload persist in
+        // the cache and the client-side render keeps displaying the wrong number.
+        PlayerComfortManager.clearComfortCache();
 
 
 
