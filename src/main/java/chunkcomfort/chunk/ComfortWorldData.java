@@ -174,21 +174,14 @@ public class ComfortWorldData extends WorldSavedData {
             return state.getValue(BlockBed.PART) == BlockBed.EnumPartType.FOOT;
         }
 
-        // REASON: Comforts sleeping bags and hammocks are two-block structures like beds.
-        // They use a PART block state property ("head"/"foot") to distinguish the two halves.
-        // Without this check both halves get counted, doubling the comfort value.
-        // We check by class name to avoid a hard dependency on the Comforts mod.
-        String className = block.getClass().getName();
-        if (className.startsWith("com.teamabnormals.comforts") || className.startsWith("net.minecraftforge.fml") ) {
-            // Intentional no-op — fallthrough to property check below
-        }
+        // REASON: any two-block structure (sleeping bags, hammocks, etc.) uses a "part"
+        // block state property to distinguish head from foot. We check this generically
+        // so all mods are handled without hard dependencies. Only the foot/bottom half
+        // is counted to avoid double-counting the comfort value.
         try {
-            // Check for a "part" or "PART" property with a "head"/"foot" value
             for (net.minecraft.block.properties.IProperty<?> prop : state.getPropertyKeys()) {
-                String propName = prop.getName().toLowerCase();
-                if (propName.equals("part")) {
+                if (prop.getName().equalsIgnoreCase("part")) {
                     String val = state.getValue(prop).toString().toLowerCase();
-                    // Only count the foot/bottom half to avoid double-counting
                     return val.equals("foot") || val.equals("bottom");
                 }
             }

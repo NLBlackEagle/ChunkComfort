@@ -26,6 +26,7 @@ public class ChunkComfortClientTooltipHandler {
 
     /** Cached set of block registry names from config for quick lookup */
     private static final Set<String> CONFIGURED_ALIAS_BLOCKS = new HashSet<>();
+    private static final Set<String> CONFIGURED_ALIAS_KEYS = new HashSet<>();
     private static final Set<String> CONFIGURED_COMFORT_BLOCKS = new HashSet<>();
     private static final Map<String, Integer> GROUP_LIMITS = new HashMap<>();
     private static final Set<String> FIRE_BLOCKS = new HashSet<>();
@@ -36,6 +37,7 @@ public class ChunkComfortClientTooltipHandler {
     public static void refreshConfiguredBlocks() {
         CONFIGURED_COMFORT_BLOCKS.clear();
         CONFIGURED_ALIAS_BLOCKS.clear();
+        CONFIGURED_ALIAS_KEYS.clear();
 
         for (String entry : ForgeConfigHandler.server.blockComfortEntries) {
             if (entry == null || entry.isEmpty()) continue;
@@ -45,6 +47,12 @@ public class ChunkComfortClientTooltipHandler {
             String[] aliases = BlockComfortRegistry.BLOCK_ALIASES.get(blockName);
             if (aliases != null) {
                 CONFIGURED_ALIAS_BLOCKS.addAll(Arrays.asList(aliases));
+                // REASON: alias keys (e.g. "comforts:sleeping_bag") are item IDs that map
+                // to real block IDs via BLOCK_ALIASES. They are in CONFIGURED_COMFORT_BLOCKS
+                // but fail both the Block.getBlockFromName check (returns null) and the
+                // CONFIGURED_ALIAS_BLOCKS check (which holds alias VALUES, not keys).
+                // Storing keys separately lets isConfiguredBlock pass for these items.
+                CONFIGURED_ALIAS_KEYS.add(blockName);
             }
         }
     }
@@ -365,14 +373,17 @@ public class ChunkComfortClientTooltipHandler {
         // Generic entity / block handling
         // -------------------
         boolean isAliasBlock = CONFIGURED_ALIAS_BLOCKS.contains(registryName);
-        // REASON: two fixes here:
-        // 1. (CONFIGURED_COMFORT_BLOCKS || isAliasBlock) so alias color variants
-        //    like comforts:sleeping_bag_red trigger the block tooltip.
-        // 2. Block.getBlockFromName instead of instanceof ItemBlock so vanilla
-        //    items like ItemBed/ItemBanner still get tooltips.
-        // 3. isRegisteredLivingEntity still suppresses skull living-entity items.
+        boolean isAliasKey = CONFIGURED_ALIAS_KEYS.contains(registryName);
+        // REASON: three cases for block tooltip items:
+        // 1. Normal block items (minecraft:bookshelf) — in CONFIGURED_COMFORT_BLOCKS,
+        //    Block.getBlockFromName returns non-null.
+        // 2. Alias value items (comforts:sleeping_bag_silver) — in CONFIGURED_ALIAS_BLOCKS.
+        // 3. Alias key items (comforts:sleeping_bag) — the item ID is an alias key that
+        //    maps to real block IDs. It's in CONFIGURED_COMFORT_BLOCKS and CONFIGURED_ALIAS_KEYS
+        //    but Block.getBlockFromName returns null and it's not in CONFIGURED_ALIAS_BLOCKS.
+        //    isAliasKey covers this case so the tooltip shows correctly.
         boolean isConfiguredBlock = (CONFIGURED_COMFORT_BLOCKS.contains(registryName) || isAliasBlock)
-                && (Block.getBlockFromName(registryName) != null || isAliasBlock)
+                && (Block.getBlockFromName(registryName) != null || isAliasBlock || isAliasKey)
                 && !isRegisteredLivingEntity(registryName);
         boolean isEntityItem = entityID != null && LivingComfortRegistry.hasEntries(entityID);
         boolean isFireBlock = FIRE_BLOCKS.contains(registryName);
