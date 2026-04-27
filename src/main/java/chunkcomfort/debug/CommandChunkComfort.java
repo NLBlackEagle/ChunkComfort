@@ -165,7 +165,8 @@ public class CommandChunkComfort extends CommandBase {
 
         int radius = AreaComfortCalculator.getRadius();
 
-        int comfortActive = AreaComfortCalculator.calculateComfortActivation(player.world, player);
+        boolean fireNearby = chunkcomfort.chunk.ComfortWorldData.hasFireNearby(player.world, player.getPosition(), radius);
+        int comfortActive = AreaComfortCalculator.calculateComfortActivation(player.world, player, fireNearby);
 
         if (!checkRequiredConditions(sender, player, comfortActive)) return;
 

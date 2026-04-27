@@ -46,7 +46,7 @@ public class ComfortWorldData extends WorldSavedData {
         return chunks.computeIfAbsent(pos, k -> new ChunkComfortData());
     }
 
-    static boolean hasFireNearby(World world, BlockPos center, int radius) {
+    public static boolean hasFireNearby(World world, BlockPos center, int radius) {
         int verticalRange = chunkcomfort.config.ForgeConfigHandler.server.fireScanVerticalRange;
         int minY = Math.max(0, center.getY() - verticalRange);
         int maxY = Math.min(world.getHeight() - 1, center.getY() + verticalRange);

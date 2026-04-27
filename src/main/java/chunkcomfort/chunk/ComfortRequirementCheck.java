@@ -16,7 +16,7 @@ import net.minecraft.world.World;
 
 public class ComfortRequirementCheck {
 
-    public static ComfortRequirements getRequirementsPresent(World world, BlockPos pos, EntityPlayer player) {
+    public static ComfortRequirements getRequirementsPresent(World world, BlockPos pos, EntityPlayer player, Boolean fireNearbyHint) {
 
         // --- LIGHT CHECK (cheap) ---
         int light = world.getLight(pos);
@@ -67,27 +67,38 @@ public class ComfortRequirementCheck {
             if (ForgeConfigHandler.server.enableTemperatureComfort) priorConditionsMet &= temperatureOk;
 
             if (priorConditionsMet) {
-                int radius = getRadius();
-                int verticalRange = ForgeConfigHandler.server.fireScanVerticalRange;
-                int minY = Math.max(0, pos.getY() - verticalRange);
-                int maxY = Math.min(world.getHeight() - 1, pos.getY() + verticalRange);
+                // REASON: use the pre-computed fireNearby result when available to avoid
+                // running the block scan twice per comfort check.
+                if (fireNearbyHint != null) {
+                    fireOk = fireNearbyHint;
+                } else {
+                    int radius = getRadius();
+                    int verticalRange = ForgeConfigHandler.server.fireScanVerticalRange;
+                    int minY = Math.max(0, pos.getY() - verticalRange);
+                    int maxY = Math.min(world.getHeight() - 1, pos.getY() + verticalRange);
 
-                try {
-                    fireOk = ChunkScanner.anyBlockMatches(
-                            world,
-                            pos,
-                            radius,
-                            minY,
-                            maxY,
-                            FireBlockRegistry::isFireBlock
-                    );
-                } catch (ChunkScanner.StopScanException e) {
-                    fireOk = true; // early exit confirmed fire presence
+                    try {
+                        fireOk = ChunkScanner.anyBlockMatches(
+                                world,
+                                pos,
+                                radius,
+                                minY,
+                                maxY,
+                                FireBlockRegistry::isFireBlock
+                        );
+                    } catch (ChunkScanner.StopScanException e) {
+                        fireOk = true; // early exit confirmed fire presence
+                    }
                 }
             }
         }
 
         return new ComfortRequirements(shelterOk, lightOk, fireOk, temperatureOk, playerTemp);
+    }
+
+    // Overload without hint — used by paths that don't have a pre-computed fireNearby.
+    public static ComfortRequirements getRequirementsPresent(World world, BlockPos pos, EntityPlayer player) {
+        return getRequirementsPresent(world, pos, player, null);
     }
 
     public static boolean isComfortActive(EntityPlayer player) {

@@ -51,9 +51,11 @@ public class AreaComfortCalculator {
         return player != null && player.isPotionActive(PotionRegistry.COMFORT);
     }
 
-    public static int calculateComfortActivation(World world, EntityPlayer player) {
+    public static int calculateComfortActivation(World world, EntityPlayer player, boolean fireNearby) {
         BlockPos pos = player.getPosition();
-        ComfortRequirements reqs = ComfortRequirementCheck.getRequirementsPresent(world, pos, player);
+        // REASON: pass pre-computed fireNearby so getRequirementsPresent does not run
+        // a second block scan for fire — hasFireNearby() was already called in calculatePlayerComfort.
+        ComfortRequirements reqs = ComfortRequirementCheck.getRequirementsPresent(world, pos, player, fireNearby);
 
         int comfort = 0;
         if (reqs.shelterOk) comfort++;
@@ -103,7 +105,15 @@ public class AreaComfortCalculator {
             return 0;
         }
 
-        int comfortActive = calculateComfortActivation(world, player);
+        ComfortWorldData worldData = ComfortWorldData.get(world);
+        int centerChunkX = playerPos.getX() >> 4;
+        int centerChunkZ = playerPos.getZ() >> 4;
+
+        // REASON: compute fireNearby once here and pass it to both calculateComfortActivation
+        // and the chunk rescan below, so the block scan runs exactly once per comfort check.
+        boolean fireNearby = hasFireNearby(world, playerPos, radius);
+
+        int comfortActive = calculateComfortActivation(world, player, fireNearby);
         int requiredConditions = 0;
         if (ForgeConfigHandler.server.requireShelter) requiredConditions++;
         if (ForgeConfigHandler.server.minLightLevel > 0) requiredConditions++;
@@ -118,12 +128,7 @@ public class AreaComfortCalculator {
             return 0;
         }
 
-        ComfortWorldData worldData = ComfortWorldData.get(world);
-        int centerChunkX = playerPos.getX() >> 4;
-        int centerChunkZ = playerPos.getZ() >> 4;
-
         PlayerChunkComfortCache cache = getCache(player);
-        boolean fireNearby = hasFireNearby(world, playerPos, radius);
         cache.clear();
 
         for (int dx = -radius; dx <= radius; dx++) {
