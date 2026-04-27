@@ -76,13 +76,18 @@ public class ComfortWorldData extends WorldSavedData {
             }
         });
 
-        for (Entity entity : world.loadedEntityList) {
-            BlockPos ePos = entity.getPosition();
-            if ((ePos.getX() >> 4) == chunkPos.x && (ePos.getZ() >> 4) == chunkPos.z) {
-                EntityComfortRegistry.ComfortEntry entry = EntityComfortRegistry.getEntityEntry(entity);
-                if (entry != null) {
-                    data.groupTotals.put(entry.group, data.groupTotals.getOrDefault(entry.group, 0) + entry.value);
-                }
+        // REASON: previously iterated world.loadedEntityList (all entities in all loaded
+        // chunks) to find decorative entities belonging to this chunk. Replaced with a
+        // targeted AABB query scoped to just this chunk, matching the pattern used in
+        // addEntityComfort. Significantly cheaper on servers with many loaded entities.
+        net.minecraft.util.math.AxisAlignedBB chunkBox = new net.minecraft.util.math.AxisAlignedBB(
+                chunkPos.getXStart(), minY, chunkPos.getZStart(),
+                chunkPos.getXEnd() + 1, maxY, chunkPos.getZEnd() + 1
+        );
+        for (Entity entity : world.getEntitiesWithinAABB(Entity.class, chunkBox)) {
+            EntityComfortRegistry.ComfortEntry entry = EntityComfortRegistry.getEntityEntry(entity);
+            if (entry != null) {
+                data.groupTotals.put(entry.group, data.groupTotals.getOrDefault(entry.group, 0) + entry.value);
             }
         }
 

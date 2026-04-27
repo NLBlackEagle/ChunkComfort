@@ -2,16 +2,17 @@ package chunkcomfort.chunk;
 
 import net.minecraft.block.Block;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.math.BlockPos;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 public class PlayerChunkComfortCache {
 
-    private static final Map<UUID, PlayerChunkComfortCache> PLAYER_CACHES = new HashMap<>();
+    // REASON: the static PLAYER_CACHES map and get(EntityPlayer) that were here
+    // duplicated the identical map in AreaComfortCalculator. The logout handler only
+    // cleaned up AreaComfortCalculator's map, so this one leaked one entry per player
+    // join forever. All callers already route through AreaComfortCalculator.getCache().
 
     public final Map<Block, Integer> blockCounts = new HashMap<>();
     public final Map<String, Integer> groupTotals = new HashMap<>();
@@ -46,10 +47,6 @@ public class PlayerChunkComfortCache {
         decorativeEntityCounts.clear();
         contextEntityCounts.clear();
         lastPos = null;
-    }
-
-    public static PlayerChunkComfortCache get(EntityPlayer player) {
-        return PLAYER_CACHES.computeIfAbsent(player.getUniqueID(), k -> new PlayerChunkComfortCache());
     }
 
     // ----------------- block/entity helpers -----------------
