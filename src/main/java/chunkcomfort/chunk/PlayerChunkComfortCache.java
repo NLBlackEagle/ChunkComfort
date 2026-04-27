@@ -38,6 +38,17 @@ public class PlayerChunkComfortCache {
 
     public BlockPos lastPos = null;
 
+    // --- Shelter cache ---
+    // REASON: the shelter column walk (up to 256 block lookups) previously ran on every
+    // comfort check. Caching the result per chunk position means it only runs when the
+    // player moves to a new chunk, when a nearby block event invalidates the chunk, or
+    // every SHELTER_RESCAN_INTERVAL checks as a safety net for edge cases (e.g. a roof
+    // built overhead in the same chunk without a block event reaching the player's chunk).
+    public net.minecraft.util.math.ChunkPos lastShelterChunk = null;
+    public boolean cachedShelterOk = false;
+    public int shelterCheckCount = 0;
+    public static final int SHELTER_RESCAN_INTERVAL = 50;
+
     /** Clear the cache before recalculating */
     public void clear() {
         blockCounts.clear();
@@ -47,6 +58,9 @@ public class PlayerChunkComfortCache {
         decorativeEntityCounts.clear();
         contextEntityCounts.clear();
         lastPos = null;
+        lastShelterChunk = null;
+        cachedShelterOk = false;
+        shelterCheckCount = 0;
     }
 
     // ----------------- block/entity helpers -----------------

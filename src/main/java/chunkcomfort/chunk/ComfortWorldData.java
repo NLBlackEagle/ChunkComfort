@@ -9,6 +9,7 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
@@ -120,8 +121,21 @@ public class ComfortWorldData extends WorldSavedData {
             for (Map.Entry<String, Integer> groupEntry : data.groupTotals.entrySet()) {
                 groupsTag.setInteger(groupEntry.getKey(), groupEntry.getValue());
             }
-
             chunkTag.setTag("groups", groupsTag);
+
+            // REASON: blockCounts was previously not persisted, so after a server restart
+            // incremental block placement/break logic (ChunkUpdateManager) started from an
+            // empty baseline. Breaking a pre-restart block decremented the count below zero
+            // and the group total drifted until the chunk was fully rescanned.
+            NBTTagCompound blocksTag = new NBTTagCompound();
+            for (Map.Entry<Block, Integer> blockEntry : data.blockCounts.entrySet()) {
+                ResourceLocation blockName = Block.REGISTRY.getNameForObject(blockEntry.getKey());
+                if (blockName != null) {
+                    blocksTag.setInteger(blockName.toString(), blockEntry.getValue());
+                }
+            }
+            chunkTag.setTag("blocks", blocksTag);
+
             chunkList.appendTag(chunkTag);
         }
 
@@ -144,6 +158,19 @@ public class ComfortWorldData extends WorldSavedData {
             NBTTagCompound groupsTag = chunkTag.getCompoundTag("groups");
             for (String key : groupsTag.getKeySet()) {
                 data.groupTotals.put(key, groupsTag.getInteger(key));
+            }
+
+            // REASON: on first load after this change, "blocks" tag won't exist in saves
+            // that predate it. The hasKey check handles that gracefully — blockCounts stays
+            // empty and repopulates on the next chunk rescan, same behaviour as before.
+            if (chunkTag.hasKey("blocks")) {
+                NBTTagCompound blocksTag = chunkTag.getCompoundTag("blocks");
+                for (String key : blocksTag.getKeySet()) {
+                    Block block = Block.REGISTRY.getObject(new ResourceLocation(key));
+                    if (block != null) {
+                        data.blockCounts.put(block, blocksTag.getInteger(key));
+                    }
+                }
             }
 
             data.totalComfort = data.groupTotals.values().stream().mapToInt(Integer::intValue).sum();

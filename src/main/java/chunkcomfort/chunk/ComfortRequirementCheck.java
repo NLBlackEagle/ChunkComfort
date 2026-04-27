@@ -22,21 +22,32 @@ public class ComfortRequirementCheck {
         int light = world.getLight(pos);
         boolean lightOk = ForgeConfigHandler.server.minLightLevel <= 0 || light >= ForgeConfigHandler.server.minLightLevel;
 
-        // --- SHELTER CHECK (expensive, only if light is required and passed) ---
+        // --- SHELTER CHECK (cached per player chunk, periodic forced rescan) ---
+        // REASON: the column walk (up to 256 block lookups) ran on every comfort check.
+        // The result is now cached on the player's PlayerChunkComfortCache keyed by chunk
+        // position. It is recomputed when the player moves to a new chunk, when the cache
+        // is cleared by a block event, or every SHELTER_RESCAN_INTERVAL checks as a safety
+        // net for cases like building a roof overhead without a block event in this chunk.
         boolean shelterOk = !ForgeConfigHandler.server.requireShelter; // default true if not required
 
         if (ForgeConfigHandler.server.requireShelter && ForgeConfigHandler.server.minLightLevel > 0 && lightOk) {
-            shelterOk = false; // default false
-            for (int y = pos.getY() + 1; y < world.getHeight(); y++) {
-                BlockPos checkPos = new BlockPos(pos.getX(), y, pos.getZ());
-                IBlockState state = world.getBlockState(checkPos);
-                Block block = state.getBlock();
+            PlayerChunkComfortCache cache = AreaComfortCalculator.getCache(player);
+            net.minecraft.util.math.ChunkPos currentChunk = new net.minecraft.util.math.ChunkPos(pos);
 
-                if (!(block instanceof BlockAir) && !(block instanceof BlockLeaves) && (block.getMaterial(state).isSolid())) {
-                    shelterOk = true;
-                    break;
-                }
+            boolean needsScan = cache.lastShelterChunk == null
+                    || cache.lastShelterChunk.x != currentChunk.x
+                    || cache.lastShelterChunk.z != currentChunk.z
+                    || cache.shelterCheckCount >= PlayerChunkComfortCache.SHELTER_RESCAN_INTERVAL;
+
+            if (needsScan) {
+                cache.cachedShelterOk = scanShelter(world, pos);
+                cache.lastShelterChunk = currentChunk;
+                cache.shelterCheckCount = 0;
+            } else {
+                cache.shelterCheckCount++;
             }
+
+            shelterOk = cache.cachedShelterOk;
         }
 
         // --- TEMPERATURE CHECK ---
@@ -110,5 +121,17 @@ public class ComfortRequirementCheck {
 
     private static int getRadius() {
         return ForgeConfigHandler.server.chunkRadius;
+    }
+
+    private static boolean scanShelter(World world, BlockPos pos) {
+        for (int y = pos.getY() + 1; y < world.getHeight(); y++) {
+            BlockPos checkPos = new BlockPos(pos.getX(), y, pos.getZ());
+            IBlockState state = world.getBlockState(checkPos);
+            Block block = state.getBlock();
+            if (!(block instanceof BlockAir) && !(block instanceof BlockLeaves) && block.getMaterial(state).isSolid()) {
+                return true;
+            }
+        }
+        return false;
     }
 }
