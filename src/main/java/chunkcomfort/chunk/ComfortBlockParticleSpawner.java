@@ -22,7 +22,14 @@ public class ComfortBlockParticleSpawner {
         boolean shouldSpawn = false;
 
         if (block != null && BlockComfortRegistry.isComfortBlock(block)) {
-            // Block case: same as before
+            // REASON: player can be null when called from onNeighborNotify (indirect
+            // placements like hammocks have no associated player). In that case we skip
+            // the cache/limit check and just spawn particles — the block is confirmed
+            // to be a comfort block and has just appeared, so particles are appropriate.
+            if (player == null) {
+                spawnComfortParticlesServer(world, pos);
+                return;
+            }
             String groupName = BlockComfortRegistry.getGroup(block);
             PlayerChunkComfortCache cache = AreaComfortCalculator.getCache(player);
             cache.ensureUpToDate();

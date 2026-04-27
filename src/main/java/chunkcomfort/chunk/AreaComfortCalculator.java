@@ -1,5 +1,6 @@
 package chunkcomfort.chunk;
 
+import chunkcomfort.ChunkComfort;
 import chunkcomfort.config.ForgeConfigHandler;
 import chunkcomfort.player.PlayerComfortManager;
 import chunkcomfort.registry.*;
@@ -335,10 +336,6 @@ public class AreaComfortCalculator {
 
         if (!DEBUG_COMFORT) return;
 
-        System.out.println("======================================");
-        System.out.println("[ComfortDebug] Player: " + player.getName());
-        System.out.println("[ComfortDebug] TotalComfort: " + totalComfort);
-        System.out.println("[ComfortDebug] PettingBoost: " + PettingComfortManager.getActivePettingPoints(player.getUniqueID()));
 
         for (String group : allGroups) {
             int blockValue = cache.groupTotals.getOrDefault(group, 0);
@@ -349,17 +346,7 @@ public class AreaComfortCalculator {
 
             int applied = Math.min(combined, totalLimit);
 
-            System.out.println(
-                    "[ComfortDebug] Group: " + group +
-                            " blocks=" + blockValue +
-                            " entities=" + entityValue +
-                            " total=" + combined +
-                            " limit=" + totalLimit +
-                            " applied=" + applied
-            );
         }
 
-        System.out.println("[ComfortDebug] BiomeModifier: " + biomeModifier);
-        System.out.println("======================================");
     }
 }

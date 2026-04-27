@@ -63,10 +63,6 @@ public class ComfortWorldData extends WorldSavedData {
         int minY = 0;
         int maxY = world.getHeight() - 1;
 
-        // REASON: removed the try/catch for StopScanException inside recalcChunkWithFire.
-        // recalcChunkWithFire scans comfort blocks — it never throws StopScanException
-        // because no comfort block scan calls throw(). The catch was dead code left over
-        // from an earlier version that used fire detection inside this scan.
         ChunkScanner.scanChunk(world, chunkPos, minY, maxY, (pos, block) -> {
             IBlockState state = world.getBlockState(pos);
 
@@ -93,6 +89,7 @@ public class ComfortWorldData extends WorldSavedData {
         data.totalComfort = data.groupTotals.values().stream().mapToInt(Integer::intValue).sum();
         data.initialized = true;
         data.lastRecalcTick = world.getTotalWorldTime();
+
 
         setChunkData(chunkPos, data);
     }
@@ -174,15 +171,12 @@ public class ComfortWorldData extends WorldSavedData {
             return state.getValue(BlockBed.PART) == BlockBed.EnumPartType.FOOT;
         }
 
-        // REASON: any two-block structure (sleeping bags, hammocks, etc.) uses a "part"
-        // block state property to distinguish head from foot. We check this generically
-        // so all mods are handled without hard dependencies. Only the foot/bottom half
-        // is counted to avoid double-counting the comfort value.
         try {
             for (net.minecraft.block.properties.IProperty<?> prop : state.getPropertyKeys()) {
                 if (prop.getName().equalsIgnoreCase("part")) {
                     String val = state.getValue(prop).toString().toLowerCase();
-                    return val.equals("foot") || val.equals("bottom");
+                    boolean primary = val.equals("foot") || val.equals("bottom");
+                    return primary;
                 }
             }
         } catch (Exception ignored) {}

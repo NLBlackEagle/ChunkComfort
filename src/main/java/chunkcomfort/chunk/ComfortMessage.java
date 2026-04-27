@@ -39,7 +39,7 @@ public class ComfortMessage {
                 }
 
             } catch (Exception e) {
-                System.out.println("Invalid comfort message: " + entry);
+                chunkcomfort.ChunkComfort.LOGGER.warn("[ChunkComfort] Invalid comfort message entry: {}", entry);
             }
         }
 

@@ -21,17 +21,14 @@ public class BlockComfortRegistry {
     public static void reloadAliases(String[] aliases) {
         BLOCK_ALIASES.clear();
         if (aliases == null) {
-            ChunkComfort.LOGGER.info("[ChunkComfort][Aliases] reloadAliases called with null array");
             return;
         }
 
-        ChunkComfort.LOGGER.info("[ChunkComfort][Aliases] reloadAliases: {} entries received", aliases.length);
 
         for (String line : aliases) {
 
             if (line == null || line.trim().isEmpty()) continue;
 
-            ChunkComfort.LOGGER.info("[ChunkComfort][Aliases] Processing alias line: '{}'", line.trim());
 
             String[] split = line.split("=");
 
@@ -53,7 +50,6 @@ public class BlockComfortRegistry {
             }
 
             BLOCK_ALIASES.put(key, vals);
-            ChunkComfort.LOGGER.info("[ChunkComfort][Aliases] Stored alias: '{}' -> {} values", key, vals.length);
         }
     }
 
@@ -112,26 +108,20 @@ public class BlockComfortRegistry {
         Block block = Block.getBlockFromName(id);
         if (block != null) {
             BLOCK_ENTRIES.put(block, entry);
-            ChunkComfort.LOGGER.info("[ChunkComfort][BlockReg] Registered canonical: '{}'", id);
         } else {
-            ChunkComfort.LOGGER.info("[ChunkComfort][BlockReg] Canonical '{}' not a block, checking aliases...", id);
         }
 
         String[] aliases = BLOCK_ALIASES.get(id);
 
         if (aliases != null) {
-            ChunkComfort.LOGGER.info("[ChunkComfort][BlockReg] Found {} aliases for '{}'", aliases.length, id);
             for (String aliasId : aliases) {
                 Block aliasBlock = Block.getBlockFromName(aliasId);
                 if (aliasBlock != null) {
                     BLOCK_ENTRIES.put(aliasBlock, entry);
-                    ChunkComfort.LOGGER.info("[ChunkComfort][BlockReg] Registered alias: '{}' -> '{}'", aliasId, id);
                 } else {
-                    ChunkComfort.LOGGER.warn("[ChunkComfort][BlockReg] Alias '{}' NOT found in block registry", aliasId);
                 }
             }
         } else {
-            ChunkComfort.LOGGER.info("[ChunkComfort][BlockReg] No aliases found for '{}'", id);
         }
     }
 

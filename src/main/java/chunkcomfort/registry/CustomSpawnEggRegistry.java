@@ -138,26 +138,17 @@ public class CustomSpawnEggRegistry {
                         e.itemId   = itemId;
                         e.nbtPath  = secondPart;
                         ENTRIES.add(e);
-                        ChunkComfort.LOGGER.debug(
-                                "[ChunkComfort] Registered NBT-path entry: {} -> {} (path: {})",
-                                itemId, entity, secondPart);
 
                     } else {
                         // NBT-discriminated direct: second part is a flat Key:Value pair
                         String key = toItemKey(itemId);
                         DIRECT_ENTRIES.put(key, new DirectEntry(entity, secondPart));
-                        ChunkComfort.LOGGER.debug(
-                                "[ChunkComfort] Registered NBT-discriminated direct entry: {} -> {} (context: {})",
-                                key, entity, secondPart);
                     }
 
                 } else {
                     // Simple direct: no comma, item alone identifies the entity
                     String key = toItemKey(right);
                     DIRECT_ENTRIES.put(key, new DirectEntry(entity, null));
-                    ChunkComfort.LOGGER.debug(
-                            "[ChunkComfort] Registered direct entry: {} -> {}",
-                            key, entity);
                 }
 
             } catch (Exception e) {

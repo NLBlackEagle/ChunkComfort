@@ -31,12 +31,65 @@ public class ChunkComfortEventHandler {
 
     @SubscribeEvent
     public void onBlockPlaced(BlockEvent.PlaceEvent event) {
+        if (event instanceof BlockEvent.MultiPlaceEvent) return;
         World world = event.getWorld();
         BlockPos pos = event.getPos();
         Block block = event.getPlacedBlock().getBlock();
-
         ChunkUpdateManager.onBlockPlaced(world, pos, block);
         ComfortBlockParticleSpawner.trySpawnComfortParticles(world, pos, event.getPlayer(), block, null);
+    }
+
+    @SubscribeEvent
+    public void onMultiBlockPlaced(BlockEvent.MultiPlaceEvent event) {
+        World world = event.getWorld();
+        BlockPos pos = event.getPos();
+        Block block = event.getPlacedBlock().getBlock();
+        ChunkUpdateManager.invalidateChunk(world, pos);
+        ComfortBlockParticleSpawner.trySpawnComfortParticles(world, pos, event.getPlayer(), block, null);
+    }
+
+    /**
+     * REASON: the Comforts hammock is placed via internal world.setBlockState() calls
+     * without firing PlaceEvent or MultiPlaceEvent for the hammock itself.
+     * Forge fires NeighborNotifyEvent adjacent to any setBlockState call.
+     * We check notified positions for comfort blocks and invalidate the chunk.
+     * receiveCanceled=false ensures we never interfere with cancelled events.
+     */
+    @SubscribeEvent(receiveCanceled = false)
+    public void onNeighborNotify(BlockEvent.NeighborNotifyEvent event) {
+        if (event.isCanceled()) return;
+        World world = event.getWorld();
+        if (world.isRemote) return;
+
+        for (net.minecraft.util.EnumFacing face : event.getNotifiedSides()) {
+            BlockPos notifiedPos = event.getPos().offset(face);
+            Block notifiedBlock = world.getBlockState(notifiedPos).getBlock();
+            if (chunkcomfort.registry.BlockComfortRegistry.isComfortBlock(notifiedBlock)) {
+                // REASON: only spawn particles when the block is newly placed — i.e. not
+                // yet tracked in chunk data. During removal, the block may still be present
+                // for one tick but is already tracked, so blockCounts.containsKey is true.
+                // This prevents particles firing on both placement and removal.
+                boolean isNew = !ComfortWorldData.get(world)
+                        .getChunkData(new net.minecraft.util.math.ChunkPos(notifiedPos))
+                        .blockCounts.containsKey(notifiedBlock);
+                ChunkUpdateManager.invalidateChunk(world, notifiedPos);
+                if (isNew) {
+                    ComfortBlockParticleSpawner.trySpawnComfortParticles(world, notifiedPos, null, notifiedBlock, null);
+                }
+                return;
+            }
+        }
+
+        Block sourceBlock = world.getBlockState(event.getPos()).getBlock();
+        if (chunkcomfort.registry.BlockComfortRegistry.isComfortBlock(sourceBlock)) {
+            boolean isNew = !ComfortWorldData.get(world)
+                    .getChunkData(new net.minecraft.util.math.ChunkPos(event.getPos()))
+                    .blockCounts.containsKey(sourceBlock);
+            ChunkUpdateManager.invalidateChunk(world, event.getPos());
+            if (isNew) {
+                ComfortBlockParticleSpawner.trySpawnComfortParticles(world, event.getPos(), null, sourceBlock, null);
+            }
+        }
     }
 
     @SubscribeEvent
@@ -148,7 +201,7 @@ public class ChunkComfortEventHandler {
 
         int activeCount = PettingComfortManager.countActivePets(
                 player.getUniqueID(), entity.getClass()
-                );
+        );
         if (activeCount >= entry.maxPettable) return;
 
         // --- SERVER: register + cooldown ---

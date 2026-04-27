@@ -77,7 +77,7 @@ public class ForgeConfigHandler {
                 "20 = 1 second"
         })
         @Config.RangeInt(min = 20, max = 2000)
-        public int comfortCheckInterval = 20;
+        public int comfortCheckInterval = 100;
 
         @Config.Comment("Enable temperature as a comfort requirement (true/false).")
         @Config.Name("Enable SimpleDifficulty Temperature Comfort Requirement")
