@@ -24,20 +24,27 @@ public class ComfortRequirementCheck {
 
         // --- SHELTER CHECK (cached per player chunk, periodic forced rescan) ---
         // REASON: the column walk (up to 256 block lookups) ran on every comfort check.
-        // The result is now cached on the player's PlayerChunkComfortCache keyed by chunk
-        // position. It is recomputed when the player moves to a new chunk, when the cache
-        // is cleared by a block event, or every SHELTER_RESCAN_INTERVAL checks as a safety
-        // net for cases like building a roof overhead without a block event in this chunk.
+        // The result is cached on the player's PlayerChunkComfortCache. It is recomputed:
+        // - when the player moves to a new chunk
+        // - when world.canSeeSky() disagrees with the cached result (player stepped
+        //   outside or came back inside without crossing a chunk boundary)
+        // - every SHELTER_RESCAN_INTERVAL checks as a safety net for edge cases
+        // world.canSeeSky() is a cheap heightmap lookup — it replaces the expensive
+        // column walk as the change detector, only triggering the full scanShelter()
+        // when sky exposure actually changes.
         boolean shelterOk = !ForgeConfigHandler.server.requireShelter; // default true if not required
 
         if (ForgeConfigHandler.server.requireShelter && ForgeConfigHandler.server.minLightLevel > 0 && lightOk) {
             PlayerChunkComfortCache cache = AreaComfortCalculator.getCache(player);
             net.minecraft.util.math.ChunkPos currentChunk = new net.minecraft.util.math.ChunkPos(pos);
 
+            boolean canSeeSky = world.canSeeSky(pos);
+
             boolean needsScan = cache.lastShelterChunk == null
                     || cache.lastShelterChunk.x != currentChunk.x
                     || cache.lastShelterChunk.z != currentChunk.z
-                    || cache.shelterCheckCount >= PlayerChunkComfortCache.SHELTER_RESCAN_INTERVAL;
+                    || cache.shelterCheckCount >= PlayerChunkComfortCache.SHELTER_RESCAN_INTERVAL
+                    || canSeeSky == cache.cachedShelterOk; // sky exposure changed
 
             if (needsScan) {
                 cache.cachedShelterOk = scanShelter(world, pos);
