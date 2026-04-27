@@ -2,6 +2,7 @@ package chunkcomfort.registry;
 
 import chunkcomfort.ChunkComfort;
 import net.minecraft.block.Block;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.translation.I18n;
 
@@ -10,8 +11,34 @@ import java.util.*;
 public class BlockComfortRegistry {
 
     // Config-driven blocks
-    public static final Map<Block, ComfortEntry> BLOCK_ENTRIES = new HashMap<>();
+    // REASON: key is now BlockKey (Block + optional metadata) instead of bare Block,
+    // so entries like waystones:waystone:2 only match the specific metadata value.
+    // Entries without metadata (meta = -1) continue to match any metadata, preserving
+    // all existing config behaviour.
+    public static final Map<BlockKey, ComfortEntry> BLOCK_ENTRIES = new LinkedHashMap<>();
     public static final Map<String, String[]> BLOCK_ALIASES = new HashMap<>();
+
+    public static class BlockKey {
+        public final Block block;
+        public final int meta; // -1 = match any
+
+        public BlockKey(Block block, int meta) {
+            this.block = block;
+            this.meta = meta;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (!(o instanceof BlockKey)) return false;
+            BlockKey other = (BlockKey) o;
+            return block == other.block && meta == other.meta;
+        }
+
+        @Override
+        public int hashCode() {
+            return 31 * block.hashCode() + meta;
+        }
+    }
 
     /**
      * Reload block aliases from config
@@ -74,7 +101,7 @@ public class BlockComfortRegistry {
                 if (parts.length < 3)
                     throw new IllegalArgumentException();
 
-                String id = parts[0].trim();
+                String rawId = parts[0].trim();
                 int value = Integer.parseInt(parts[1].trim());
                 String group = parts[2].trim();
 
@@ -84,9 +111,24 @@ public class BlockComfortRegistry {
                     limit = Integer.parseInt(parts[3].trim());
                 }
 
+                // REASON: support optional metadata suffix in block ID (e.g. waystones:waystone:2).
+                // Split on the last colon only if the part after it is a number.
+                String id = rawId;
+                int meta = -1; // -1 = match any metadata
+                int lastColon = rawId.lastIndexOf(':');
+                if (lastColon > 0) {
+                    String afterColon = rawId.substring(lastColon + 1);
+                    try {
+                        meta = Integer.parseInt(afterColon);
+                        id = rawId.substring(0, lastColon);
+                    } catch (NumberFormatException ignored) {
+                        // not metadata — id stays as rawId, meta stays -1
+                    }
+                }
+
                 ComfortEntry entry = new ComfortEntry(value, group, limit);
 
-                registerBlockAndAliases(id, entry);
+                registerBlockAndAliases(id, meta, entry);
 
             } catch (Exception e) {
 
@@ -101,14 +143,13 @@ public class BlockComfortRegistry {
     }
 
     /**
-     * Registers a block and all its aliases
+     * Registers a block and all its aliases using BlockKey (block + optional metadata).
      */
-    private static void registerBlockAndAliases(String id, ComfortEntry entry) {
+    private static void registerBlockAndAliases(String id, int meta, ComfortEntry entry) {
 
         Block block = Block.getBlockFromName(id);
         if (block != null) {
-            BLOCK_ENTRIES.put(block, entry);
-        } else {
+            BLOCK_ENTRIES.put(new BlockKey(block, meta), entry);
         }
 
         String[] aliases = BLOCK_ALIASES.get(id);
@@ -117,11 +158,9 @@ public class BlockComfortRegistry {
             for (String aliasId : aliases) {
                 Block aliasBlock = Block.getBlockFromName(aliasId);
                 if (aliasBlock != null) {
-                    BLOCK_ENTRIES.put(aliasBlock, entry);
-                } else {
+                    BLOCK_ENTRIES.put(new BlockKey(aliasBlock, meta), entry);
                 }
             }
-        } else {
         }
     }
 
@@ -168,21 +207,63 @@ public class BlockComfortRegistry {
         return blockId; // fallback: block ID
     }
 
-    public static boolean isComfortBlock(Block block) {
-        return BLOCK_ENTRIES.containsKey(block);
+    // Returns the registered BlockKey that matched for this blockstate.
+    // Used by the chunk scan to key per-entry counters against the registered entry
+    // rather than the actual metadata, so wildcard entries share one counter across
+    // all metadata variants of the same block.
+    public static BlockKey getKeyForEntry(Block block, IBlockState state) {
+        int meta = block.getMetaFromState(state);
+        if (BLOCK_ENTRIES.containsKey(new BlockKey(block, meta))) return new BlockKey(block, meta);
+        if (BLOCK_ENTRIES.containsKey(new BlockKey(block, -1))) return new BlockKey(block, -1);
+        return null;
     }
 
+    // REASON: lookup by blockstate so metadata-specific entries are correctly matched.
+    // Tries exact (block + meta) first, then falls back to wildcard (block + meta=-1).
+    public static ComfortEntry getBlockEntry(Block block, IBlockState state) {
+        int meta = block.getMetaFromState(state);
+        ComfortEntry exact = BLOCK_ENTRIES.get(new BlockKey(block, meta));
+        if (exact != null) return exact;
+        return BLOCK_ENTRIES.get(new BlockKey(block, -1));
+    }
+
+    // Block-only overload: returns the first matching entry for this block regardless of
+    // metadata. Used by callers that only have a Block (tooltip, particle, event handlers).
+    // The chunk scan uses the blockstate overload for precise metadata matching.
     public static ComfortEntry getBlockEntry(Block block) {
-        return BLOCK_ENTRIES.get(block);
+        ComfortEntry wildcard = BLOCK_ENTRIES.get(new BlockKey(block, -1));
+        if (wildcard != null) return wildcard;
+        for (Map.Entry<BlockKey, ComfortEntry> e : BLOCK_ENTRIES.entrySet()) {
+            if (e.getKey().block == block) return e.getValue();
+        }
+        return null;
     }
 
-    public static String getGroup(Block block) {
-        ComfortEntry entry = BLOCK_ENTRIES.get(block);
+    public static boolean isComfortBlock(Block block, IBlockState state) {
+        return getBlockEntry(block, state) != null;
+    }
+
+    public static boolean isComfortBlock(Block block) {
+        return getBlockEntry(block) != null;
+    }
+
+    public static String getGroup(Block block, IBlockState state) {
+        ComfortEntry entry = getBlockEntry(block, state);
         return entry != null ? entry.group : null;
     }
 
+    public static String getGroup(Block block) {
+        ComfortEntry entry = getBlockEntry(block);
+        return entry != null ? entry.group : null;
+    }
+
+    public static int getValue(Block block, IBlockState state) {
+        ComfortEntry entry = getBlockEntry(block, state);
+        return entry != null ? entry.value : 0;
+    }
+
     public static int getValue(Block block) {
-        ComfortEntry entry = BLOCK_ENTRIES.get(block);
+        ComfortEntry entry = getBlockEntry(block);
         return entry != null ? entry.value : 0;
     }
 

@@ -503,8 +503,8 @@ public class CommandChunkComfort extends CommandBase {
         Map<BlockComfortRegistry.ComfortEntry, String> blockEntryToCanonicalId = new HashMap<>();
         // Map: canonicalId -> ComfortEntry
         Map<String, BlockComfortRegistry.ComfortEntry> canonicalIdToBlockEntry = new HashMap<>();
-        for (Map.Entry<Block, BlockComfortRegistry.ComfortEntry> be : BlockComfortRegistry.BLOCK_ENTRIES.entrySet()) {
-            String canonicalId = BlockComfortRegistry.getCanonicalId(be.getKey());
+        for (Map.Entry<BlockComfortRegistry.BlockKey, BlockComfortRegistry.ComfortEntry> be : BlockComfortRegistry.BLOCK_ENTRIES.entrySet()) {
+            String canonicalId = BlockComfortRegistry.getCanonicalId(be.getKey().block);
             blockEntryToCanonicalId.putIfAbsent(be.getValue(), canonicalId);
             canonicalIdToBlockEntry.put(canonicalId, be.getValue());
         }

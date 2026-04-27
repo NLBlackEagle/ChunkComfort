@@ -64,17 +64,35 @@ public class ComfortWorldData extends WorldSavedData {
         int minY = 0;
         int maxY = world.getHeight() - 1;
 
+        // REASON: ComfortEntry.limit was previously ignored for blocks — all matching
+        // blocks were summed unconditionally and only the GroupLimitRegistry cap was
+        // applied at the end. This meant e.g. waystones:waystone:2 with limit=1 would
+        // still count every waystone in the chunk. Now we track per-BlockKey counts
+        // during the scan and stop adding value once the entry limit is reached.
+        Map<BlockComfortRegistry.BlockKey, Integer> scanCounts = new java.util.HashMap<>();
+
         ChunkScanner.scanChunk(world, chunkPos, minY, maxY, (pos, block) -> {
             IBlockState state = world.getBlockState(pos);
 
             if (!isPrimaryBlock(state)) return;
 
-            if (BlockComfortRegistry.isComfortBlock(block)) {
-                String group = BlockComfortRegistry.getGroup(block);
-                int value = BlockComfortRegistry.getValue(block);
-                data.groupTotals.put(group, data.groupTotals.getOrDefault(group, 0) + value);
-                data.blockCounts.put(block, data.blockCounts.getOrDefault(block, 0) + 1);
-            }
+            BlockComfortRegistry.ComfortEntry entry = BlockComfortRegistry.getBlockEntry(block, state);
+            if (entry == null) return;
+
+            // REASON: use the registered BlockKey (which may have meta=-1 for wildcard
+            // entries) as the scan counter key, not the actual blockstate metadata.
+            // Without this, a wildcard entry like waystones:waystone (no metadata) would
+            // give each metadata variant its own counter — both :0 and :2 would pass a
+            // limit of 1 independently, counting the structure twice.
+            BlockComfortRegistry.BlockKey key = BlockComfortRegistry.getKeyForEntry(block, state);
+            if (key == null) return;
+            int currentCount = scanCounts.getOrDefault(key, 0);
+
+            if (currentCount >= entry.limit) return; // per-entry limit reached
+
+            scanCounts.put(key, currentCount + 1);
+            data.groupTotals.put(entry.group, data.groupTotals.getOrDefault(entry.group, 0) + entry.value);
+            data.blockCounts.put(block, data.blockCounts.getOrDefault(block, 0) + 1);
         });
 
         // REASON: previously iterated world.loadedEntityList (all entities in all loaded
