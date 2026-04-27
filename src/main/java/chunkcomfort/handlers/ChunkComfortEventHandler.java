@@ -224,7 +224,14 @@ public class ChunkComfortEventHandler {
 
         if (AreaComfortCalculator.isEnvironmentBlocked(player.world, player.getPosition())) return;
 
-        int comfort = AreaComfortCalculator.calculatePlayerComfort(player);
+        // REASON: previously called calculatePlayerComfort() here, triggering a full
+        // chunk + entity scan on every potion addition. Since applyComfortEffects()
+        // applies the comfort potion itself (via addPotionEffect), this caused a
+        // feedback loop: comfort tick -> apply Speed -> onPotionAdded -> full recalc.
+        // The cached value written by the regular tick is always fresh enough for
+        // blacklist enforcement — comfort does not change between ticks — so reading
+        // from the cache is both correct and free.
+        int comfort = chunkcomfort.player.PlayerComfortManager.getCachedComfort(player);
 
         List<Potion> toRemove = new ArrayList<>();
 

@@ -228,7 +228,7 @@ public class LivingComfortRegistry {
      * Reads the entity's actual NBT and returns the CONTEXT_MAP key that matches it,
      * or null if this entity ID has no context entries (single-entry or complex NBT).
      *
-     * Used by addLivingEntityComfort() to populate contextEntityCounts in the cache
+     * Used by addEntityComfort() to populate contextEntityCounts in the cache
      * so that NBT variants of the same entity class (e.g. if_mob_skull SkullType:1
      * vs SkullType:3) are counted independently rather than sharing one class-keyed count.
      *

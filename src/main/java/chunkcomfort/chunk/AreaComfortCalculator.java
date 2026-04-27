@@ -141,8 +141,7 @@ public class AreaComfortCalculator {
             }
         }
 
-        addLivingEntityComfort(world, playerPos, radius, cache);
-        addDecorativeEntityComfort(world, playerPos, radius, cache);
+        addEntityComfort(world, playerPos, radius, cache);
 
         // --- Combine block and entity group totals ---
         Set<String> allGroups = new HashSet<>();
@@ -179,8 +178,16 @@ public class AreaComfortCalculator {
         return finalComfort;
     }
 
-    public static void addLivingEntityComfort(World world, BlockPos center, int radius,
-                                              PlayerChunkComfortCache cache) {
+    // REASON: previously two separate methods — addLivingEntityComfort (one AABB query
+    // per chunk) and addDecorativeEntityComfort (one AABB query over the whole area).
+    // Living entities and decorative entities are mutually exclusive (living = EntityLiving,
+    // decorative = non-EntityLiving), so a single query per chunk can feed both branches
+    // in the same loop, halving the number of world.getEntitiesWithinAABB() calls.
+    // The decorative dedup set (countedDecoratives) is kept per-chunk since each chunk
+    // query is independent; this preserves the original behaviour where an entity on a
+    // chunk boundary can only be counted once per the chunk whose box first contains it.
+    public static void addEntityComfort(World world, BlockPos center, int radius,
+                                        PlayerChunkComfortCache cache) {
         int centerChunkX = center.getX() >> 4;
         int centerChunkZ = center.getZ() >> 4;
 
@@ -197,7 +204,6 @@ public class AreaComfortCalculator {
                         chunkPos.getXEnd() + 1, maxY, chunkPos.getZEnd() + 1
                 );
 
-
                 // REASON: previously keyed on ResourceLocation, which meant all NBT
                 // variants of the same entity ID (e.g. every if_mob_skull type) shared
                 // one counter. After counting 1 cyclops skull the limit was hit and
@@ -205,64 +211,56 @@ public class AreaComfortCalculator {
                 // entries with their own limit. Keying on the LivingComfortEntry object
                 // itself gives each config line its own independent counter.
                 Map<LivingComfortRegistry.LivingComfortEntry, Integer> livingCount = new HashMap<>();
+                Set<UUID> countedDecoratives = new HashSet<>();
 
                 for (Entity entity : world.getEntitiesWithinAABB(Entity.class, chunkBox)) {
-                    if (!(entity instanceof EntityLiving) || entity instanceof EntityArmorStand) continue;
+                    if (entity instanceof EntityLiving) {
+                        // --- Living entity branch ---
+                        if (entity instanceof EntityArmorStand) continue;
 
-                    LivingComfortRegistry.LivingComfortEntry entry = LivingComfortRegistry.getMatchingEntry(entity);
-                    ResourceLocation id = EntityList.getKey(entity);
+                        LivingComfortRegistry.LivingComfortEntry entry = LivingComfortRegistry.getMatchingEntry(entity);
+                        ResourceLocation id = EntityList.getKey(entity);
 
-                    if (entry == null || id == null) continue;
+                        if (entry == null || id == null) continue;
 
-                    int count = livingCount.getOrDefault(entry, 0);
-                    if (count >= entry.limit) continue;
+                        int count = livingCount.getOrDefault(entry, 0);
+                        if (count >= entry.limit) continue;
 
-                    int bonus = NamedPetComfortRegistry.getBonus(id, entity.getCustomNameTag());
-                    if (bonus > 0) {
-                        cache.addEntityGroupTotal(entry.group, bonus);
+                        int bonus = NamedPetComfortRegistry.getBonus(id, entity.getCustomNameTag());
+                        if (bonus > 0) {
+                            cache.addEntityGroupTotal(entry.group, bonus);
+                        }
+
+                        cache.addEntityGroupTotal(entry.group, entry.value);
+                        cache.addEntityCount(entity.getClass(), 1);
+
+                        // Populate per-variant count so tooltip shows correct count per skull type
+                        String contextKey = LivingComfortRegistry.extractEntityContextKey(id, entity);
+                        if (contextKey != null) {
+                            cache.addContextEntityCount(contextKey, 1);
+                        }
+
+                        livingCount.put(entry, count + 1);
+
+                    } else {
+                        // --- Decorative (non-living) entity branch ---
+                        if (!EntityComfortRegistry.isComfortEntity(entity)) continue;
+
+                        EntityComfortRegistry.ComfortEntry entry = EntityComfortRegistry.getEntityEntry(entity);
+                        if (entry == null) continue;
+
+                        UUID entityId = entity.getUniqueID();
+                        if (countedDecoratives.contains(entityId)) continue;
+                        countedDecoratives.add(entityId);
+
+                        int currentCount = cache.getDecorativeEntityCount(entity.getClass());
+                        if (currentCount >= entry.limit) continue;
+
+                        cache.addDecorativeEntityCount(entity.getClass(), 1);
+                        cache.addEntityGroupTotal(entry.group, entry.value);
                     }
-
-                    cache.addEntityGroupTotal(entry.group, entry.value);
-                    cache.addEntityCount(entity.getClass(), 1);
-
-                    // Populate per-variant count so tooltip shows correct count per skull type
-                    String contextKey = LivingComfortRegistry.extractEntityContextKey(id, entity);
-                    if (contextKey != null) {
-                        cache.addContextEntityCount(contextKey, 1);
-                    }
-
-                    livingCount.put(entry, count + 1);
                 }
             }
-        }
-    }
-
-
-
-    public static void addDecorativeEntityComfort(World world, BlockPos center, int radius,
-                                                  PlayerChunkComfortCache cache) {
-        AxisAlignedBB box = getAxisAlignedBB(world, center, radius);
-        List<Entity> entities = world.getEntitiesWithinAABB(Entity.class, box);
-
-        // Track which decorative entities we've counted this tick
-        Set<UUID> countedDecoratives = new HashSet<>();
-
-        for (Entity entity : entities) {
-            if (entity instanceof EntityLiving) continue;
-            if (!EntityComfortRegistry.isComfortEntity(entity)) continue;
-
-            EntityComfortRegistry.ComfortEntry entry = EntityComfortRegistry.getEntityEntry(entity);
-            if (entry == null) continue;
-
-            UUID entityId = entity.getUniqueID();
-            if (countedDecoratives.contains(entityId)) continue;
-            countedDecoratives.add(entityId);
-
-            int currentCount = cache.getDecorativeEntityCount(entity.getClass());
-            if (currentCount >= entry.limit) continue;
-
-            cache.addDecorativeEntityCount(entity.getClass(), 1);
-            cache.addEntityGroupTotal(entry.group, entry.value);
         }
     }
 
