@@ -1,5 +1,4 @@
 # Description
-
 ChunkComfort is a minecraft mod meant to reward the player for fitting out their base.
 
 It works by assigning blocks, actions and entities a certain amount of comfort points which are all summed up to a total amount in a configurable radius around the player.
@@ -16,3 +15,5 @@ I really let scope creep get the better of me and more is planned, such as havin
 ## Compatibility
 ChunkComfort has been tested with over 220 mods found within the RLCraft Dregora Modpack and will continue to be tested in said environment in pursuit of a bug-free mod.
 Therefor the default settings are not only very stable but also very performant.
+
+<img width="1912" height="1008" alt="image" src="https://github.com/user-attachments/assets/2410c8fc-35e1-457b-b0f0-7960dc3dcdee" />
