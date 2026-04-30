@@ -207,6 +207,7 @@ public class ForgeConfigHandler {
                 "minecraft:parrot,1,pets,3,{OwnerUUID:'*-*'}",
                 "minecraft:wolf,4,pets,2,{OwnerUUID:'*-*'}",
                 "minecraft:horse,2,pets,1,{OwnerUUID:'*-*'}",
+                "minecraft:pig,2,pets,1,{OwnerUUID:'*-*'}",
                 "minecraft:donkey,2,pets,1,{OwnerUUID:'*-*'}",
                 "minecraft:mule,2,pets,1,{OwnerUUID:'*-*'}",
                 "minecraft:llama,2,pets,1,{OwnerUUID:'*-*'}",
@@ -226,6 +227,7 @@ public class ForgeConfigHandler {
         public String[] livingTooltipEntries = new String[]{
                 "minecraft:ocelot,'Dilly|Skully|Gizmo',1",
                 "minecraft:parrot,'Eagle|BaldEagle|Heaven',1",
+                "minecraft:pig,'Technoblade',1",
                 "minecraft:wolf,'Stitch|Lyn',1",
                 "minecraft:donkey,'Donkey',1",
                 "minecraft:villager,'ijsbrand',1",
