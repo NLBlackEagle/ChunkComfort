@@ -252,3 +252,24 @@ chunkcomfort.config.message.10=§6As you open your eyes, there is but one thing 
 chunkcomfort.config.message.11=§6You dreamt about a world, Dregora... and being sheltered against the probability of being smitten
 chunkcomfort.config.message.12=§6You wake and have an existential crisis: how much more comfort makes things comfier?!
 chunkcomfort.config.message.13=§6You no longer need to dream — you are living it
+
+
+# Messages when comfort increased
+toast.chunkcomfort.tierup.title=Comfort Level Up
+toast.chunkcomfort.tierup.title.max=Comfort Maxed Hurray!
+toast.chunkcomfort.tierup.flavor=Your home grows ever more comfortable.
+
+# Per-tier flavour lines (optional, falls back to .flavor if missing)
+toast.chunkcomfort.tierup.tier0=A fire, a roof, something warm nearby — it's a start.
+toast.chunkcomfort.tierup.tier1=Something about this place makes it worth coming back to.
+toast.chunkcomfort.tierup.tier2=The warmth here feels different now. More settled.
+toast.chunkcomfort.tierup.tier3=There's still more to be done, but the foundations stand strong.
+toast.chunkcomfort.tierup.tier4=This place is starting to have a shape of its own.
+toast.chunkcomfort.tierup.tier5=You find yourself thinking about what belongs here next.
+toast.chunkcomfort.tierup.tier6=Nowhere else quite feels like this.
+toast.chunkcomfort.tierup.tier7=The things you've gathered here tell a story.
+toast.chunkcomfort.tierup.tier8=There's a life in this place that wasn't here before.
+toast.chunkcomfort.tierup.tier9=Every corner of this place means something now.
+toast.chunkcomfort.tierup.tier10=Even on the worst days, this place feels like shelter.
+toast.chunkcomfort.tierup.tier11=You're not sure when it happened, but this became home.
+toast.chunkcomfort.tierup.tier12=There's nothing left to wish for here.

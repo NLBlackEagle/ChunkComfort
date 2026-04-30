@@ -25,5 +25,12 @@ public class NetworkHandler {
                 Side.CLIENT
         );
 
+        INSTANCE.registerMessage(
+                PacketTierUpHandler.class,
+                PacketTierUp.class,
+                2,
+                Side.CLIENT
+        );
+
     }
 }

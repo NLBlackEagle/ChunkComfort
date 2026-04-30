@@ -141,8 +141,19 @@ public class PlayerComfortManager {
         int duration = 600;
 
         if (current == null || current.getAmplifier() != tierIndex || current.getDuration() < 220) {
+            boolean tierUp = current == null
+                    ? tierIndex > 0
+                    : tierIndex > current.getAmplifier();
+
             player.removePotionEffect(PotionRegistry.COMFORT);
             player.addPotionEffect(new PotionEffect(PotionRegistry.COMFORT, duration, tierIndex, false, true));
+
+            if (tierUp && !player.world.isRemote) {
+                NetworkHandler.INSTANCE.sendTo(
+                        new chunkcomfort.network.PacketTierUp(tierIndex),
+                        (EntityPlayerMP) player
+                );
+            }
         }
     }
 
