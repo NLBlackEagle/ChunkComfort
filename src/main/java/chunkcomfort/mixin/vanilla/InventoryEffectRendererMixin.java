@@ -164,6 +164,13 @@ public abstract class InventoryEffectRendererMixin {
 
             tooltip.add(I18n.format("tooltip.chunkcomfort.level", comfort, maxComfort));
 
+            int nextThreshold = PlayerComfortManager.getNextTierThreshold(comfortEffect.getAmplifier());
+            if (nextThreshold >= 0) {
+                tooltip.add(I18n.format("tooltip.chunkcomfort.level.next", nextThreshold - comfort));
+            } else {
+                tooltip.add(I18n.format("tooltip.chunkcomfort.level.maxed"));
+            }
+
             tooltip.add("");
 
             tooltip.add(I18n.format("tooltip.chunkcomfort.positive.effects"));

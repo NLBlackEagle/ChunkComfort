@@ -151,7 +151,7 @@ public class ForgeConfigHandler {
                 "minecraft:crafting_table,2,workstation,5",
                 "minecraft:furnace,1,workstation,5",
                 "minecraft:cauldron,3,workstation,5",
-                "minecraft:brewing_stand,10,workstation,2",
+                "minecraft:brewing_stand,10,workstation,1",
                 "minecraft:anvil,5,workstation,2",
 
                 // Enchanting (rare, late-game goal)
@@ -211,7 +211,7 @@ public class ForgeConfigHandler {
                 "minecraft:mule,2,pets,1,{OwnerUUID:'*-*'}",
                 "minecraft:llama,2,pets,1,{OwnerUUID:'*-*'}",
                 "minecraft:skeleton_horse,2,pets,1,{OwnerUUID:'*-*'}",
-                "minecraft:squid,farm,5,{}",
+                "minecraft:squid,1,farm,5,{}",
                 "minecraft:sheep,1,farm,5,{}",
                 "minecraft:cow,1,farm,5,{}",
                 "minecraft:chicken,1,farm,5,{}",
@@ -278,16 +278,18 @@ public class ForgeConfigHandler {
                 "Example: 10,[[minecraft:speed,0],[minecraft:regeneration,0]]"
         })
         public String[] comfortEffects = new String[]{
-                "10,[[minecraft:haste,0]]",
-                "30,[[minecraft:speed,0]]",
-                "60,[[minecraft:regeneration,0]]",
-                "100,[[minecraft:speed,1],[minecraft:regeneration,1]]",
-                "150,[[minecraft:strength,0],[minecraft:speed,1]]",
-                "200,[[minecraft:resistance,1],[minecraft:regeneration,1]]",
-                "250,[[minecraft:strength,1],[minecraft:resistance,1],[minecraft:regeneration,1]]",
-                "300,[[minecraft:strength,1],[minecraft:resistance,1],[minecraft:regeneration,2]]",
-                "350,[[minecraft:strength,1],[minecraft:resistance,2],[minecraft:regeneration,2]]",
-                "425,[[minecraft:strength,2],[minecraft:resistance,2],[minecraft:regeneration,2]]"
+                "25,[[minecraft:haste,0]]",
+                "50,[[minecraft:speed,0]]",
+                "75,[[minecraft:jump_boost,0]]",
+                "100,[[minecraft:resistance,0]]",
+                "125,[[minecraft:fire_resistance,0]]",
+                "150,[[minecraft:absorption,0]]",
+                "175,[[minecraft:strength,0]]",
+                "225,[[minecraft:regeneration,0]]",
+                "250,[[minecraft:water_breathing,0]]",
+                "275,[[minecraft:luck,0]]",
+                "350,[[minecraft:health_boost,0]]",
+                "455,[[minecraft:regeneration,1],[minecraft:luck,1]]"
         };
 
         @Config.Comment({
@@ -319,9 +321,19 @@ public class ForgeConfigHandler {
         })
         @Config.Name("Comfort Potion Blacklist")
         public String[] comfortPotionBlacklist = new String[]{
-                "60,[minecraft:poison]",
-                "100,[minecraft:wither,minecraft:mining_fatigue]"
+                "100,[minecraft:slowness]",
+                "150,[minecraft:unluck]",
+                "200,[minecraft:nausea]",
+                "250,[minecraft:blindness]",
+                "300,[minecraft:poison]",
+                "350,[minecraft:instant_damage]",
+                "400,[minecraft:mining_fatigue]",
+                "450,[minecraft:weakness]",
+                "455,[minecraft:wither]"
         };
+
+
+
 
         @Config.Comment("Percentage chance for messages from Comfort Waking Messages to display after waking up in-game")
         @Config.RangeInt(min = 0, max = 100)

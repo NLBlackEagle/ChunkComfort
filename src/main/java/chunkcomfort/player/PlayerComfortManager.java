@@ -146,6 +146,13 @@ public class PlayerComfortManager {
         }
     }
 
+    /** Returns the comfort threshold of the next tier above tierIndex, or -1 if already at max. */
+    public static int getNextTierThreshold(int tierIndex) {
+        int nextIndex = tierIndex + 1;
+        if (nextIndex >= TIERS.size()) return -1;
+        return TIERS.get(nextIndex).comfort;
+    }
+
     public static List<String> getEffectsForTier(int tierIndex) {
         if (tierIndex < 0 || tierIndex >= TIERS.size()) return Collections.emptyList();
 

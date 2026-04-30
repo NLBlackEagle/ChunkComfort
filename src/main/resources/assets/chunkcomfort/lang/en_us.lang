@@ -23,9 +23,13 @@ tooltip.chunkcomfort.firestarters=§6Used to create a comfy fire establishing a 
 
 tooltip.chunkcomfort.inactive=Your surroundings don't feel very comfortable yet.
 
-tooltip.chunkcomfort.blacklisted=Dread clings to the air here, everything feels wrong and strained.
+tooltip.chunkcomfort.blacklisted.environment=This place feels deeply unnatural, as if the land itself rejects comfort.
+
+tooltip.chunkcomfort.blacklisted.boss=A powerful presence looms nearby, comfort is impossible while it draws breath.
 
 tooltip.chunkcomfort.level=§6Comfort: %1$s/%2$s
+tooltip.chunkcomfort.level.next=§6Points to next level: %1$s
+tooltip.chunkcomfort.level.maxed=Comfort is at its peak
 
 tooltip.chunkcomfort.positive.effects=§2Comfort Effects:
 tooltip.chunkcomfort.positive.effects.plus=§a+

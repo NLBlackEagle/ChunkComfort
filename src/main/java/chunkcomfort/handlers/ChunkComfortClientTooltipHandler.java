@@ -246,14 +246,17 @@ public class ChunkComfortClientTooltipHandler {
         if (player != null) {cache.ensureUpToDate();}
 
 
-        boolean blacklisted = false;
+        boolean envBlacklisted = false;
+        boolean bossBlacklisted = false;
 
         if (player != null && player.world != null) {
             BlockPos pos = player.getPosition();
             if (pos != null) {
-                blacklisted = AreaComfortCalculator.isEnvironmentBlocked(player.world, pos);
+                envBlacklisted = AreaComfortCalculator.isEnvironmentBlocked(player.world, pos);
             }
         }
+        bossBlacklisted = AreaComfortCalculator.isBossBlocked();
+        boolean blacklisted = envBlacklisted || bossBlacklisted;
 
         boolean comfortActive = player != null && AreaComfortCalculator.isComfortActive(player);
 
@@ -296,7 +299,8 @@ public class ChunkComfortClientTooltipHandler {
             if (!tooltip.contains(header)) tooltip.add(header);
 
             if (blacklisted) {
-                tooltip.add(I18n.format("tooltip.chunkcomfort.blacklisted"));
+                if (envBlacklisted) tooltip.add(I18n.format("tooltip.chunkcomfort.blacklisted.environment"));
+                if (bossBlacklisted) tooltip.add(I18n.format("tooltip.chunkcomfort.blacklisted.boss"));
                 return;
             }
 
@@ -412,7 +416,8 @@ public class ChunkComfortClientTooltipHandler {
         }
 
         if (blacklisted) {
-            tooltip.add(I18n.format("tooltip.chunkcomfort.blacklisted"));
+            if (envBlacklisted) tooltip.add(I18n.format("tooltip.chunkcomfort.blacklisted.environment"));
+            if (bossBlacklisted) tooltip.add(I18n.format("tooltip.chunkcomfort.blacklisted.boss"));
             return;
         }
 

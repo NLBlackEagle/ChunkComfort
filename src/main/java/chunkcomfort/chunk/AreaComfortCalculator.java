@@ -80,11 +80,11 @@ public class AreaComfortCalculator {
         }
         String biomeId = biomeReg.toString();
 
-        if (DimensionBiomeBlacklistRegistry.isDimensionBlocked(dimId)
-                || DimensionBiomeBlacklistRegistry.isBiomeBlocked(biomeId)) {
-            return true;
-        }
+        return DimensionBiomeBlacklistRegistry.isDimensionBlocked(dimId)
+                || DimensionBiomeBlacklistRegistry.isBiomeBlocked(biomeId);
+    }
 
+    public static boolean isBossBlocked() {
         return ForgeConfigHandler.server.enableBossBarDetection && ChunkBossState.isBossActive();
     }
 
@@ -95,7 +95,7 @@ public class AreaComfortCalculator {
 
         if (world.isRemote) return 0;
 
-        if (isEnvironmentBlocked(world, playerPos)) {
+        if (isEnvironmentBlocked(world, playerPos) || isBossBlocked()) {
             if (PotionRegistry.COMFORT != null) {
                 player.removePotionEffect(PotionRegistry.COMFORT);
             }
