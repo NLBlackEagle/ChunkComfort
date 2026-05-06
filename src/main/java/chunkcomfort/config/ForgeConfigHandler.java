@@ -99,7 +99,7 @@ public class ForgeConfigHandler {
 
         //Comfort Entries
 
-        @Config.Comment("Blocks that count as fire sources")
+        @Config.Comment("Blocks that count as fire sources. Supports metadata via @: e.g. minecraft:campfire@1 matches only meta 1, minecraft:campfire matches all variants")
         @Config.Name("Fire Blocks")
         public String[] fireBlocks = new String[]{
                 "minecraft:fire"
