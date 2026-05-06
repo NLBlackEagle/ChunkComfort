@@ -79,21 +79,16 @@ public class ChunkComfortClientTooltipHandler {
 
         for (String entry : ForgeConfigHandler.server.fireBlocks) {
             if (entry == null || entry.trim().isEmpty()) continue;
-
             FIRE_BLOCKS.add(entry.trim());
         }
     }
 
     public static void refreshGroupTooltips() {
-
         GROUP_TOOLTIP_CACHE.clear();
 
         for (String group : ForgeConfigHandler.getDefinedGroups()) {
-
             String key = "tooltip.chunkcomfort.hidden." + group;
-
             String translated = I18n.format(key);
-
             if (!translated.equals(key)) {
                 GROUP_TOOLTIP_CACHE.add(group);
             }
@@ -216,12 +211,6 @@ public class ChunkComfortClientTooltipHandler {
         if (LivingComfortRegistry.hasEntries(directId)) return true;
 
         // Indirect check: item maps to a living entity via CustomSpawnEggRegistry
-        // We check DIRECT_ENTRIES by looking for any entry whose item ID matches.
-        // We do this by attempting to resolve a synthetic stack — but we only have
-        // the registry name here, not a stack. Instead check if the item's registry
-        // name is a key in CustomSpawnEggRegistry's direct entries by checking if
-        // any resolved entity ID has living entries.
-        // We use ForgeRegistries to build a minimal ItemStack for resolution.
         try {
             net.minecraft.item.Item item = net.minecraft.item.Item.REGISTRY.getObject(directId);
             if (item != null) {
@@ -234,17 +223,81 @@ public class ChunkComfortClientTooltipHandler {
         return false;
     }
 
+    // -------------------
+    // TOOLTIP HELPERS
+    // -------------------
+
+    /**
+     * Adds the [CC] header line — always the first thing added to the tooltip.
+     *
+     * We pass messageKey rather than a pre-formatted string so the lang file
+     * controls all color formatting. The three possible keys are:
+     *   tooltip.chunkcomfort.header              → §8[§6CC§8] §7Hold CTRL for comfort info
+     *   tooltip.chunkcomfort.blacklisted.*       → §8[§6CC§8] §7Area is blacklisted / Boss nearby
+     *   tooltip.chunkcomfort.inactive            → §8[§6CC§8] §7Comfort inactive
+     *
+     * The contains() guard prevents duplicates when both the spawn egg path
+     * and the block path run for the same item in one tooltip event.
+     */
+    private void addHeader(List<String> tooltip, String messageKey) {
+        String header = I18n.format("tooltip.chunkcomfort.header");
+        if (tooltip.contains(header)) return;
+        tooltip.add(I18n.format(messageKey));
+    }
+
+    /**
+     * Adds the CTRL-gated information block when CTRL is held:
+     *   1. infoLines   — the actual data (points, counts, group totals)
+     *   2. Fire info   — if this item is a fire source or fire block
+     *   3. Spacer      — empty line from tooltip.chunkcomfort.spacer
+     *   4. Flavor text — if this group has a hidden tooltip defined
+     *
+     * WHY a Runnable for infoLines?
+     * Each tooltip path (block, entity, spawn egg) needs different variables to
+     * compute its lines. Rather than passing dozens of parameters, we pass a
+     * Runnable — a small piece of code that runs later. The lambda () -> { ... }
+     * syntax creates one inline, capturing the variables it needs from the
+     * surrounding scope automatically.
+     *
+     * In Java, variables captured by a lambda must be "effectively final" —
+     * their value cannot change after being assigned. You will see "final"
+     * declarations before each lambda call below for exactly this reason.
+     *
+     * WHY does the fire-only path pass () -> {} (empty lambda)?
+     * Fire-only items have no block or entity entry so neither the block path
+     * nor the entity path calls addCtrlBlock() for them. We still need
+     * addCtrlBlock() to run so the fire lines get added — we just have no
+     * info lines to contribute, so the Runnable does nothing.
+     */
+    private void addCtrlBlock(List<String> tooltip, ItemStack stack, boolean ctrlDown,
+                              EntityPlayer player, boolean isFireSourceItem, boolean isFireBlock,
+                              Runnable infoLines) {
+        if (!ctrlDown || player == null) return;
+
+        // Information lines (block points, group totals, entity counts, etc)
+        infoLines.run();
+
+        // Fire info, if applicable
+        if (isFireSourceItem) tooltip.add(I18n.format("tooltip.chunkcomfort.firestarters"));
+        if (isFireBlock)      tooltip.add(I18n.format("tooltip.chunkcomfort.fireblocks"));
+
+        // Spacer + flavor text, if this group has one defined
+        String group = getGroupFromItem(stack);
+        if (group != null && GROUP_TOOLTIP_CACHE.contains(group)) {
+            tooltip.add(I18n.format("tooltip.chunkcomfort.spacer"));
+            tooltip.add(I18n.format("tooltip.chunkcomfort.hidden." + group));
+        }
+    }
+
     @SubscribeEvent
     public void onItemTooltip(ItemTooltipEvent event) {
 
         ItemStack stack = event.getItemStack();
-
         List<String> tooltip = event.getToolTip();
         EntityPlayer player = event.getEntityPlayer();
         boolean ctrlDown = net.minecraft.client.gui.GuiScreen.isCtrlKeyDown();
         PlayerChunkComfortCache cache = player != null ? AreaComfortCalculator.getCache(player) : null;
-        if (player != null) {cache.ensureUpToDate();}
-
+        if (player != null) { cache.ensureUpToDate(); }
 
         boolean envBlacklisted = false;
         boolean bossBlacklisted = false;
@@ -274,7 +327,6 @@ public class ChunkComfortClientTooltipHandler {
         // 2. Vanilla spawn eggs (fallback)
         if (entityID == null &&
                 stack.getItem() instanceof net.minecraft.item.ItemMonsterPlacer) {
-
             entityID = net.minecraft.item.ItemMonsterPlacer.getNamedIdFrom(stack);
         }
 
@@ -292,23 +344,24 @@ public class ChunkComfortClientTooltipHandler {
                 return;
             }
 
-            PettingComfortData petEntry =
-                    PettingComfortRegistry.getEntry(entityID.toString());
+            PettingComfortData petEntry = PettingComfortRegistry.getEntry(entityID.toString());
 
-            String header = I18n.format("tooltip.chunkcomfort.header");
-            if (!tooltip.contains(header)) tooltip.add(header);
-
+            // Blacklisted/inactive: show [CC] with the relevant message and stop.
+            // We check these before adding the normal header so the header line
+            // itself reflects the current state rather than showing "Hold CTRL"
+            // when there is nothing to show.
             if (blacklisted) {
-                if (envBlacklisted) tooltip.add(I18n.format("tooltip.chunkcomfort.blacklisted.environment"));
-                if (bossBlacklisted) tooltip.add(I18n.format("tooltip.chunkcomfort.blacklisted.boss"));
+                if (envBlacklisted) addHeader(tooltip, "tooltip.chunkcomfort.blacklisted.environment");
+                if (bossBlacklisted) addHeader(tooltip, "tooltip.chunkcomfort.blacklisted.boss");
+                return;
+            }
+            if (!comfortActive && player != null) {
+                addHeader(tooltip, "tooltip.chunkcomfort.inactive");
                 return;
             }
 
-
-            if (!comfortActive && player != null && !blacklisted) {
-                tooltip.add(I18n.format("tooltip.chunkcomfort.inactive"));
-                return;
-            }
+            // Normal state: add the [CC] Hold CTRL header
+            addHeader(tooltip, "tooltip.chunkcomfort.header");
 
             if (player != null) {
 
@@ -330,7 +383,7 @@ public class ChunkComfortClientTooltipHandler {
                 // use one class). When nbtContext is available we use contextEntityCounts
                 // instead — keyed on "entityId|SkullType:1" — so each variant shows its
                 // own independent count rather than the combined count of all variants.
-                int entityCount;
+                final int entityCount;
                 if (nbtContext != null && !nbtContext.isEmpty()) {
                     String contextKey = entityID.toString() + "|" + nbtContext;
                     entityCount = cache.getContextEntityCount(contextKey);
@@ -340,32 +393,30 @@ public class ChunkComfortClientTooltipHandler {
                             : 0;
                 }
 
-                int groupPoints = cache.entityGroupTotals.getOrDefault(livingEntry.group, 0);
+                // final is required here so the lambda below can capture these values
+                final int groupPoints = cache.entityGroupTotals.getOrDefault(livingEntry.group, 0);
+                final int totalGroupLimit = getGroupLimit(livingEntry.group);
+                final LivingComfortRegistry.LivingComfortEntry capturedEntry = livingEntry;
+                final PettingComfortData capturedPet = petEntry;
+                final ResourceLocation capturedEntityID = entityID;
 
-                int totalGroupLimit = getGroupLimit(livingEntry.group);
+                addCtrlBlock(tooltip, stack, ctrlDown, player, false, false, () -> {
+                    tooltip.add(I18n.format(
+                            "tooltip.chunkcomfort.living.line1",
+                            capturedEntry.value,
+                            entityCount,
+                            capturedEntry.limit));
+                    tooltip.add(I18n.format(
+                            "tooltip.chunkcomfort.living.line2",
+                            capturedEntry.group,
+                            groupPoints,
+                            totalGroupLimit));
 
-                tooltip.add(I18n.format(
-                        "tooltip.chunkcomfort.living.line1",
-                        livingEntry.value,
-                        entityCount,
-                        livingEntry.limit));
+                    String nameLine = NamedPetComfortRegistry.formatNamesWithPoints(capturedEntityID);
+                    if (nameLine != null) tooltip.add(nameLine);
 
-                tooltip.add(I18n.format(
-                        "tooltip.chunkcomfort.living.line2",
-                        livingEntry.group,
-                        groupPoints,
-                        totalGroupLimit));
-
-                String nameLine =
-                        NamedPetComfortRegistry.formatNamesWithPoints(entityID);
-
-                if (nameLine != null) {
-                    tooltip.add(nameLine);
-                }
-
-                if (petEntry != null) {
-                    tooltip.add(I18n.format("tooltip.chunkcomfort.pet"));
-                }
+                    if (capturedPet != null) tooltip.add(I18n.format("tooltip.chunkcomfort.pet"));
+                });
             }
 
             handledSpawnEgg = true;
@@ -394,54 +445,22 @@ public class ChunkComfortClientTooltipHandler {
         boolean isFireSourceItem = FIRE_SOURCE_ITEMS.contains(registryName);
         EntityComfortRegistry.ComfortEntry entityEntry = EntityComfortRegistry.getEntityEntryFromId(new ResourceLocation(registryName));
 
-
         // Nothing to show? Exit early
         if (!isConfiguredBlock && entityEntry == null && !isEntityItem && !isFireBlock && !isFireSourceItem) return;
 
-        // Add JEI header if it wasn’t added yet
-        String header = I18n.format("tooltip.chunkcomfort.header");
-        if (!tooltip.contains(header)) tooltip.add(header);
-
-        if (ctrlDown && player != null) {
-
-            String group = getGroupFromItem(stack);
-
-            if (group != null && GROUP_TOOLTIP_CACHE.contains(group)) {
-
-                String key = "tooltip.chunkcomfort.hidden." + group;
-                tooltip.add(I18n.format(key));
-            }
-        } else {
-            tooltip.add(I18n.format("tooltip.chunkcomfort.ctrl"));
-        }
-
+        // Blacklisted/inactive: show [CC] with the relevant message and stop
         if (blacklisted) {
-            if (envBlacklisted) tooltip.add(I18n.format("tooltip.chunkcomfort.blacklisted.environment"));
-            if (bossBlacklisted) tooltip.add(I18n.format("tooltip.chunkcomfort.blacklisted.boss"));
+            if (envBlacklisted) addHeader(tooltip, "tooltip.chunkcomfort.blacklisted.environment");
+            if (bossBlacklisted) addHeader(tooltip, "tooltip.chunkcomfort.blacklisted.boss");
+            return;
+        }
+        if (!comfortActive && player != null) {
+            addHeader(tooltip, "tooltip.chunkcomfort.inactive");
             return;
         }
 
-        if (!comfortActive && player != null && !blacklisted) {
-            tooltip.add(I18n.format("tooltip.chunkcomfort.inactive"));
-            return;
-        }
-
-        // -------------------
-        // Fire Starter tooltip
-        // -------------------
-        String fireItem = I18n.format("tooltip.chunkcomfort.firestarters");
-        if ((isFireSourceItem) && (!tooltip.contains(fireItem))) {
-            tooltip.add(fireItem);
-        }
-
-        // -------------------
-        // Fire Block tooltip
-        // -------------------
-        String fireBlock = I18n.format("tooltip.chunkcomfort.fireblocks");
-        if ((isFireBlock) && (!tooltip.contains(fireBlock))) {
-            tooltip.add(fireBlock);
-        }
-
+        // Normal state: add the [CC] Hold CTRL header
+        addHeader(tooltip, "tooltip.chunkcomfort.header");
 
         if (player == null) return;
 
@@ -453,7 +472,6 @@ public class ChunkComfortClientTooltipHandler {
         //  could probably just do !no darn banner instances if I am lazy?
 
         boolean isBanner = false;
-
         if (stack.getItem() instanceof ItemBlock) {
             Block block = ((ItemBlock) stack.getItem()).getBlock();
             isBanner = block instanceof BlockBanner;
@@ -461,15 +479,14 @@ public class ChunkComfortClientTooltipHandler {
 
         if (!handledSpawnEgg && (entityEntry != null || isEntityItem) && !isBanner) {
 
-            // todo: this is hardcoded mess cuz I was lazy, I aliases may not work? Not sure, only banners are stupid aliases.
+            // todo: this is hardcoded mess cuz I was lazy, aliases may not work? Not sure, only banners are stupid aliases.
             //  probably have to test this with other aliases and test it.
 
             Class<? extends Entity> entityClass = ENTITY_ITEM_MAP.getOrDefault(registryName, EntityArmorStand.class);
-
             ResourceLocation entityId = new ResourceLocation(registryName);
             PettingComfortData petEntry = PettingComfortRegistry.getEntry(entityId.toString());
 
-            int entityCount = cache.getDecorativeEntityCount(entityClass); // <-- NEW: use decorativeEntityCounts
+            final int entityCount = cache.getDecorativeEntityCount(entityClass);
             int groupPoints = 0;
             int totalGroupLimit = 0;
             int value = 0;
@@ -482,12 +499,21 @@ public class ChunkComfortClientTooltipHandler {
                 totalGroupLimit = GROUP_LIMITS.getOrDefault(group, 0);
             }
 
-            tooltip.add(I18n.format("tooltip.chunkcomfort.decorative.line1", value, entityCount, entityEntry != null ? entityEntry.limit : 0));
-            tooltip.add(I18n.format("tooltip.chunkcomfort.decorative.line2", group, groupPoints, totalGroupLimit));
+            // final copies required for lambda capture
+            final int capturedValue = value;
+            final int capturedGroupPoints = groupPoints;
+            final int capturedTotalGroupLimit = totalGroupLimit;
+            final String capturedGroup = group;
+            final EntityComfortRegistry.ComfortEntry capturedEntityEntry = entityEntry;
+            final PettingComfortData capturedPet = petEntry;
 
-            if (petEntry != null) {
-                tooltip.add(I18n.format("tooltip.chunkcomfort.pet"));
-            }
+            addCtrlBlock(tooltip, stack, ctrlDown, player, isFireSourceItem, isFireBlock, () -> {
+                tooltip.add(I18n.format("tooltip.chunkcomfort.decorative.line1",
+                        capturedValue, entityCount, capturedEntityEntry != null ? capturedEntityEntry.limit : 0));
+                tooltip.add(I18n.format("tooltip.chunkcomfort.decorative.line2",
+                        capturedGroup, capturedGroupPoints, capturedTotalGroupLimit));
+                if (capturedPet != null) tooltip.add(I18n.format("tooltip.chunkcomfort.pet"));
+            });
         }
 
         // -------------------
@@ -503,35 +529,54 @@ public class ChunkComfortClientTooltipHandler {
 
             // Collect all block IDs to check (main + aliases)
             List<String> allIds = new ArrayList<>();
-            allIds.add(canonicalId); // include main ID
+            allIds.add(canonicalId);
             if (aliases != null) allIds.addAll(Arrays.asList(aliases));
 
             int totalAmount = 0;
-            Block mainBlock = null; // we'll use the first valid block to fetch points/group/etc
+            Block mainBlock = null;
 
             for (String id : allIds) {
                 Block b = Block.getBlockFromName(id);
                 if (b != null) {
-                    if (mainBlock == null) mainBlock = b; // remember first valid block
+                    if (mainBlock == null) mainBlock = b;
                     int count = cache.blockCounts.getOrDefault(b, 0);
                     totalAmount += count;
-
                 }
             }
 
             if (mainBlock != null) {
-                int pointsPerBlock = BlockComfortRegistry.getValue(mainBlock);
-                String groupName = BlockComfortRegistry.getGroup(mainBlock);
+                final int pointsPerBlock = BlockComfortRegistry.getValue(mainBlock);
+                final String groupName = BlockComfortRegistry.getGroup(mainBlock);
                 int blockLimit = 0;
                 BlockComfortRegistry.ComfortEntry entry = BlockComfortRegistry.getBlockEntry(mainBlock);
                 if (entry != null) blockLimit = entry.limit;
+                final int capturedBlockLimit = blockLimit;
+                final int groupPoints = cache.groupTotals.getOrDefault(groupName, 0);
+                final int totalGroupLimit = GROUP_LIMITS.getOrDefault(groupName, 0);
+                final int capturedTotal = totalAmount;
 
-                int groupPoints = cache.groupTotals.getOrDefault(groupName, 0);
-                int totalGroupLimit = GROUP_LIMITS.getOrDefault(groupName, 0);
+                addCtrlBlock(tooltip, stack, ctrlDown, player, isFireSourceItem, isFireBlock, () -> {
+                    tooltip.add(I18n.format("tooltip.chunkcomfort.block.line1",
+                            pointsPerBlock, capturedTotal, capturedBlockLimit));
+                    tooltip.add(I18n.format("tooltip.chunkcomfort.block.line2",
+                            groupName, groupPoints, totalGroupLimit));
+                });
+            }
+        }
 
-                tooltip.add(I18n.format("tooltip.chunkcomfort.block.line1", pointsPerBlock, totalAmount, blockLimit));
-                tooltip.add(I18n.format("tooltip.chunkcomfort.block.line2", groupName, groupPoints, totalGroupLimit));
-
+        // -------------------
+        // Fire-only items
+        // REASON: fire source and fire block items may have no block or entity entry
+        // at all, which means neither the entity block nor the block block above will
+        // call addCtrlBlock() for them. Since the fire lines only run inside
+        // addCtrlBlock(), they would never appear. We call it here with an empty
+        // Runnable (() -> {}) when nothing else has handled this item — the empty
+        // Runnable means "no info lines to add", but addCtrlBlock() still runs and
+        // adds the fire lines itself.
+        // -------------------
+        if (!isConfiguredBlock && entityEntry == null && !isEntityItem) {
+            if (isFireSourceItem || isFireBlock) {
+                addCtrlBlock(tooltip, stack, ctrlDown, player, isFireSourceItem, isFireBlock, () -> {});
             }
         }
     }

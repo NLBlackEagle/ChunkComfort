@@ -11,7 +11,7 @@ chunkcomfort.effects.comfort=Comfort
 # ============================================================
 
 # Main header shown at the top of Comfort-related tooltips
-tooltip.chunkcomfort.header=§eComfort Info:
+tooltip.chunkcomfort.header=§8[§6CC§8] §7Hold CTRL for comfort info
 
 # Tooltip shown for blocks counted as valid comfort fire sources
 # (campfires, fireplaces, etc.)
@@ -21,11 +21,11 @@ tooltip.chunkcomfort.fireblocks=§6A comfy fire, key to establishing a warm, lit
 # (flint & steel, fire charges, etc.)
 tooltip.chunkcomfort.firestarters=§6Used to create a comfy fire establishing a warm, lit and sheltered comfort zone.
 
-tooltip.chunkcomfort.inactive=Your surroundings don't feel very comfortable yet.
+tooltip.chunkcomfort.inactive=§8[§6CC§8] §7Your surroundings don't feel very comfortable yet.
 
-tooltip.chunkcomfort.blacklisted.environment=This place feels deeply unnatural, as if the land itself rejects comfort.
+tooltip.chunkcomfort.blacklisted.environment=§8[§6CC§8] §7This place feels deeply unnatural, as if the land itself rejects comfort.
 
-tooltip.chunkcomfort.blacklisted.boss=A powerful presence looms nearby, comfort is impossible while it draws breath.
+tooltip.chunkcomfort.blacklisted.boss=§8[§6CC§8] §7A powerful presence looms nearby, comfort is impossible while it draws breath.
 
 tooltip.chunkcomfort.level=§6Comfort: %1$s/%2$s
 tooltip.chunkcomfort.level.next=§6Points to next level: %1$s
@@ -36,11 +36,11 @@ tooltip.chunkcomfort.positive.effects.plus=§a+
 tooltip.chunkcomfort.negative.effects=§4Negated Effects:
 tooltip.chunkcomfort.positive.effects.minus=§c-
 
+tooltip.chunkcomfort.spacer=
+
 # ============================================================
 # Group Tooltip Descriptions (Ctrl + Hover over tooltip shows this description)
 # ============================================================
-
-tooltip.chunkcomfort.ctrl=§7§oHold CTRL to show the description.
 
 tooltip.chunkcomfort.hidden.furniture=§7You settle into the quiet of your home, where every chair, table, and shelf feels like it has learned your rhythm. Nothing rushes here, only the soft certainty of being where you belong.
 
@@ -81,12 +81,12 @@ tooltip.chunkcomfort.hidden.farm=§7Life repeats itself here in quiet cycles. Gr
 # Shows total comfort points contributed by this decorative entity
 # %1$s = entity points added
 # %2$s/%3$s = current group total / group limit
-tooltip.chunkcomfort.decorative.line1=§aEntity points: %1$s  Limit: %2$s/%3$s
+tooltip.chunkcomfort.decorative.line1=§7Entity points: %1$s  Limit: %2$s/%3$s
 
 # Displays which decorative group the entity belongs to
 # %1$s = group name
 # %2$s/%3$s = points in group / max allowed points
-tooltip.chunkcomfort.decorative.line2=§bGroup: %1$s  Points: %2$s/%3$s
+tooltip.chunkcomfort.decorative.line2=§7Group: %1$s  Points: %2$s/%3$s
 
 
 # ============================================================
@@ -96,10 +96,10 @@ tooltip.chunkcomfort.decorative.line2=§bGroup: %1$s  Points: %2$s/%3$s
 # Displays comfort value contributed by a placed block
 # %1$s = block points added
 # %2$s/%3$s = current group total / group limit
-tooltip.chunkcomfort.block.line1=§aBlock points: %1$s  Limit: %2$s/%3$s
+tooltip.chunkcomfort.block.line1=§7Block points: %1$s  Limit: %2$s/%3$s
 
 # Shows block comfort group information
-tooltip.chunkcomfort.block.line2=§bGroup: %1$s  Points: %2$s/%3$s
+tooltip.chunkcomfort.block.line2=§7Group: %1$s  Points: %2$s/%3$s
 
 
 # ============================================================
@@ -107,15 +107,15 @@ tooltip.chunkcomfort.block.line2=§bGroup: %1$s  Points: %2$s/%3$s
 # ============================================================
 
 # Comfort contribution from living entities (pets, villagers, animals)
-tooltip.chunkcomfort.living.line1=§aEntity points: %1$s  Limit: %2$s/%3$s
+tooltip.chunkcomfort.living.line1=§7Entity points: %1$s  Limit: %2$s/%3$s
 
 # Living entity group breakdown
-tooltip.chunkcomfort.living.line2=§bGroup: %1$s  Points: %2$s/%3$s
+tooltip.chunkcomfort.living.line2=§7Group: %1$s  Points: %2$s/%3$s
 
 # Bonus comfort granted when entities are named
 # %1$s = list of names detected
 # %2$s = bonus points awarded
-tooltip.chunkcomfort.named_pets=Names: %1$s + %2$s points
+tooltip.chunkcomfort.named_pets=§7Names: %1$s + %2$s points
 
 
 # ============================================================
@@ -123,7 +123,7 @@ tooltip.chunkcomfort.named_pets=Names: %1$s + %2$s points
 # ============================================================
 
 # Instruction shown when looking at a pettable entity
-tooltip.chunkcomfort.pet=§d§oShift + Left Click to pet your pet!
+tooltip.chunkcomfort.pet=§7§oShift + Left Click to pet your pet!
 
 # Chat message shown when petting succeeds
 # %1$s = entity name
