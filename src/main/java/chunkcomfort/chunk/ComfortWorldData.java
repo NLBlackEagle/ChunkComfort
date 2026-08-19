@@ -197,11 +197,11 @@ public class ComfortWorldData extends WorldSavedData {
     }
 
     public static ComfortWorldData get(World world) {
-        assert world.getMapStorage() != null;
-        ComfortWorldData data = (ComfortWorldData) world.getMapStorage().getOrLoadData(ComfortWorldData.class, DATA_NAME);
+        assert world.getPerWorldStorage() != null;
+        ComfortWorldData data = (ComfortWorldData) world.getPerWorldStorage().getOrLoadData(ComfortWorldData.class, DATA_NAME);
         if (data == null) {
             data = new ComfortWorldData();
-            world.getMapStorage().setData(DATA_NAME, data);
+            world.getPerWorldStorage().setData(DATA_NAME, data);
         }
         return data;
     }
