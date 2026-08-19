@@ -55,6 +55,8 @@ public class ChunkComfortEventHandler {
      * We check notified positions for comfort blocks and invalidate the chunk.
      * receiveCanceled=false ensures we never interfere with cancelled events.
      */
+
+    /*
     @SubscribeEvent(receiveCanceled = false)
     public void onNeighborNotify(BlockEvent.NeighborNotifyEvent event) {
         if (event.isCanceled()) return;
@@ -91,6 +93,9 @@ public class ChunkComfortEventHandler {
             }
         }
     }
+     */
+
+    //todo: Make hammock placement a mixin and spawn the particles then ^
 
     @SubscribeEvent
     public void onBlockBroken(BlockEvent.BreakEvent event) {
