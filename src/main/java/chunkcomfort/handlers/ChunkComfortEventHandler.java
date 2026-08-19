@@ -22,6 +22,7 @@ import net.minecraftforge.event.entity.living.PotionEvent;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
 import net.minecraftforge.event.entity.player.PlayerWakeUpEvent;
 import net.minecraftforge.event.world.BlockEvent;
+import net.minecraftforge.fml.common.eventhandler.Event;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 
@@ -127,7 +128,7 @@ public class ChunkComfortEventHandler {
         if (event.phase != TickEvent.Phase.END) return;
 
         EntityPlayer player = event.player;
-        if (player == null || player.world == null || player.world.isRemote) return;
+        if (player.world.isRemote) return;
         if (player.ticksExisted % ForgeConfigHandler.server.comfortCheckInterval != 0) return;
 
 
@@ -221,7 +222,7 @@ public class ChunkComfortEventHandler {
     }
 
     @SubscribeEvent
-    public void onPotionAdded(PotionEvent.PotionAddedEvent event) {
+    public void onPotionAdded(PotionEvent.PotionApplicableEvent event) {
         if (!(event.getEntityLiving() instanceof EntityPlayer)) return;
 
         EntityPlayer player = (EntityPlayer) event.getEntityLiving();
@@ -238,19 +239,12 @@ public class ChunkComfortEventHandler {
         // from the cache is both correct and free.
         int comfort = chunkcomfort.player.PlayerComfortManager.getCachedComfort(player);
 
-        List<Potion> toRemove = new ArrayList<>();
 
-        for (PotionEffect effect : player.getActivePotionEffects()) {
-            ResourceLocation id = Potion.REGISTRY.getNameForObject(effect.getPotion());
-            if (id == null) continue;
+        ResourceLocation id = Potion.REGISTRY.getNameForObject(event.getPotionEffect().getPotion());
+        if (id == null) return;
 
-            if (PotionBlacklistRegistry.isBlocked(comfort, id.toString())) {
-                toRemove.add(effect.getPotion());
-            }
-        }
-
-        for (Potion potion : toRemove) {
-            player.removePotionEffect(potion);
+        if (PotionBlacklistRegistry.isBlocked(comfort, id.toString())) {
+            event.setResult(Event.Result.DENY);
         }
     }
 }
