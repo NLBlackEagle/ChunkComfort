@@ -1,0 +1,15 @@
+{
+  "required": true,
+  "package": "chunkcomfort.mixin.comforts",
+  "refmap": "mixins.chunkcomfort.refmap.json",
+  "compatibilityLevel": "JAVA_8",
+  "target": "@env(DEFAULT)",
+  "minVersion": "0.8",
+  "mixins": [
+    "BlockRopeMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1,
+    "maxShiftBy": 10
+  }
+}

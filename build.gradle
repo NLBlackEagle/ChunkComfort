@@ -59,6 +59,7 @@ dependencies {
     implementation fg.deobf("curse.maven:fermiumbooter-${fermiumbooter_version}")
     implementation fg.deobf("curse.maven:jei-${jei_version}")
 
+    compileOnly fg.deobf("curse.maven:comforts-${comforts_version}")
     compileOnly fg.deobf("curse.maven:dynsurroundhuds-${dynsurroundhuds_version}")
     compileOnly fg.deobf("curse.maven:rustic-${rustic_version}")
     compileOnly fg.deobf("curse.maven:simpledifficulty-${simpledifficulty_version}")

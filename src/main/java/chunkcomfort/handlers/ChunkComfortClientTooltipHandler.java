@@ -448,6 +448,19 @@ public class ChunkComfortClientTooltipHandler {
         // Nothing to show? Exit early
         if (!isConfiguredBlock && entityEntry == null && !isEntityItem && !isFireBlock && !isFireSourceItem) return;
 
+        // REASON: whether an item counts as a fire source/fire block is an intrinsic
+        // property of the item, not a reflection of the player's current comfort state.
+        // Items with no other comfort role (no configured block/entity entry) should
+        // always show this hint on CTRL — even outside an established comfort zone or
+        // in a blacklisted area — otherwise items like flint & steel never tell you
+        // they satisfy the Fire Requirement unless comfort already happens to be active.
+        boolean isPureFireItem = !isConfiguredBlock && entityEntry == null && !isEntityItem;
+        if (isPureFireItem && (isFireSourceItem || isFireBlock)) {
+            addHeader(tooltip, "tooltip.chunkcomfort.header");
+            addCtrlBlock(tooltip, stack, ctrlDown, player, isFireSourceItem, isFireBlock, () -> {});
+            return;
+        }
+
         // Blacklisted/inactive: show [CC] with the relevant message and stop
         if (blacklisted) {
             if (envBlacklisted) addHeader(tooltip, "tooltip.chunkcomfort.blacklisted.environment");
@@ -561,22 +574,6 @@ public class ChunkComfortClientTooltipHandler {
                     tooltip.add(I18n.format("tooltip.chunkcomfort.block.line2",
                             groupName, groupPoints, totalGroupLimit));
                 });
-            }
-        }
-
-        // -------------------
-        // Fire-only items
-        // REASON: fire source and fire block items may have no block or entity entry
-        // at all, which means neither the entity block nor the block block above will
-        // call addCtrlBlock() for them. Since the fire lines only run inside
-        // addCtrlBlock(), they would never appear. We call it here with an empty
-        // Runnable (() -> {}) when nothing else has handled this item — the empty
-        // Runnable means "no info lines to add", but addCtrlBlock() still runs and
-        // adds the fire lines itself.
-        // -------------------
-        if (!isConfiguredBlock && entityEntry == null && !isEntityItem) {
-            if (isFireSourceItem || isFireBlock) {
-                addCtrlBlock(tooltip, stack, ctrlDown, player, isFireSourceItem, isFireBlock, () -> {});
             }
         }
     }
