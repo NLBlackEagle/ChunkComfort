@@ -35,16 +35,19 @@ public class ComfortBlockParticleSpawner {
             // nearby, nobody would receive the particle packet anyway, so just spawn.
             if (player == null) {
                 EntityPlayer nearest = findNearestPlayer(world, pos, PARTICLE_RADIUS);
-                if (nearest != null && !ComfortRequirementCheck.isComfortActive(nearest)) return;
+                if (nearest != null && !AreaComfortCalculator.isComfortActive(nearest)) return;
                 spawnComfortParticlesServer(world, pos);
                 return;
             }
 
-            // REASON: only celebrate the placement with particles if the player's
-            // minimum comfort requirements (shelter/light/fire/temperature, per config)
-            // are actually satisfied at their position. Without this, particles fired
-            // purely off block/group limits, regardless of whether comfort was active.
-            if (!ComfortRequirementCheck.isComfortActive(player)) return;
+            // REASON: only celebrate the placement with particles if the player actually
+            // has the Comfort potion buff active. Checking just the environmental
+            // prerequisites (shelter/light/fire/temperature) let particles fire before
+            // the buff itself was applied — e.g. right as a player places their first
+            // comfort block, before decor points accrue and the periodic tick grants
+            // the potion — so the particles fired even though the player wasn't shown
+            // as comfort-active.
+            if (!AreaComfortCalculator.isComfortActive(player)) return;
 
             String groupName = BlockComfortRegistry.getGroup(block);
             PlayerChunkComfortCache cache = AreaComfortCalculator.getCache(player);
