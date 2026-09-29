@@ -8,10 +8,10 @@
   "mixins": [
     "InventoryEffectRendererMixin",
     "GuiIngameMixin",
-    "EntitySetDeadMixin"
+    "EntitySetDeadMixin",
+    "PotionEffectMixin"
   ],
   "client": [
-    "PotionEffectMixin",
     "BossBarMixin"
   ],
   "injectors": {

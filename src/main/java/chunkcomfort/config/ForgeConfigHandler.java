@@ -416,9 +416,6 @@ public class ForgeConfigHandler {
         try { LivingComfortRegistry.reload(server.livingComfortEntries); }
         catch (Exception e) { ChunkComfort.LOGGER.error("Failed to reload Living Comfort Entries", e); }
 
-        try { Set<String> groups = getDefinedGroups(); ChunkComfortGroupTooltipRegistry.reload(groups); }
-        catch (Exception e) {ChunkComfort.LOGGER.error("Failed to reload Group Tooltip Registry", e);}
-
         try { PettingComfortRegistry.loadFromConfig(server.pettingComfortEntries); }
         catch (Exception e) { ChunkComfort.LOGGER.error("Failed to reload Petting Comfort Entries", e); }
 
@@ -429,12 +426,20 @@ public class ForgeConfigHandler {
         catch (Exception e) { ChunkComfort.LOGGER.error("Failed to reload Named Pet Comfort Entries", e); }
 
         PlayerComfortManager.reloadConfig();
-        ChunkComfortClientTooltipHandler.refreshFireBlocks();
-        ChunkComfortClientTooltipHandler.refreshFireSourceItems();
-        ChunkComfortClientTooltipHandler.refreshConfiguredBlocks();
-        ChunkComfortClientTooltipHandler.refreshGroupLimits();
-        ChunkComfortClientTooltipHandler.refreshNonBlockEntities();
-        ChunkComfortClientTooltipHandler.refreshGroupTooltips();
+
+        // REASON: these caches feed only the client-side ItemTooltipEvent handler, and
+        // refreshGroupTooltips() touches net.minecraft.client.resources.I18n which does not
+        // exist on a dedicated server. Gate them on the physical side so the server never
+        // links a client-only class during config reload.
+        if (net.minecraftforge.fml.common.FMLCommonHandler.instance().getSide().isClient()) {
+            ChunkComfortClientTooltipHandler.refreshFireBlocks();
+            ChunkComfortClientTooltipHandler.refreshFireSourceItems();
+            ChunkComfortClientTooltipHandler.refreshConfiguredBlocks();
+            ChunkComfortClientTooltipHandler.refreshGroupLimits();
+            ChunkComfortClientTooltipHandler.refreshNonBlockEntities();
+            ChunkComfortClientTooltipHandler.refreshGroupTooltips();
+        }
+
         AreaComfortCalculator.invalidateMaxComfortCache();
         GroupLimitRegistry.reload();
 

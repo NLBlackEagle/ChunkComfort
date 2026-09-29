@@ -22,8 +22,10 @@ public class PettingComfortRegistry {
                 PettingComfortData entry = new PettingComfortData(line);
                 registry.put(entry.entityId, entry);
             } catch (Exception e) {
+                // server-safe: net.minecraft.client.resources.I18n has no class on a
+                // dedicated server. Match the sibling registries' translation call.
                 ChunkComfort.LOGGER.warn(
-                        net.minecraft.client.resources.I18n.format(
+                        net.minecraft.util.text.translation.I18n.translateToLocalFormatted(
                                 "chunkcomfort.config.invalid_petting_entry",
                                 line
                         )

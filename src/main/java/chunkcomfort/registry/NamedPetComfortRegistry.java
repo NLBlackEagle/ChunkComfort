@@ -41,8 +41,10 @@ public class NamedPetComfortRegistry {
                 }
 
             } catch (Exception e) {
+                // server-safe: net.minecraft.client.resources.I18n has no class on a
+                // dedicated server. Match the sibling registries' translation call.
                 ChunkComfort.LOGGER.warn(
-                        I18n.format(
+                        net.minecraft.util.text.translation.I18n.translateToLocalFormatted(
                                 "chunkcomfort.config.invalid_named_pet_entry",
                                 line
                         )
