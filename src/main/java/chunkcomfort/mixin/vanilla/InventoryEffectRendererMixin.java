@@ -5,6 +5,7 @@ import chunkcomfort.chunk.AreaComfortCalculator;
 import chunkcomfort.player.PlayerComfortManager;
 import chunkcomfort.registry.PotionBlacklistRegistry;
 import chunkcomfort.registry.PotionRegistry;
+import com.google.common.collect.Ordering;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.gui.inventory.GuiContainerCreative;
@@ -21,6 +22,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.*;
@@ -41,6 +43,30 @@ public abstract class InventoryEffectRendererMixin {
                 .collect(Collectors.toList());
     }
 
+    // REASON: vanilla sorts effects by duration (shortest first), so the Comfort icon
+    // moved around the list while the hover tooltip below assumed it was the top row.
+    // Force Comfort to be drawn first and keep vanilla order for everything else.
+    @Redirect(
+            method = "drawActivePotionEffects",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lcom/google/common/collect/Ordering;sortedCopy(Ljava/lang/Iterable;)Ljava/util/List;",
+                    remap = false
+            )
+    )
+    private List<PotionEffect> sortComfortFirst(Ordering<PotionEffect> ordering, Iterable<PotionEffect> effects) {
+        List<PotionEffect> sorted = ordering.sortedCopy(effects);
+
+        for (int i = 0; i < sorted.size(); i++) {
+            if (sorted.get(i).getPotion() == PotionRegistry.COMFORT) {
+                sorted.add(0, sorted.remove(i));
+                break;
+            }
+        }
+
+        return sorted;
+    }
+
     @Inject(
             method = "drawActivePotionEffects",
             at = @At("RETURN")
@@ -51,33 +77,10 @@ public abstract class InventoryEffectRendererMixin {
         if (mc.player == null) return;
 
 
-        // --- Build visible effects EXACTLY like vanilla ---
-        List<PotionEffect> visibleEffects =
-                mc.player.getActivePotionEffects().stream()
-                        .filter(e -> !(e instanceof ICanBeHidden &&
-                                ((ICanBeHidden) e).chunkcomfort$isHidden()))
-                        .sorted((a, b) ->
-                                a.getPotion().getName()
-                                        .compareToIgnoreCase(b.getPotion().getName()))
-                        .collect(Collectors.toCollection(ArrayList::new));
-
-        // --- Move Comfort effect to top SAFELY ---
-        PotionEffect comfortEffect = null;
-
-        Iterator<PotionEffect> iterator = visibleEffects.iterator();
-        while (iterator.hasNext()) {
-            PotionEffect e = iterator.next();
-
-            if (e.getPotion() == PotionRegistry.COMFORT) {
-                comfortEffect = e;
-                iterator.remove();
-                break;
-            }
-        }
-
+        // Comfort is always drawn as the top row (see sortComfortFirst)
+        PotionEffect comfortEffect = mc.player.getActivePotionEffect(PotionRegistry.COMFORT);
         if (comfortEffect == null) return;
-
-        visibleEffects.add(0, comfortEffect);
+        if (comfortEffect instanceof ICanBeHidden && ((ICanBeHidden) comfortEffect).chunkcomfort$isHidden()) return;
 
         // --- Positive effects ---
         List<String> effects =
@@ -120,36 +123,26 @@ public abstract class InventoryEffectRendererMixin {
         int mouseY = sr.getScaledHeight()
                 - (rawMouseY * sr.getScaledHeight() / mc.displayHeight) - 1;
 
-        // Comfort forced to top
-        int comfortIndex = 0;
-
         // --- GUI positioning ---
         int guiLeft, guiTop;
-        int potionX;
 
         if (mc.currentScreen instanceof GuiInventory) {
             GuiInventory inv = (GuiInventory) mc.currentScreen;
             guiLeft = inv.getGuiLeft();
             guiTop = inv.getGuiTop();
-            potionX = guiLeft - 124;
 
         } else if (mc.currentScreen instanceof GuiContainerCreative) {
             GuiContainerCreative creative = (GuiContainerCreative) mc.currentScreen;
             guiLeft = creative.getGuiLeft();
             guiTop = creative.getGuiTop();
 
-            potionX = guiLeft - 124;
-
-            if (!visibleEffects.isEmpty()
-                    && visibleEffects.get(0).getPotion() != PotionRegistry.COMFORT) {
-                potionX += 28;
-            }
-
         } else {
             return;
         }
 
-        int potionY = guiTop + 8 + comfortIndex * 33;
+        // Comfort is the top row, so no row offset is needed
+        int potionX = guiLeft - 124;
+        int potionY = guiTop + 8;
 
         // --- Hover area ---
         int hoverX = potionX;
