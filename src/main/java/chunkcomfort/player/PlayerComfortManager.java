@@ -9,6 +9,7 @@ import chunkcomfort.registry.PotionRegistry;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.potion.Potion;
 import net.minecraft.potion.PotionEffect;
 import net.minecraft.util.ResourceLocation;
@@ -141,20 +142,39 @@ public class PlayerComfortManager {
         int duration = 600;
 
         if (current == null || current.getAmplifier() != tierIndex || current.getDuration() < 220) {
-            boolean tierUp = current == null
-                    ? tierIndex > 0
-                    : tierIndex > current.getAmplifier();
+            // Gaining comfort at all counts too, so tier 0 gets its first-milestone toast
+            boolean tierUp = current == null || tierIndex > current.getAmplifier();
 
             player.removePotionEffect(PotionRegistry.COMFORT);
             player.addPotionEffect(new PotionEffect(PotionRegistry.COMFORT, duration, tierIndex, false, true));
 
-            if (tierUp && !player.world.isRemote) {
+            if (tierUp && !player.world.isRemote && shouldShowTierUpToast(player, tierIndex)) {
                 NetworkHandler.INSTANCE.sendTo(
                         new chunkcomfort.network.PacketTierUp(tierIndex),
                         (EntityPlayerMP) player
                 );
             }
         }
+    }
+
+    // REASON: the Comfort potion is removed when the player leaves their comfort zone,
+    // so walking back in counted as a tier up and showed the toast again every time.
+    // The toast is now a one-time milestone: the highest tier a player has seen a toast
+    // for is stored in their persisted NBT (survives death and relogging), and only
+    // passing that tier shows a new toast.
+    private static final String HIGHEST_TOAST_TIER_KEY = "chunkcomfort_highestToastTier";
+
+    private static boolean shouldShowTierUpToast(EntityPlayer player, int tierIndex) {
+        NBTTagCompound entityData = player.getEntityData();
+        NBTTagCompound persisted = entityData.getCompoundTag(EntityPlayer.PERSISTED_NBT_TAG);
+
+        int highestSeen = persisted.hasKey(HIGHEST_TOAST_TIER_KEY) ? persisted.getInteger(HIGHEST_TOAST_TIER_KEY) : -1;
+        if (tierIndex <= highestSeen) return false;
+
+        persisted.setInteger(HIGHEST_TOAST_TIER_KEY, tierIndex);
+        // getCompoundTag returns a detached tag when missing, so write it back
+        entityData.setTag(EntityPlayer.PERSISTED_NBT_TAG, persisted);
+        return true;
     }
 
     /** Returns the comfort threshold of the next tier above tierIndex, or -1 if already at max. */
