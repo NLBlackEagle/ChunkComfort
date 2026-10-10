@@ -32,5 +32,12 @@ public class NetworkHandler {
                 Side.CLIENT
         );
 
+        INSTANCE.registerMessage(
+                PacketComfortStatusHandler.class,
+                PacketComfortStatus.class,
+                3,
+                Side.CLIENT
+        );
+
     }
 }

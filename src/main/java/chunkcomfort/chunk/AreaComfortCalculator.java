@@ -2,6 +2,8 @@ package chunkcomfort.chunk;
 
 import chunkcomfort.ChunkComfort;
 import chunkcomfort.config.ForgeConfigHandler;
+import chunkcomfort.network.NetworkHandler;
+import chunkcomfort.network.PacketComfortStatus;
 import chunkcomfort.player.PlayerComfortManager;
 import chunkcomfort.registry.*;
 import net.minecraft.entity.Entity;
@@ -9,6 +11,7 @@ import net.minecraft.entity.EntityList;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.item.EntityArmorStand;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
@@ -54,9 +57,12 @@ public class AreaComfortCalculator {
     public static int calculateComfortActivation(World world, EntityPlayer player, boolean fireNearby) {
         BlockPos pos = player.getPosition();
         // REASON: pass pre-computed fireNearby so getRequirementsPresent does not run
-        // a second block scan for fire — hasFireNearby() was already called in calculatePlayerComfort.
+        // a second block scan for fire — the caller already ran hasFireNearby().
         ComfortRequirements reqs = ComfortRequirementCheck.getRequirementsPresent(world, pos, player, fireNearby);
+        return countMetRequirements(reqs);
+    }
 
+    private static int countMetRequirements(ComfortRequirements reqs) {
         int comfort = 0;
         if (reqs.shelterOk) comfort++;
         if (reqs.lightOk) comfort++;
@@ -109,11 +115,16 @@ public class AreaComfortCalculator {
         int centerChunkX = playerPos.getX() >> 4;
         int centerChunkZ = playerPos.getZ() >> 4;
 
-        // REASON: compute fireNearby once here and pass it to both calculateComfortActivation
-        // and the chunk rescan below, so the block scan runs exactly once per comfort check.
-        boolean fireNearby = hasFireNearby(world, playerPos, radius);
+        // REASON: no fire hint here, so the fire scan runs inside getRequirementsPresent
+        // and only once light, shelter and temperature have passed (early exit).
+        ComfortRequirements reqs = ComfortRequirementCheck.getRequirementsPresent(world, playerPos, player, null);
+        int comfortActive = countMetRequirements(reqs);
 
-        int comfortActive = calculateComfortActivation(world, player, fireNearby);
+        // Tell the client which requirements are missing so the item tooltip can show them
+        if (player instanceof EntityPlayerMP) {
+            NetworkHandler.INSTANCE.sendTo(new PacketComfortStatus(reqs.getMissingFlags()), (EntityPlayerMP) player);
+        }
+
         int requiredConditions = 0;
         if (ForgeConfigHandler.server.requireShelter) requiredConditions++;
         if (ForgeConfigHandler.server.minLightLevel > 0) requiredConditions++;
@@ -127,6 +138,12 @@ public class AreaComfortCalculator {
             PlayerComfortManager.setCachedComfort(player.getUniqueID(), 0);
             return 0;
         }
+
+        // All requirements passed, so when fire is required reqs.fireOk is the real scan
+        // result. Only scan here when fire isn't a requirement — at most one scan per check.
+        boolean fireNearby = ForgeConfigHandler.server.requireFire
+                ? reqs.fireOk
+                : hasFireNearby(world, playerPos, radius);
 
         PlayerChunkComfortCache cache = getCache(player);
         cache.clear();

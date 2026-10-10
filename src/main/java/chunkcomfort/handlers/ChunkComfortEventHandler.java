@@ -91,6 +91,7 @@ public class ChunkComfortEventHandler {
     public void onJoinWorld(net.minecraftforge.event.entity.EntityJoinWorldEvent event) {
         if (event.getWorld().isRemote && event.getEntity() instanceof EntityPlayer) {
             ChunkBossState.resetClient();
+            chunkcomfort.client.ClientComfortStatus.missingFlags = 0;
         }
     }
 

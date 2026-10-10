@@ -21,7 +21,14 @@ tooltip.chunkcomfort.fireblocks=§6A comfy fire, key to establishing a warm, lit
 # (flint & steel, fire charges, etc.)
 tooltip.chunkcomfort.firestarters=§6Used to create a comfy fire establishing a warm, lit and sheltered comfort zone.
 
-tooltip.chunkcomfort.inactive=§8[§6CC§8] §7Your surroundings don't feel very comfortable yet.
+tooltip.chunkcomfort.inactive=§8[§6CC§8] §7Perhaps some furniture would liven the place up?
+
+# Shown instead of the line above for the first missing comfort requirement
+tooltip.chunkcomfort.missing.shelter=§8[§6CC§8] §7It's too exposed for comfort.
+tooltip.chunkcomfort.missing.light=§8[§6CC§8] §7It's too dark for comfort.
+tooltip.chunkcomfort.missing.fire=§8[§6CC§8] §7A fire would give comfort.
+tooltip.chunkcomfort.missing.hot=§8[§6CC§8] §7It's too hot for comfort.
+tooltip.chunkcomfort.missing.cold=§8[§6CC§8] §7It's too cold for comfort.
 
 tooltip.chunkcomfort.blacklisted.environment=§8[§6CC§8] §7This place feels deeply unnatural, as if the land itself rejects comfort.
 

@@ -34,7 +34,10 @@ public class ComfortRequirementCheck {
         // when sky exposure actually changes.
         boolean shelterOk = !ForgeConfigHandler.server.requireShelter; // default true if not required
 
-        if (ForgeConfigHandler.server.requireShelter && ForgeConfigHandler.server.minLightLevel > 0 && lightOk) {
+        // REASON: early exit — the player needs every requirement anyway, so skip the
+        // shelter check once light has already failed. lightOk is always true when
+        // minLightLevel is disabled, so shelter is still checked in that case.
+        if (ForgeConfigHandler.server.requireShelter && lightOk) {
             PlayerChunkComfortCache cache = AreaComfortCalculator.getCache(player);
             net.minecraft.util.math.ChunkPos currentChunk = new net.minecraft.util.math.ChunkPos(pos);
 
@@ -61,52 +64,40 @@ public class ComfortRequirementCheck {
         boolean temperatureOk = true;
         double playerTemp = 0.0;
 
-        if (ForgeConfigHandler.server.enableTemperatureComfort && SimpleDifficultyIntegration.LOADED) {
-            // Only calculate temperature if prior required conditions are met
-            boolean priorConditions = true;
-            if (ForgeConfigHandler.server.requireShelter) priorConditions &= shelterOk;
-            if (ForgeConfigHandler.server.minLightLevel > 0) priorConditions &= lightOk;
-
-            if (priorConditions) {
-                playerTemp = SimpleDifficultyTemperatureBridge.getTemperatureLevel(player);
-                temperatureOk = playerTemp >= ForgeConfigHandler.server.minComfortTemperature
-                        && playerTemp <= ForgeConfigHandler.server.maxComfortTemperature;
-            }
+        // Only calculate temperature if prior required conditions are met
+        if (ForgeConfigHandler.server.enableTemperatureComfort && SimpleDifficultyIntegration.LOADED
+                && lightOk && shelterOk) {
+            playerTemp = SimpleDifficultyTemperatureBridge.getTemperatureLevel(player);
+            temperatureOk = playerTemp >= ForgeConfigHandler.server.minComfortTemperature
+                    && playerTemp <= ForgeConfigHandler.server.maxComfortTemperature;
         }
 
         // --- FIRE CHECK ---
         boolean fireOk = !ForgeConfigHandler.server.requireFire; // default true if fire not required
 
-        if (ForgeConfigHandler.server.requireFire) {
-            boolean priorConditionsMet = true;
+        // Only check fire if prior required conditions are met
+        if (ForgeConfigHandler.server.requireFire && lightOk && shelterOk && temperatureOk) {
+            // REASON: use the pre-computed fireNearby result when available to avoid
+            // running the block scan twice per comfort check.
+            if (fireNearbyHint != null) {
+                fireOk = fireNearbyHint;
+            } else {
+                int radius = getRadius();
+                int verticalRange = ForgeConfigHandler.server.fireScanVerticalRange;
+                int minY = Math.max(0, pos.getY() - verticalRange);
+                int maxY = Math.min(world.getHeight() - 1, pos.getY() + verticalRange);
 
-            if (ForgeConfigHandler.server.requireShelter) priorConditionsMet &= shelterOk;
-            if (ForgeConfigHandler.server.minLightLevel > 0) priorConditionsMet &= lightOk;
-            if (ForgeConfigHandler.server.enableTemperatureComfort) priorConditionsMet &= temperatureOk;
-
-            if (priorConditionsMet) {
-                // REASON: use the pre-computed fireNearby result when available to avoid
-                // running the block scan twice per comfort check.
-                if (fireNearbyHint != null) {
-                    fireOk = fireNearbyHint;
-                } else {
-                    int radius = getRadius();
-                    int verticalRange = ForgeConfigHandler.server.fireScanVerticalRange;
-                    int minY = Math.max(0, pos.getY() - verticalRange);
-                    int maxY = Math.min(world.getHeight() - 1, pos.getY() + verticalRange);
-
-                    try {
-                        fireOk = ChunkScanner.anyBlockMatches(
-                                world,
-                                pos,
-                                radius,
-                                minY,
-                                maxY,
-                                FireBlockRegistry::isFireBlock
-                        );
-                    } catch (ChunkScanner.StopScanException e) {
-                        fireOk = true; // early exit confirmed fire presence
-                    }
+                try {
+                    fireOk = ChunkScanner.anyBlockMatches(
+                            world,
+                            pos,
+                            radius,
+                            minY,
+                            maxY,
+                            FireBlockRegistry::isFireBlock
+                    );
+                } catch (ChunkScanner.StopScanException e) {
+                    fireOk = true; // early exit confirmed fire presence
                 }
             }
         }
@@ -127,7 +118,8 @@ public class ComfortRequirementCheck {
     }
 
     private static int getRadius() {
-        return ForgeConfigHandler.server.chunkRadius;
+        // Same clamped radius as the comfort calculation so both fire scans cover the same area
+        return AreaComfortCalculator.getRadius();
     }
 
     private static boolean scanShelter(World world, BlockPos pos) {

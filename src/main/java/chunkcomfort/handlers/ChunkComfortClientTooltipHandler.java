@@ -1,6 +1,7 @@
 package chunkcomfort.handlers;
 
 import chunkcomfort.chunk.AreaComfortCalculator;
+import chunkcomfort.client.ClientComfortStatus;
 import chunkcomfort.chunk.PettingComfortData;
 import chunkcomfort.chunk.PlayerChunkComfortCache;
 import chunkcomfort.config.ForgeConfigHandler;
@@ -246,6 +247,30 @@ public class ChunkComfortClientTooltipHandler {
     }
 
     /**
+     * Adds a single [CC] line for the most important comfort requirement the player is
+     * missing, as reported by the server in PacketComfortStatus. The server only sends
+     * the first failed requirement (light → shelter → hot/cold → fire); with none
+     * missing, the generic "needs furniture" (inactive) line is shown.
+     * Only one line is shown so the player fixes problems one step at a time.
+     */
+    private void addInactiveLines(List<String> tooltip) {
+        int missing = ClientComfortStatus.missingFlags;
+
+        String key;
+        if ((missing & ComfortRequirements.MISSING_LIGHT) != 0) key = "tooltip.chunkcomfort.missing.light";
+        else if ((missing & ComfortRequirements.MISSING_SHELTER) != 0) key = "tooltip.chunkcomfort.missing.shelter";
+        else if ((missing & ComfortRequirements.TOO_HOT) != 0) key = "tooltip.chunkcomfort.missing.hot";
+        else if ((missing & ComfortRequirements.TOO_COLD) != 0) key = "tooltip.chunkcomfort.missing.cold";
+        else if ((missing & ComfortRequirements.MISSING_FIRE) != 0) key = "tooltip.chunkcomfort.missing.fire";
+        else key = "tooltip.chunkcomfort.inactive";
+
+        // Same duplicate guard as addHeader: spawn egg and block paths can both run for one item
+        String line = I18n.format(key);
+        if (tooltip.contains(line)) return;
+        tooltip.add(line);
+    }
+
+    /**
      * Adds the CTRL-gated information block when CTRL is held:
      *   1. infoLines   — the actual data (points, counts, group totals)
      *   2. Fire info   — if this item is a fire source or fire block
@@ -356,7 +381,7 @@ public class ChunkComfortClientTooltipHandler {
                 return;
             }
             if (!comfortActive && player != null) {
-                addHeader(tooltip, "tooltip.chunkcomfort.inactive");
+                addInactiveLines(tooltip);
                 return;
             }
 
@@ -468,7 +493,7 @@ public class ChunkComfortClientTooltipHandler {
             return;
         }
         if (!comfortActive && player != null) {
-            addHeader(tooltip, "tooltip.chunkcomfort.inactive");
+            addInactiveLines(tooltip);
             return;
         }
 

@@ -35,19 +35,16 @@ public class ComfortBlockParticleSpawner {
             // nearby, nobody would receive the particle packet anyway, so just spawn.
             if (player == null) {
                 EntityPlayer nearest = findNearestPlayer(world, pos, PARTICLE_RADIUS);
-                if (nearest != null && !AreaComfortCalculator.isComfortActive(nearest)) return;
+                if (nearest != null && !requirementsMet(world, nearest)) return;
                 spawnComfortParticlesServer(world, pos);
                 return;
             }
 
-            // REASON: only celebrate the placement with particles if the player actually
-            // has the Comfort potion buff active. Checking just the environmental
-            // prerequisites (shelter/light/fire/temperature) let particles fire before
-            // the buff itself was applied — e.g. right as a player places their first
-            // comfort block, before decor points accrue and the periodic tick grants
-            // the potion — so the particles fired even though the player wasn't shown
-            // as comfort-active.
-            if (!AreaComfortCalculator.isComfortActive(player)) return;
+            // REASON: celebrate the placement with particles as soon as the comfort
+            // requirements (shelter/light/fire/temperature, no blacklist or boss) are met,
+            // even before enough points have accrued for the Comfort potion itself.
+            // This shows players they're building in a valid comfort zone.
+            if (!requirementsMet(world, player)) return;
 
             String groupName = BlockComfortRegistry.getGroup(block);
             PlayerChunkComfortCache cache = AreaComfortCalculator.getCache(player);
@@ -96,6 +93,12 @@ public class ComfortBlockParticleSpawner {
         if (shouldSpawn) {
             spawnComfortParticlesServer(world, pos);
         }
+    }
+
+    private static boolean requirementsMet(World world, EntityPlayer player) {
+        if (AreaComfortCalculator.isEnvironmentBlocked(world, player.getPosition())) return false;
+        if (AreaComfortCalculator.isBossBlocked()) return false;
+        return ComfortRequirementCheck.isComfortActive(player);
     }
 
     /**
