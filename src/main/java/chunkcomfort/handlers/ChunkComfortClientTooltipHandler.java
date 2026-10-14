@@ -324,6 +324,15 @@ public class ChunkComfortClientTooltipHandler {
         PlayerChunkComfortCache cache = player != null ? AreaComfortCalculator.getCache(player) : null;
         if (player != null) { cache.ensureUpToDate(); }
 
+        // Statue candles give no comfort themselves, but still get a [CC] line explaining them
+        if (StatueRegistry.isCandle(stack)) {
+            tooltip.add(I18n.format("tooltip.chunkcomfort.candle.header"));
+            if (ctrlDown) {
+                tooltip.add(I18n.format("tooltip.chunkcomfort.candle.info"));
+                tooltip.add(I18n.format("tooltip.chunkcomfort.candle.info2"));
+            }
+        }
+
         boolean envBlacklisted = false;
         boolean bossBlacklisted = false;
 

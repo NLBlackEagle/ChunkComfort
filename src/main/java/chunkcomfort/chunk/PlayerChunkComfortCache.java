@@ -4,8 +4,11 @@ import net.minecraft.block.Block;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.math.BlockPos;
 
+
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 public class PlayerChunkComfortCache {
 
@@ -27,6 +30,9 @@ public class PlayerChunkComfortCache {
     // (matching the CONTEXT_MAP format in LivingComfortRegistry) so each variant
     // is counted independently and the tooltip shows the correct per-type count.
     public final Map<String, Integer> contextEntityCounts = new HashMap<>();
+
+    // Statue candles lit in the comfort zone, as StatueRegistry.slotKey values
+    public final Set<Integer> litStatueSlots = new HashSet<>();
 
     public int cacheVersion = 0; // default
     public void ensureUpToDate() {
@@ -57,6 +63,7 @@ public class PlayerChunkComfortCache {
         entityGroupTotals.clear();
         decorativeEntityCounts.clear();
         contextEntityCounts.clear();
+        litStatueSlots.clear();
         lastPos = null;
         lastShelterChunk = null;
         cachedShelterOk = false;

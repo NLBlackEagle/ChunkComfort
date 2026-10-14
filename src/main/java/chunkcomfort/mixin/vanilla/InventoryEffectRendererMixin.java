@@ -2,9 +2,12 @@ package chunkcomfort.mixin.vanilla;
 
 import chunkcomfort.api.ICanBeHidden;
 import chunkcomfort.chunk.AreaComfortCalculator;
+import chunkcomfort.client.ClientComfortStatus;
 import chunkcomfort.player.PlayerComfortManager;
 import chunkcomfort.registry.PotionBlacklistRegistry;
 import chunkcomfort.registry.PotionRegistry;
+import chunkcomfort.registry.StatueRegistry;
+import chunkcomfort.statue.StatueType;
 import com.google.common.collect.Ordering;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.ScaledResolution;
@@ -83,8 +86,9 @@ public abstract class InventoryEffectRendererMixin {
         if (comfortEffect instanceof ICanBeHidden && ((ICanBeHidden) comfortEffect).chunkcomfort$isHidden()) return;
 
         // --- Positive effects ---
-        List<String> effects =
-                PlayerComfortManager.getEffectsForTier(comfortEffect.getAmplifier());
+        Set<Integer> litStatueSlots = ClientComfortStatus.litStatueSlots;
+        List<PlayerComfortManager.EffectEntry> effects =
+                PlayerComfortManager.getStackedEffects(comfortEffect.getAmplifier(), litStatueSlots);
 
         if (effects.isEmpty()) return;
 
@@ -93,25 +97,30 @@ public abstract class InventoryEffectRendererMixin {
         int comfort = PlayerComfortManager.getCachedComfort(player);
         int maxComfort = AreaComfortCalculator.getMaxComfort();
 
-        // --- Build NEGATED effects ---
+        // --- Build NEGATED effect lines ---
+        // A potion is negated if any unlocked entry for it is lit; otherwise name the candle that would negate it
+        Set<Potion> negatedPotions = new LinkedHashSet<>();
+        Map<Potion, StatueRegistry.Requirement> waitingPotions = new LinkedHashMap<>();
+
+        for (PotionBlacklistRegistry.Entry entry : PotionBlacklistRegistry.getEntries()) {
+            if (comfort < entry.comfort) continue;
+
+            Potion potion = Potion.REGISTRY.getObject(new ResourceLocation(entry.potionId));
+            if (potion == null) continue;
+
+            if (StatueRegistry.isLit(entry.statue, litStatueSlots)) negatedPotions.add(potion);
+            else waitingPotions.putIfAbsent(potion, entry.statue);
+        }
+
         List<String> negated = new ArrayList<>();
-
-        for (Map.Entry<Integer, Set<String>> entry :
-                PotionBlacklistRegistry.getBlacklist().entrySet()) {
-
-            if (comfort < entry.getKey()) continue;
-
-            for (String potionId : entry.getValue()) {
-
-                Potion potion = Potion.REGISTRY.getObject(new ResourceLocation(potionId));
-                if (potion == null) continue;
-
-                String name = I18n.format(potion.getName());
-
-                if (!negated.contains(name)) {
-                    negated.add(name);
-                }
-            }
+        for (Potion potion : negatedPotions) {
+            negated.add(I18n.format("tooltip.chunkcomfort.positive.effects.minus") + " " + I18n.format(potion.getName()));
+        }
+        for (Map.Entry<Potion, StatueRegistry.Requirement> waiting : waitingPotions.entrySet()) {
+            if (negatedPotions.contains(waiting.getKey())) continue;
+            StatueRegistry.Requirement candle = waiting.getValue();
+            negated.add(I18n.format("tooltip.chunkcomfort.negative.effects.needs", I18n.format(waiting.getKey().getName()),
+                    candle.statue.getLocalizedName(), StatueType.roman(candle.slot + 1)));
         }
 
         // --- Mouse coordinates ---
@@ -168,17 +177,23 @@ public abstract class InventoryEffectRendererMixin {
 
             tooltip.add(I18n.format("tooltip.chunkcomfort.positive.effects"));
 
-            for (String effect : effects) {
+            for (PlayerComfortManager.EffectEntry entry : effects) {
+                String effect = PlayerComfortManager.getDisplayName(entry);
+
+                // Unlocked but waiting on a statue candle: name the statue and candle that light it
+                if (!StatueRegistry.isLit(entry.statue, litStatueSlots)) {
+                    tooltip.add(I18n.format("tooltip.chunkcomfort.positive.effects.needs", effect,
+                            entry.statue.statue.getLocalizedName(), StatueType.roman(entry.statue.slot + 1)));
+                    continue;
+                }
+
                 tooltip.add(I18n.format("tooltip.chunkcomfort.positive.effects.plus") + " " + effect);
             }
 
             if (!negated.isEmpty()) {
                 tooltip.add("");
                 tooltip.add(I18n.format("tooltip.chunkcomfort.negative.effects"));
-
-                for (String effect : negated) {
-                    tooltip.add(I18n.format("tooltip.chunkcomfort.positive.effects.minus") + " " + effect);
-                }
+                tooltip.addAll(negated);
             }
 
             GuiUtils.drawHoveringText(

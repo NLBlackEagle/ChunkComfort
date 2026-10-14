@@ -44,6 +44,7 @@ public class ChunkComfort {
         // Tooltip handler / overlay
         if (event.getSide().isClient()) {
             MinecraftForge.EVENT_BUS.register(new ChunkComfortClientTooltipHandler());
+            chunkcomfort.client.StatueClient.init();
         }
 
         LOGGER.info("ChunkComfort preInit complete.");

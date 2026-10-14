@@ -6,17 +6,20 @@ import chunkcomfort.network.NetworkHandler;
 import chunkcomfort.network.PacketComfortStatus;
 import chunkcomfort.player.PlayerComfortManager;
 import chunkcomfort.registry.*;
+import chunkcomfort.statue.TileEntityStatue;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.item.EntityArmorStand;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
+import net.minecraft.world.chunk.Chunk;
 
 import java.util.*;
 
@@ -160,6 +163,18 @@ public class AreaComfortCalculator {
 
                 data.blockCounts.forEach(cache::addBlockCount);
                 data.groupTotals.forEach(cache::addGroupTotal);
+
+                // REASON: candles are placed by right-clicking, not by placing blocks, so the
+                // block-count cache never sees them. Reading the chunk's tile entities directly
+                // is cheap (no block scan) and always current. Only already-loaded chunks.
+                Chunk chunk = world.getChunkProvider().getLoadedChunk(chunkPos.x, chunkPos.z);
+                if (chunk != null) {
+                    for (TileEntity te : chunk.getTileEntityMap().values()) {
+                        if (te instanceof TileEntityStatue) {
+                            ((TileEntityStatue) te).collectLitSlots(cache.litStatueSlots);
+                        }
+                    }
+                }
             }
         }
 

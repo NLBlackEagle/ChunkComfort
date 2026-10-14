@@ -43,6 +43,11 @@ tooltip.chunkcomfort.positive.effects.plus=§a+
 tooltip.chunkcomfort.negative.effects=§4Negated Effects:
 tooltip.chunkcomfort.positive.effects.minus=§c-
 
+# Unlocked comfort effect / negation that is waiting on a lit statue candle in the comfort zone
+# %1$s = effect name, %2$s = statue name(s) with a candle slot for it
+tooltip.chunkcomfort.positive.effects.needs=§8+ %1$s §7(light candle %3$s on a %2$s)
+tooltip.chunkcomfort.negative.effects.needs=§8- %1$s §7(light candle %3$s on a %2$s)
+
 tooltip.chunkcomfort.spacer=
 
 # ============================================================
@@ -280,3 +285,61 @@ toast.chunkcomfort.tierup.tier9=Wait, is that art!?
 toast.chunkcomfort.tierup.tier10=Lightning-Free.. Right?
 toast.chunkcomfort.tierup.tier11=I, Eagle am proud of you!
 toast.chunkcomfort.tierup.tier12=Nothing left to wish for.
+
+# ============================================================
+# Statues & Candles
+# ============================================================
+
+itemGroup.chunkcomfort=ChunkComfort
+item.chunkcomfort.candle.name=Candle
+# Tooltip on every Statue Candle Item (no comfort of its own), the info line only while CTRL is held
+tooltip.chunkcomfort.candle.header=§8[§6CC§8] §7Statue Candle - Hold CTRL for info
+tooltip.chunkcomfort.candle.info=§6Sneak-right-click the base of a Comfort Statue to place a candle.
+tooltip.chunkcomfort.candle.info2=§7If that candle spot is assigned to a Comfort effect and you have unlocked its comfort level, you gain that positive effect, or are protected from that negative effect, while in the comfort zone.
+
+tile.chunkcomfort.artisan_statue.name=Artisan Statue
+tile.chunkcomfort.fortune_statue.name=Fortune Statue
+tile.chunkcomfort.wind_statue.name=Wind Statue
+tile.chunkcomfort.guardian_statue.name=Guardian Statue
+tile.chunkcomfort.elements_statue.name=Elements Statue
+tile.chunkcomfort.arcane_statue.name=Arcane Statue
+tile.chunkcomfort.warrior_statue.name=Warrior Statue
+tile.chunkcomfort.healer_statue.name=Healer Statue
+
+# Plaque dedication shown at the top of the statue tooltip (leave a statue out to show none)
+tooltip.chunkcomfort.statue.plaque=§6§o%1$s
+tile.chunkcomfort.artisan_statue.plaque=In Honor of Star Artsy the Artisan
+tile.chunkcomfort.fortune_statue.plaque=In Memory of Skully the Cat
+tile.chunkcomfort.wind_statue.plaque=Statue of Eagle
+tile.chunkcomfort.guardian_statue.plaque=Nischi
+tile.chunkcomfort.elements_statue.plaque=FonnyMunkey & Kotlin
+tile.chunkcomfort.arcane_statue.plaque=CDSTK, Nanonaitor & Cath
+tile.chunkcomfort.healer_statue.plaque=NLBlackHeavenNL
+
+# Statue item tooltip, one line per candle slot
+# %1$s = slot number, %2$s = what the candle does
+# Shown instead of the candle lines below while sneak isn't held
+tooltip.chunkcomfort.statue.hold_sneak=§8§o[Hold Sneak]
+tooltip.chunkcomfort.statue.slot=§7Candle %1$s: %2$s
+tooltip.chunkcomfort.statue.activates=§a%1$s
+tooltip.chunkcomfort.statue.negates=§cblocks %1$s
+# Not unlocked yet by the player's comfort: %1$s = effect name (shown obfuscated), %2$s = level (" II", empty for blocks), %3$s = unlock.tier or unlock.points
+tooltip.chunkcomfort.statue.locked.activates=§a§k%1$s§r§a%2$s §7- Unlocked at %3$s
+tooltip.chunkcomfort.statue.locked.negates=§c§k%1$s§r§c%2$s §7- Unlocked at %3$s
+# %1$s = the first Comfort tier that reaches the unlock comfort (I = first comfortEffects entry)
+tooltip.chunkcomfort.statue.unlock.tier=Comfort %1$s
+# Fallback when the unlock comfort is above every comfortEffects tier
+tooltip.chunkcomfort.statue.unlock.points=%1$s CC points
+# Effect spot whose potions all failed to load (wrong id, or the mod is not installed)
+tooltip.chunkcomfort.statue.notfound=§cerror, potion effect not found
+tooltip.chunkcomfort.statue.hint=§8Aim at a candle spot and sneak-right-click with a candle to place it, sneak-right-click a candle with an empty hand to take it out. Only the candles listed above burn.
+
+# Action bar while aiming at a candle spot with a candle (or at a candle with an empty hand), within 2 blocks
+# %1$s = slot number (roman), %2$s = what the candle does
+tooltip.chunkcomfort.statue.aim=§6Candle %1$s: §f%2$s
+# Shown for candle spots without an effect
+tooltip.chunkcomfort.statue.decorative=§7decorative
+# Shown instead of the hint above while not sneaking (holding a candle / empty hand)
+tooltip.chunkcomfort.statue.sneak=§e[Hold Sneak]
+
+tooltip.chunkcomfort.hidden.statues=§7Small flames flicker at the feet of old figures. Whatever they once stood for, they keep watch now, and with every candle you light, the house feels a little more looked after.

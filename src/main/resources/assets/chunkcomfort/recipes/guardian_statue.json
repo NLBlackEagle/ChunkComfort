@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "SSS",
+    "SXS",
+    "SSS"
+  ],
+  "key": {
+    "S": {
+      "item": "minecraft:stonebrick",
+      "data": 0
+    },
+    "X": {
+      "item": "minecraft:shield"
+    }
+  },
+  "result": {
+    "item": "chunkcomfort:guardian_statue"
+  }
+}

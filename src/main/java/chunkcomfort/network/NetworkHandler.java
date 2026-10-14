@@ -39,5 +39,19 @@ public class NetworkHandler {
                 Side.CLIENT
         );
 
+        INSTANCE.registerMessage(
+                PacketStatueStatusHandler.class,
+                PacketStatueStatus.class,
+                4,
+                Side.CLIENT
+        );
+
+        INSTANCE.registerMessage(
+                PacketStatueCandleHandler.class,
+                PacketStatueCandle.class,
+                5,
+                Side.SERVER
+        );
+
     }
 }

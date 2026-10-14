@@ -92,6 +92,8 @@ public class ChunkComfortEventHandler {
         if (event.getWorld().isRemote && event.getEntity() instanceof EntityPlayer) {
             ChunkBossState.resetClient();
             chunkcomfort.client.ClientComfortStatus.missingFlags = 0;
+            chunkcomfort.client.ClientComfortStatus.litStatueSlots.clear();
+            chunkcomfort.client.ClientComfortStatus.comfort = 0;
         }
     }
 
@@ -192,10 +194,14 @@ public class ChunkComfortEventHandler {
         int comfort = chunkcomfort.player.PlayerComfortManager.getCachedComfort(player);
 
 
-        ResourceLocation id = Potion.REGISTRY.getNameForObject(event.getPotionEffect().getPotion());
+        Potion potion = event.getPotionEffect().getPotion();
+        ResourceLocation id = Potion.REGISTRY.getNameForObject(potion);
         if (id == null) return;
 
-        if (PotionBlacklistRegistry.isBlocked(comfort, id.toString())) {
+        // A negation listed on a statue only protects while its candle is lit
+        Set<Integer> litStatueSlots = AreaComfortCalculator.getCache(player).litStatueSlots;
+
+        if (PotionBlacklistRegistry.isNegated(comfort, id.toString(), litStatueSlots)) {
             event.setResult(Event.Result.DENY);
         }
     }

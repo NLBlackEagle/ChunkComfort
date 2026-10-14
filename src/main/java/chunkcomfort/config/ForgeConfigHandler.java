@@ -171,6 +171,16 @@ public class ForgeConfigHandler {
                 "minecraft:dragon_egg,20,collectibles,1",
                 "minecraft:beacon,20,collectibles,1",
 
+                // Statues (each statue counts once; its candles give no comfort)
+                "chunkcomfort:artisan_statue,10,statues,1",
+                "chunkcomfort:fortune_statue,10,statues,1",
+                "chunkcomfort:wind_statue,10,statues,1",
+                "chunkcomfort:guardian_statue,10,statues,1",
+                "chunkcomfort:elements_statue,10,statues,1",
+                "chunkcomfort:arcane_statue,10,statues,1",
+                "chunkcomfort:warrior_statue,10,statues,1",
+                "chunkcomfort:healer_statue,10,statues,1",
+
                 // Lightsources (small contribution)
                 "minecraft:torch,1,lightsources,20",
                 "minecraft:redstone_torch,1,lightsources,20",
@@ -270,28 +280,42 @@ public class ForgeConfigHandler {
                 "lightsources,20",
                 "pets,15",
                 "collectibles,50",
+                "statues,80",
                 "villagers,10",
                 "farm,10"
         };
 
         @Config.Comment({
-                "Comfort tier effects",
-                "Format: <comfort>,[[<potion>,<amplifier>],[<potion>,<amplifier>]]",
-                "Example: 10,[[minecraft:speed,0],[minecraft:regeneration,0]]"
+                "Comfort tier effects. Optionally add a statue and candle spot (1-19): the effect then only runs while that",
+                "candle has a candle in it, on a statue of that type in the comfort zone. Spots used here (and in the",
+                "Comfort Potion Blacklist) are the statue's effect spots; only those burn with a flame. The other spots are decorative.",
+                "Format: <comfort>,[[<potion>,<amplifier>],[<potion>,<amplifier>,<statue>,<candle_spot>]]",
+                "Example: 10,[[minecraft:speed,0],[minecraft:regeneration,0,chunkcomfort:healer_statue,7]]"
         })
         public String[] comfortEffects = new String[]{
-                "25,[[minecraft:haste,0]]",
-                "50,[[minecraft:speed,0]]",
-                "75,[[minecraft:jump_boost,0]]",
-                "100,[[minecraft:resistance,0]]",
-                "125,[[minecraft:fire_resistance,0]]",
-                "150,[[minecraft:absorption,0]]",
-                "175,[[minecraft:strength,0]]",
-                "225,[[minecraft:regeneration,0]]",
-                "250,[[minecraft:water_breathing,0]]",
-                "275,[[minecraft:luck,0]]",
-                "350,[[minecraft:health_boost,0]]",
-                "455,[[minecraft:regeneration,1],[minecraft:luck,1]]"
+                "25,[[minecraft:haste,0,chunkcomfort:artisan_statue,1]]",
+                "50,[[minecraft:speed,0,chunkcomfort:wind_statue,2]]",
+                "75,[[minecraft:jump_boost,0,chunkcomfort:wind_statue,3]]",
+                "100,[[minecraft:resistance,0,chunkcomfort:guardian_statue,4]]",
+                "125,[[minecraft:fire_resistance,0,chunkcomfort:elements_statue,5]]",
+                "150,[[minecraft:absorption,0,chunkcomfort:guardian_statue,6]]",
+                "175,[[minecraft:strength,0,chunkcomfort:warrior_statue,7]]",
+                "225,[[minecraft:regeneration,0,chunkcomfort:healer_statue,8]]",
+                "250,[[minecraft:water_breathing,0,chunkcomfort:elements_statue,9]]",
+                "275,[[minecraft:luck,0,chunkcomfort:fortune_statue,10]]",
+                "350,[[minecraft:health_boost,0,chunkcomfort:guardian_statue,11]]",
+                "455,[[minecraft:regeneration,1,chunkcomfort:healer_statue,12],[minecraft:luck,1,chunkcomfort:fortune_statue,12]]"
+        };
+
+        @Config.Comment({
+                "Items that can be placed in a statue candle slot",
+                "Format: <item_id>"
+        })
+        @Config.Name("Statue Candle Items")
+        public String[] statueCandleItems = new String[]{
+                "chunkcomfort:candle",
+                "rustic:candle",
+                "rustic:candle_gold"
         };
 
         @Config.Comment({
@@ -316,22 +340,22 @@ public class ForgeConfigHandler {
         };
 
         @Config.Comment({
-                "Potion blacklist per comfort tier",
-                "Format: <min_comfort>,[<potion_id>,<another_potion_id>]",
-                "Example: 60,[minecraft:poison]",
-                "Example: 100,[minecraft:wither,minecraft:mining_fatigue]"
+                "Potion blacklist per comfort tier. Optionally add a statue and candle spot (1-19): the potion is then only",
+                "negated while that candle has a candle in it, on a statue of that type in the comfort zone.",
+                "Use a comfort value from Comfort Effects, so statues can show the Comfort tier it unlocks at.",
+                "Format: <min_comfort>,[[<potion>],[<potion>,<statue>,<candle_spot>]]",
+                "Example: 50,[[minecraft:poison]]",
+                "Example: 100,[[minecraft:wither],[minecraft:mining_fatigue,chunkcomfort:artisan_statue,1]]"
         })
         @Config.Name("Comfort Potion Blacklist")
         public String[] comfortPotionBlacklist = new String[]{
-                "100,[minecraft:slowness]",
-                "150,[minecraft:unluck]",
-                "200,[minecraft:nausea]",
-                "250,[minecraft:blindness]",
-                "300,[minecraft:poison]",
-                "350,[minecraft:instant_damage]",
-                "400,[minecraft:mining_fatigue]",
-                "450,[minecraft:weakness]",
-                "455,[minecraft:wither]"
+                "100,[[minecraft:slowness,chunkcomfort:wind_statue,4]]",
+                "150,[[minecraft:unluck,chunkcomfort:fortune_statue,6]]",
+                "225,[[minecraft:nausea,chunkcomfort:healer_statue,8]]",
+                "250,[[minecraft:blindness,chunkcomfort:arcane_statue,9]]",
+                "275,[[minecraft:poison,chunkcomfort:healer_statue,10]]",
+                "350,[[minecraft:instant_damage,chunkcomfort:guardian_statue,11],[minecraft:mining_fatigue,chunkcomfort:artisan_statue,11]]",
+                "455,[[minecraft:weakness,chunkcomfort:warrior_statue,12],[minecraft:wither,chunkcomfort:healer_statue,12]]"
         };
 
 
@@ -372,8 +396,14 @@ public class ForgeConfigHandler {
         try { DimensionBiomeBlacklistRegistry.reload(server.dimensionBlacklist,server.biomeBlacklist); }
         catch (Exception e) { ChunkComfort.LOGGER.error("Failed to reload Dimension and Biome Blacklist", e); }
 
+        // Statue candle spots are filled in by the blacklist and comfortEffects (PlayerComfortManager) below
+        StatueRegistry.clearSlots();
+
         try { PotionBlacklistRegistry.reload(server.comfortPotionBlacklist); }
         catch (Exception e) { ChunkComfort.LOGGER.error("Failed to reload Potion Blacklist", e); }
+
+        try { StatueRegistry.reloadCandles(server.statueCandleItems); }
+        catch (Exception e) { ChunkComfort.LOGGER.error("Failed to reload Statue Candle Items", e); }
 
         try { FireBlockRegistry.reload(server.fireBlocks); }
         catch (Exception e) { ChunkComfort.LOGGER.error("Failed to reload Fire Blocks", e); }
@@ -426,6 +456,14 @@ public class ForgeConfigHandler {
         catch (Exception e) { ChunkComfort.LOGGER.error("Failed to reload Named Pet Comfort Entries", e); }
 
         PlayerComfortManager.reloadConfig();
+
+        // Statues show "Unlocked at Comfort <tier>", which is only exact on a tier threshold
+        for (PotionBlacklistRegistry.Entry entry : PotionBlacklistRegistry.getEntries()) {
+            if (!PlayerComfortManager.isTierThreshold(entry.comfort)) {
+                ChunkComfort.LOGGER.warn("Comfort Potion Blacklist comfort {} ({}) is not a Comfort Effects tier, statues will show the next tier above it",
+                        entry.comfort, entry.potionId);
+            }
+        }
 
         // REASON: these caches feed only the client-side ItemTooltipEvent handler, and
         // refreshGroupTooltips() touches net.minecraft.client.resources.I18n which does not

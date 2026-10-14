@@ -1,0 +1,74 @@
+{
+  "parent": "block/block",
+  "textures": {
+    "wax": "minecraft:blocks/wool_colored_white",
+    "wick": "minecraft:blocks/wool_colored_black",
+    "particle": "minecraft:blocks/wool_colored_white"
+  },
+  "elements": [
+    {
+      "from": [
+        7,
+        0,
+        7
+      ],
+      "to": [
+        9,
+        4,
+        9
+      ],
+      "faces": {
+        "north": {
+          "texture": "#wax"
+        },
+        "east": {
+          "texture": "#wax"
+        },
+        "south": {
+          "texture": "#wax"
+        },
+        "west": {
+          "texture": "#wax"
+        },
+        "up": {
+          "texture": "#wax"
+        },
+        "down": {
+          "texture": "#wax"
+        }
+      }
+    },
+    {
+      "from": [
+        7.75,
+        4,
+        7.75
+      ],
+      "to": [
+        8.25,
+        5,
+        8.25
+      ],
+      "faces": {
+        "north": {
+          "texture": "#wick"
+        },
+        "east": {
+          "texture": "#wick"
+        },
+        "south": {
+          "texture": "#wick"
+        },
+        "west": {
+          "texture": "#wick"
+        },
+        "up": {
+          "texture": "#wick"
+        },
+        "down": {
+          "texture": "#wick"
+        }
+      }
+    }
+  ]
+}

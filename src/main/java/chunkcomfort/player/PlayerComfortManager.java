@@ -4,8 +4,10 @@ import chunkcomfort.api.ICanBeHidden;
 import chunkcomfort.chunk.AreaComfortCalculator;
 import chunkcomfort.config.ForgeConfigHandler;
 import chunkcomfort.network.NetworkHandler;
+import chunkcomfort.network.PacketStatueStatus;
 import chunkcomfort.network.PacketSyncHiddenEffect;
 import chunkcomfort.registry.PotionRegistry;
+import chunkcomfort.registry.StatueRegistry;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -16,8 +18,9 @@ import net.minecraft.util.ResourceLocation;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import javax.annotation.Nullable;
+
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class PlayerComfortManager {
 
@@ -36,13 +39,16 @@ public class PlayerComfortManager {
         return COMFORT_CACHE.getOrDefault(player.getUniqueID(), 0);
     }
 
-    private static class EffectEntry {
-        final Potion potion;
-        final int amplifier;
+    /** One comfort tier effect, and the statue candle it needs (null = always on once unlocked). */
+    public static class EffectEntry {
+        public final Potion potion;
+        public final int amplifier;
+        @Nullable public final StatueRegistry.Requirement statue;
 
-        EffectEntry(Potion potion, int amplifier) {
+        EffectEntry(Potion potion, int amplifier, @Nullable StatueRegistry.Requirement statue) {
             this.potion = potion;
             this.amplifier = amplifier;
+            this.statue = statue;
         }
     }
 
@@ -72,11 +78,25 @@ public class PlayerComfortManager {
                     String clean = entry.replace("[", "").replace("]", "");
                     String[] parts = clean.split(",");
 
-                    String potionId = parts[0];
-                    int amplifier = Integer.parseInt(parts[1]);
+                    String potionId = parts[0].trim();
+                    int amplifier = Integer.parseInt(parts[1].trim());
+
+                    // Optional statue + candle spot: the effect only runs while that candle is lit
+                    StatueRegistry.Requirement statue = null;
+                    if (parts.length >= 4) {
+                        statue = StatueRegistry.parseRequirement(parts[2], parts[3], line);
+                    } else if (parts.length == 3) {
+                        LOGGER.warn("comfortEffects group needs both a statue and a candle spot: [{}] in {}", clean, line);
+                    }
 
                     Potion potion = Potion.REGISTRY.getObject(new ResourceLocation(potionId));
-                    if (potion != null) tier.effects.add(new EffectEntry(potion, amplifier));
+                    if (potion != null) {
+                        tier.effects.add(new EffectEntry(potion, amplifier, statue));
+                    } else if (statue != null) {
+                        LOGGER.warn("Unknown potion {} in comfortEffects entry: {}", potionId, line);
+                    }
+                    // Statue spots show the effect (or "not found") even when the potion is missing
+                    if (statue != null) StatueRegistry.addSlotEffect(statue, new StatueRegistry.SlotEffect(potion, comfort, amplifier));
                 }
 
                 TIERS.add(tier);
@@ -102,9 +122,23 @@ public class PlayerComfortManager {
             }
         }
 
+        Set<Integer> litStatueSlots = AreaComfortCalculator.getCache(player).litStatueSlots;
+
+        // Tell the client which statue candles are lit and the player's comfort, so the Comfort
+        // tooltip and statue hints can mark effects that are locked or still waiting on a candle
+        if (player instanceof EntityPlayerMP) {
+            NetworkHandler.INSTANCE.sendTo(new PacketStatueStatus(litStatueSlots, comfort), (EntityPlayerMP) player);
+        }
+
         if (activeTier == null) return;
 
-        for (EffectEntry entry : activeTier.effects) {
+        for (EffectEntry entry : getStackedEffects(tierIndex, litStatueSlots)) {
+
+            // REASON: effects listed on a statue only activate while their candle is lit.
+            // Skipped effects are not removed, they simply run out like when the player
+            // leaves the zone, so a matching potion the player drank is never cleared.
+            if (!StatueRegistry.isLit(entry.statue, litStatueSlots)) continue;
+
             PotionEffect effect = new PotionEffect(
                     entry.potion,
                     ForgeConfigHandler.server.comfortCheckInterval * 2,
@@ -177,6 +211,24 @@ public class PlayerComfortManager {
         return true;
     }
 
+    /**
+     * The first comfort tier (0 = Comfort I) whose threshold reaches this comfort, or -1 if no
+     * tier does. Used to show "Unlocked at Comfort III" instead of raw comfort points.
+     */
+    public static int getTierForComfort(int comfort) {
+        for (int i = 0; i < TIERS.size(); i++) {
+            if (TIERS.get(i).comfort >= comfort) return i;
+        }
+        return -1;
+    }
+
+    public static boolean isTierThreshold(int comfort) {
+        for (ComfortTier tier : TIERS) {
+            if (tier.comfort == comfort) return true;
+        }
+        return false;
+    }
+
     /** Returns the comfort threshold of the next tier above tierIndex, or -1 if already at max. */
     public static int getNextTierThreshold(int tierIndex) {
         int nextIndex = tierIndex + 1;
@@ -184,11 +236,33 @@ public class PlayerComfortManager {
         return TIERS.get(nextIndex).comfort;
     }
 
-    public static List<String> getEffectsForTier(int tierIndex) {
+    // REASON: only the highest reached tier's effects used to apply, so reaching a new
+    // tier replaced every earlier effect. Tiers now stack: every effect from tier 0 up to
+    // tierIndex is active. A potion listed in several tiers keeps its highest amplifier
+    // (e.g. Regeneration II replaces Regeneration I) and its first-unlocked position.
+    // Entries whose statue candle is lit win over unlit ones, so an unlit Regeneration II
+    // doesn't hide a lit (or ungated) Regeneration I.
+    public static List<EffectEntry> getStackedEffects(int tierIndex, Set<Integer> litStatueSlots) {
         if (tierIndex < 0 || tierIndex >= TIERS.size()) return Collections.emptyList();
 
-        return TIERS.get(tierIndex).effects.stream()
-                .map(entry -> I18n.format(entry.potion.getName()) + " " + (entry.amplifier + 1))
-                .collect(Collectors.toList());
+        Map<Potion, EffectEntry> stacked = new LinkedHashMap<>();
+        for (int i = 0; i <= tierIndex; i++) {
+            for (EffectEntry entry : TIERS.get(i).effects) {
+                EffectEntry existing = stacked.get(entry.potion);
+                boolean lit = StatueRegistry.isLit(entry.statue, litStatueSlots);
+                boolean existingLit = existing != null && StatueRegistry.isLit(existing.statue, litStatueSlots);
+
+                if (existing == null || (lit && !existingLit)
+                        || (lit == existingLit && entry.amplifier > existing.amplifier)) {
+                    stacked.put(entry.potion, entry);
+                }
+            }
+        }
+        return new ArrayList<>(stacked.values());
+    }
+
+    /** Display name of a comfort effect, e.g. "Haste 1". */
+    public static String getDisplayName(EffectEntry entry) {
+        return I18n.format(entry.potion.getName()) + " " + (entry.amplifier + 1);
     }
 }
