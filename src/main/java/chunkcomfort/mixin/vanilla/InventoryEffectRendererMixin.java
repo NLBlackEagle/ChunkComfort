@@ -3,6 +3,7 @@ package chunkcomfort.mixin.vanilla;
 import chunkcomfort.api.ICanBeHidden;
 import chunkcomfort.chunk.AreaComfortCalculator;
 import chunkcomfort.client.ClientComfortStatus;
+import chunkcomfort.config.ForgeConfigHandler;
 import chunkcomfort.player.PlayerComfortManager;
 import chunkcomfort.registry.PotionBlacklistRegistry;
 import chunkcomfort.registry.PotionRegistry;
@@ -41,8 +42,7 @@ public abstract class InventoryEffectRendererMixin {
     )
     private Collection<PotionEffect> filterHiddenPotions(Collection<PotionEffect> effects) {
         return effects.stream()
-                .filter(effect -> !(effect instanceof ICanBeHidden &&
-                        ((ICanBeHidden) effect).chunkcomfort$isHidden()))
+                .filter(effect -> !ICanBeHidden.isHiddenFromDisplay(effect))
                 .collect(Collectors.toList());
     }
 
@@ -173,27 +173,30 @@ public abstract class InventoryEffectRendererMixin {
                 tooltip.add(I18n.format("tooltip.chunkcomfort.level.maxed"));
             }
 
-            tooltip.add("");
+            // Inventory Hover Tooltip off: only the comfort level, no effect lists
+            if (ForgeConfigHandler.display.inventoryHoverTooltip) {
+                tooltip.add("");
 
-            tooltip.add(I18n.format("tooltip.chunkcomfort.positive.effects"));
+                tooltip.add(I18n.format("tooltip.chunkcomfort.positive.effects"));
 
-            for (PlayerComfortManager.EffectEntry entry : effects) {
-                String effect = PlayerComfortManager.getDisplayName(entry);
+                for (PlayerComfortManager.EffectEntry entry : effects) {
+                    String effect = PlayerComfortManager.getDisplayName(entry);
 
-                // Unlocked but waiting on a statue candle: name the statue and candle that light it
-                if (!StatueRegistry.isLit(entry.statue, litStatueSlots)) {
-                    tooltip.add(I18n.format("tooltip.chunkcomfort.positive.effects.needs", effect,
-                            entry.statue.statue.getLocalizedName(), StatueType.roman(entry.statue.slot + 1)));
-                    continue;
+                    // Unlocked but waiting on a statue candle: name the statue and candle that light it
+                    if (!StatueRegistry.isLit(entry.statue, litStatueSlots)) {
+                        tooltip.add(I18n.format("tooltip.chunkcomfort.positive.effects.needs", effect,
+                                entry.statue.statue.getLocalizedName(), StatueType.roman(entry.statue.slot + 1)));
+                        continue;
+                    }
+
+                    tooltip.add(I18n.format("tooltip.chunkcomfort.positive.effects.plus") + " " + effect);
                 }
 
-                tooltip.add(I18n.format("tooltip.chunkcomfort.positive.effects.plus") + " " + effect);
-            }
-
-            if (!negated.isEmpty()) {
-                tooltip.add("");
-                tooltip.add(I18n.format("tooltip.chunkcomfort.negative.effects"));
-                tooltip.addAll(negated);
+                if (!negated.isEmpty()) {
+                    tooltip.add("");
+                    tooltip.add(I18n.format("tooltip.chunkcomfort.negative.effects"));
+                    tooltip.addAll(negated);
+                }
             }
 
             GuiUtils.drawHoveringText(

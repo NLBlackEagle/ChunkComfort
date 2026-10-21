@@ -1,11 +1,15 @@
 package chunkcomfort.mixin.vanilla;
 
 import chunkcomfort.api.ICanBeHidden;
+import chunkcomfort.api.IRefreshableEffect;
 import chunkcomfort.config.ForgeConfigHandler;
 import chunkcomfort.potion.ComfortPotion;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.potion.PotionEffect;
+import net.minecraftforge.fml.common.FMLCommonHandler;
+import net.minecraftforge.fml.relauncher.Side;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -13,7 +17,14 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(PotionEffect.class)
-public class PotionEffectMixin implements ICanBeHidden {
+public class PotionEffectMixin implements ICanBeHidden, IRefreshableEffect {
+
+    @Shadow private int duration;
+
+    @Override
+    public void chunkcomfort$setDuration(int duration) {
+        this.duration = duration;
+    }
 
     @Unique
     private boolean chunkcomfort$isHidden = false;
@@ -47,6 +58,9 @@ public class PotionEffectMixin implements ICanBeHidden {
     @Inject(method = "combine(Lnet/minecraft/potion/PotionEffect;)V", at = @At("HEAD"), cancellable = true)
     private void chunkcomfort$preventWine(PotionEffect other, CallbackInfo ci) {
         if (!ForgeConfigHandler.server.stopRusticWine) return;
+        // REASON: the client must take the server's duration top-ups for comfort effects
+        // (SPacketEntityEffect combines into the client's copy), the wine check only matters on the server
+        if (FMLCommonHandler.instance().getEffectiveSide() == Side.CLIENT) return;
 
         PotionEffect self = (PotionEffect) (Object) this;
 

@@ -1,6 +1,7 @@
 package chunkcomfort.player;
 
 import chunkcomfort.api.ICanBeHidden;
+import chunkcomfort.api.IRefreshableEffect;
 import chunkcomfort.chunk.AreaComfortCalculator;
 import chunkcomfort.config.ForgeConfigHandler;
 import chunkcomfort.network.NetworkHandler;
@@ -12,6 +13,7 @@ import net.minecraft.client.resources.I18n;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.network.play.server.SPacketEntityEffect;
 import net.minecraft.potion.Potion;
 import net.minecraft.potion.PotionEffect;
 import net.minecraft.util.ResourceLocation;
@@ -130,30 +132,47 @@ public class PlayerComfortManager {
             NetworkHandler.INSTANCE.sendTo(new PacketStatueStatus(litStatueSlots, comfort), (EntityPlayerMP) player);
         }
 
-        if (activeTier == null) return;
+        // The comfort effects that should be running now (only lit ones)
+        Map<Potion, EffectEntry> wanted = new HashMap<>();
+        if (activeTier != null) {
+            for (EffectEntry entry : getStackedEffects(tierIndex, litStatueSlots)) {
+                // Effects listed on a statue only activate while their candle is lit
+                if (StatueRegistry.isLit(entry.statue, litStatueSlots)) wanted.put(entry.potion, entry);
+            }
+        }
 
-        for (EffectEntry entry : getStackedEffects(tierIndex, litStatueSlots)) {
+        // REASON: comfort effects used to be re-added with a short duration and left to run out,
+        // so their timer counted down into the red and they lingered after leaving the zone.
+        // Now they are topped up every check and removed as soon as they no longer apply.
+        // Only effects comfort added (marked hidden) are touched, never a potion the player drank.
+        removeComfortEffects(player, wanted.keySet());
 
-            // REASON: effects listed on a statue only activate while their candle is lit.
-            // Skipped effects are not removed, they simply run out like when the player
-            // leaves the zone, so a matching potion the player drank is never cleared.
-            if (!StatueRegistry.isLit(entry.statue, litStatueSlots)) continue;
+        for (EffectEntry entry : wanted.values()) {
+            PotionEffect active = player.getActivePotionEffect(entry.potion);
 
-            PotionEffect effect = new PotionEffect(
+            if (active != null && isComfortEffect(active) && active.getAmplifier() == entry.amplifier) {
+                refreshDuration(player, active);
+                continue;
+            }
+            // The player's own potion of this type is running, leave it alone until it ends
+            if (active != null && !isComfortEffect(active)) continue;
+            // Our effect at another level (tier changed): replace it
+            if (active != null) player.removePotionEffect(entry.potion);
+
+            player.addPotionEffect(new PotionEffect(
                     entry.potion,
-                    ForgeConfigHandler.server.comfortCheckInterval * 2,
+                    effectDuration(),
                     entry.amplifier,
                     true,
-                    false
-            );
+                    // Beacon Style: particles make the client show it like a beacon effect
+                    ForgeConfigHandler.display.beaconStyle
+            ));
 
-            player.addPotionEffect(effect);
+            PotionEffect added = player.getActivePotionEffect(entry.potion);
+            if (added != null) {
+                ((ICanBeHidden) added).chunkcomfort$setHidden(true);
 
-            PotionEffect active = player.getActivePotionEffect(entry.potion);
-            if (active != null) {
-                ((ICanBeHidden) active).chunkcomfort$setHidden(true);
-
-                if (!player.world.isRemote) {
+                if (player instanceof EntityPlayerMP) {
                     NetworkHandler.INSTANCE.sendTo(
                             new PacketSyncHiddenEffect(
                                     player.getEntityId(),
@@ -166,28 +185,65 @@ public class PlayerComfortManager {
             }
         }
 
+        if (activeTier == null) return;
+
         applyComfortPotion(player, tierIndex);
+    }
+
+    /** Duration given to comfort effects; topped up every check, so it never gets close to running out. */
+    private static int effectDuration() {
+        return Math.max(600, ForgeConfigHandler.server.comfortCheckInterval * 2);
+    }
+
+    /** An effect comfort added (comfort marks its effects hidden). */
+    private static boolean isComfortEffect(PotionEffect effect) {
+        return effect instanceof ICanBeHidden && ((ICanBeHidden) effect).chunkcomfort$isHidden();
+    }
+
+    /** Removes the comfort-added effects that are not in keep (all of them when keep is empty). */
+    private static void removeComfortEffects(EntityPlayer player, Set<Potion> keep) {
+        List<Potion> stale = new ArrayList<>();
+        for (PotionEffect effect : player.getActivePotionEffects()) {
+            if (effect.getPotion() == PotionRegistry.COMFORT) continue;
+            if (isComfortEffect(effect) && !keep.contains(effect.getPotion())) stale.add(effect.getPotion());
+        }
+        // Removing sends the removal to the client, so the icon disappears right away
+        for (Potion potion : stale) player.removePotionEffect(potion);
+    }
+
+    /**
+     * Resets an effect's duration in place and tells the client. Removing and re-adding it would
+     * also reset the effect, e.g. Health Boost and Absorption would take their hearts away each time.
+     */
+    private static void refreshDuration(EntityPlayer player, PotionEffect effect) {
+        ((IRefreshableEffect) effect).chunkcomfort$setDuration(effectDuration());
+        if (player instanceof EntityPlayerMP) {
+            ((EntityPlayerMP) player).connection.sendPacket(new SPacketEntityEffect(player.getEntityId(), effect));
+        }
     }
 
     private static void applyComfortPotion(EntityPlayer player, int tierIndex) {
         if (PotionRegistry.COMFORT == null) return;
 
         PotionEffect current = player.getActivePotionEffect(PotionRegistry.COMFORT);
-        int duration = 600;
 
-        if (current == null || current.getAmplifier() != tierIndex || current.getDuration() < 220) {
-            // Gaining comfort at all counts too, so tier 0 gets its first-milestone toast
-            boolean tierUp = current == null || tierIndex > current.getAmplifier();
+        // Same tier: just top it up, so its timer never runs low
+        if (current != null && current.getAmplifier() == tierIndex) {
+            refreshDuration(player, current);
+            return;
+        }
 
-            player.removePotionEffect(PotionRegistry.COMFORT);
-            player.addPotionEffect(new PotionEffect(PotionRegistry.COMFORT, duration, tierIndex, false, true));
+        // Gaining comfort at all counts too, so tier 0 gets its first-milestone toast
+        boolean tierUp = current == null || tierIndex > current.getAmplifier();
 
-            if (tierUp && !player.world.isRemote && shouldShowTierUpToast(player, tierIndex)) {
-                NetworkHandler.INSTANCE.sendTo(
-                        new chunkcomfort.network.PacketTierUp(tierIndex),
-                        (EntityPlayerMP) player
-                );
-            }
+        player.removePotionEffect(PotionRegistry.COMFORT);
+        player.addPotionEffect(new PotionEffect(PotionRegistry.COMFORT, effectDuration(), tierIndex, false, true));
+
+        if (tierUp && !player.world.isRemote && shouldShowTierUpToast(player, tierIndex)) {
+            NetworkHandler.INSTANCE.sendTo(
+                    new chunkcomfort.network.PacketTierUp(tierIndex),
+                    (EntityPlayerMP) player
+            );
         }
     }
 

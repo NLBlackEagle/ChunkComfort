@@ -22,6 +22,27 @@ public class ForgeConfigHandler {
     @Config.Name("Server Options")
     public static final ServerConfig server = new ServerConfig();
 
+    @Config.Name("Comfort Effect Display Style")
+    public static final DisplayConfig display = new DisplayConfig();
+
+    public static class DisplayConfig {
+
+        @Config.Comment({
+                "List the active, locked and blocked comfort effects in the tooltip when hovering the Comfort icon in the inventory",
+                "Client side: each player's own config decides"
+        })
+        @Config.Name("Inventory Hover Tooltip")
+        public boolean inventoryHoverTooltip = true;
+
+        @Config.Comment({
+                "Show active comfort effects like beacon effects: in the inventory effect list and on the HUD (blue beacon frame),",
+                "with faint beacon-style particles. Off = the effects are hidden and only listed in the hover tooltip",
+                "Server side: the server's config decides for all players"
+        })
+        @Config.Name("Beacon Style")
+        public boolean beaconStyle = true;
+    }
+
     public static class ServerConfig {
 
         //Global Settings

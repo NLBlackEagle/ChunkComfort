@@ -25,7 +25,7 @@ public abstract class GuiIngameMixin {
 
         // Check if all potions are hidden
         List<PotionEffect> visibleEffects = mc.player.getActivePotionEffects().stream()
-                .filter(effect -> !(effect instanceof ICanBeHidden && ((ICanBeHidden) effect).chunkcomfort$isHidden()))
+                .filter(effect -> !ICanBeHidden.isHiddenFromDisplay(effect))
                 .collect(Collectors.toList());
 
         if (visibleEffects.isEmpty()) {

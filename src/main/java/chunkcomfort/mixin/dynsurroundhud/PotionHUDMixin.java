@@ -2,6 +2,7 @@ package chunkcomfort.mixin.dynsurroundhud;
 
 import chunkcomfort.api.ICanBeHidden;
 import net.minecraft.client.Minecraft;
+import net.minecraft.potion.PotionEffect;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import org.orecruncher.dshuds.hud.PotionHUD;
 import org.spongepowered.asm.mixin.Mixin;
@@ -34,7 +35,7 @@ public abstract class PotionHUDMixin {
                         java.lang.reflect.Method getEffect = potionInfo.getClass().getDeclaredMethod("getPotionEffect");
                         getEffect.setAccessible(true);
                         Object effect = getEffect.invoke(potionInfo);
-                        return effect instanceof ICanBeHidden && ((ICanBeHidden) effect).chunkcomfort$isHidden();
+                        return effect instanceof PotionEffect && ICanBeHidden.isHiddenFromDisplay((PotionEffect) effect);
                     } catch (Exception e) {
                         return false;
                     }
