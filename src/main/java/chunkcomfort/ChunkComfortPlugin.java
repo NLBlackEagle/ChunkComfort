@@ -15,6 +15,7 @@ public class ChunkComfortPlugin implements IFMLLoadingPlugin {
         FermiumRegistryAPI.enqueueMixin(false, "mixins.chunkcomfort.vanilla.json");
         FermiumRegistryAPI.enqueueMixin(true, "mixins.chunkcomfort.comforts.particles.json", () -> Loader.isModLoaded("comforts"));
         FermiumRegistryAPI.enqueueMixin(true, "mixins.chunkcomfort.dynsurroundhud.hidehud.json", () -> Loader.isModLoaded("dshuds"));
+        FermiumRegistryAPI.enqueueMixin(true, "mixins.chunkcomfort.potioncore.sickness.json", () -> Loader.isModLoaded("potioncore"));
     }
 
     @Override

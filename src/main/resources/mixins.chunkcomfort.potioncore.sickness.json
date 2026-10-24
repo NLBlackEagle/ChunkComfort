@@ -1,0 +1,15 @@
+{
+  "required": true,
+  "package": "chunkcomfort.mixin.potioncore",
+  "refmap": "mixins.chunkcomfort.refmap.json",
+  "compatibilityLevel": "JAVA_8",
+  "target": "@env(DEFAULT)",
+  "minVersion": "0.8",
+  "mixins": [
+    "PotionCoreEventHandlerMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1,
+    "maxShiftBy": 10
+  }
+}
