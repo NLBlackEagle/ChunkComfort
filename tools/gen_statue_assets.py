@@ -21,28 +21,35 @@ CANDLE_HEIGHT = 4
 
 # Real candle positions per statue (from Blockbench, see import_statue.py), replaces the
 # placeholder layout. Height is the candle's wax height, leave it out for the default 4.
+# The dwarf (artisan) layout, every model copied from the dwarf file shares it
+DWARF_SLOTS = [(14, 2, 14, 3), (14, 2, 12, 2), (14, 2, 10, 1), (14, 2, 8, 2), (14, 2, 6, 1), (14, 2, 4, 3),
+               (14, 2, 2, 2), (12, 2, 2, 1), (10, 2, 2, 2), (8, 2, 2, 1), (6, 2, 2, 3), (4, 2, 2, 2),
+               (2, 2, 2, 1), (2, 2, 4, 2), (2, 2, 6, 1), (2, 2, 8, 3), (2, 2, 10, 2), (2, 2, 12, 1),
+               (2, 2, 14, 2)]
+
 LAYOUTS = {
     # "wind_statue": [(x, y, z, height), ...],
-    "artisan_statue": [(14, 2, 14, 3), (14, 2, 12, 2), (14, 2, 10, 1), (14, 2, 8, 2), (14, 2, 6, 1), (14, 2, 4, 3),
-                       (14, 2, 2, 2), (12, 2, 2, 1), (10, 2, 2, 2), (8, 2, 2, 1), (6, 2, 2, 3), (4, 2, 2, 2),
-                       (2, 2, 2, 1), (2, 2, 4, 2), (2, 2, 6, 1), (2, 2, 8, 3), (2, 2, 10, 2), (2, 2, 12, 1),
-                       (2, 2, 14, 2)],
-    "fortune_statue": [(14, 2, 14, 3), (14, 2, 12, 2), (14, 2, 10, 1), (14, 2, 8, 2), (14, 2, 6, 1), (14, 2, 4, 3),
-                       (14, 2, 2, 2), (12, 2, 2, 1), (10, 2, 2, 2), (8, 2, 2, 1), (6, 2, 2, 3), (4, 2, 2, 2),
-                       (2, 2, 2, 1), (2, 2, 4, 2), (2, 2, 6, 1), (2, 2, 8, 3), (2, 2, 10, 2), (2, 2, 12, 1),
-                       (2, 2, 14, 2)],
+    "artisan_statue": DWARF_SLOTS,
+    "fortune_statue": DWARF_SLOTS,
+    # Placeholders: a copy of the dwarf model and texture until they get their own
+    "wind_statue": DWARF_SLOTS,
+    "guardian_statue": DWARF_SLOTS,
+    "elements_statue": DWARF_SLOTS,
+    "arcane_statue": DWARF_SLOTS,
+    "warrior_statue": DWARF_SLOTS,
+    "healer_statue": DWARF_SLOTS,
 }
 
 STATUES = {
     # name: (slot count, placeholder texture colour, recipe center item, generate placeholder block model)
     "artisan_statue":  (4, (216, 216, 216), "minecraft:iron_pickaxe", False),
     "fortune_statue":  (2, (249, 212, 79),  "minecraft:rabbit_foot",  False),
-    "wind_statue":     (7, (235, 229, 222), "minecraft:feather",      True),
-    "guardian_statue": (6, (132, 134, 133), "minecraft:shield",       True),
-    "elements_statue": (4, (197, 92, 31),   "minecraft:blaze_powder", True),
-    "arcane_statue":   (5, (169, 125, 169), "minecraft:ender_eye",    True),
-    "warrior_statue":  (2, (83, 10, 13),    "minecraft:bow",          True),
-    "healer_statue":   (6, (72, 216, 112),  "minecraft:ghast_tear",   True),
+    "wind_statue":     (7, (235, 229, 222), "minecraft:feather",      False),
+    "guardian_statue": (6, (132, 134, 133), "minecraft:shield",       False),
+    "elements_statue": (4, (197, 92, 31),   "minecraft:blaze_powder", False),
+    "arcane_statue":   (5, (169, 125, 169), "minecraft:ender_eye",    False),
+    "warrior_statue":  (2, (83, 10, 13),    "minecraft:bow",          False),
+    "healer_statue":   (6, (72, 216, 112),  "minecraft:ghast_tear",   False),
 }
 
 FACING_Y = {"north": 0, "east": 90, "south": 180, "west": 270}
