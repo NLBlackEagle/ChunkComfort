@@ -247,6 +247,40 @@ public class BlockComfortRegistry {
         return getBlockEntry(block) != null;
     }
 
+    /**
+     * True if a Block Comfort Entries id was registered by this registry, resolved the same way
+     * reload() does: an optional :metadata suffix is stripped, and Block ID aliases are followed.
+     * Used to decide whether an entry deserves a "not registered" warning, so alias ids
+     * (e.g. minecraft:banner) and metadata ids (e.g. waystones:waystone:2) don't warn.
+     */
+    public static boolean isRegisteredEntryId(String rawId) {
+        String id = rawId;
+        int lastColon = rawId.lastIndexOf(':');
+        if (lastColon > 0) {
+            try {
+                Integer.parseInt(rawId.substring(lastColon + 1));
+                id = rawId.substring(0, lastColon);
+            } catch (NumberFormatException ignored) {
+                // not metadata
+            }
+        }
+
+        if (isRegisteredBlockId(id)) return true;
+
+        String[] aliases = BLOCK_ALIASES.get(id);
+        if (aliases != null) {
+            for (String aliasId : aliases) {
+                if (isRegisteredBlockId(aliasId)) return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean isRegisteredBlockId(String id) {
+        Block block = Block.getBlockFromName(id);
+        return block != null && isComfortBlock(block);
+    }
+
     public static String getGroup(Block block, IBlockState state) {
         ComfortEntry entry = getBlockEntry(block, state);
         return entry != null ? entry.group : null;
