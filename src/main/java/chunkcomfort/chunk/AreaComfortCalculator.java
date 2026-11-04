@@ -97,6 +97,24 @@ public class AreaComfortCalculator {
         return ForgeConfigHandler.server.enableBossBarDetection && ChunkBossState.isBossActive();
     }
 
+    /**
+     * Turns raw block counts summed over the whole comfort area into group points, applying
+     * each entry's block limit once for the area. Entries shared by aliases (e.g. standing and
+     * wall banners) are the same ComfortEntry object, so they share one limit.
+     */
+    public static void addAreaLimitedBlockPoints(Map<BlockComfortRegistry.BlockKey, Integer> areaKeyCounts,
+                                                 java.util.function.BiConsumer<String, Integer> groupSink) {
+        Map<BlockComfortRegistry.ComfortEntry, Integer> perEntry = new IdentityHashMap<>();
+        areaKeyCounts.forEach((key, count) -> {
+            BlockComfortRegistry.ComfortEntry entry = BlockComfortRegistry.BLOCK_ENTRIES.get(key);
+            if (entry != null) perEntry.merge(entry, count, Integer::sum);
+        });
+        perEntry.forEach((entry, count) -> {
+            int points = Math.min(count, entry.limit) * entry.value;
+            if (points > 0) groupSink.accept(entry.group, points);
+        });
+    }
+
     public static int calculatePlayerComfort(EntityPlayer player) {
         World world = player.world;
         BlockPos playerPos = player.getPosition();
@@ -150,6 +168,7 @@ public class AreaComfortCalculator {
 
         PlayerChunkComfortCache cache = getCache(player);
         cache.clear();
+        Map<BlockComfortRegistry.BlockKey, Integer> areaKeyCounts = new HashMap<>();
 
         for (int dx = -radius; dx <= radius; dx++) {
             for (int dz = -radius; dz <= radius; dz++) {
@@ -162,6 +181,8 @@ public class AreaComfortCalculator {
                 }
 
                 data.blockCounts.forEach(cache::addBlockCount);
+                data.keyCounts.forEach((key, count) -> areaKeyCounts.merge(key, count, Integer::sum));
+                // decorative entity points; block points are added area-wide below
                 data.groupTotals.forEach(cache::addGroupTotal);
 
                 // REASON: candles are placed by right-clicking, not by placing blocks, so the
@@ -177,6 +198,8 @@ public class AreaComfortCalculator {
                 }
             }
         }
+
+        addAreaLimitedBlockPoints(areaKeyCounts, cache::addGroupTotal);
 
         addEntityComfort(world, playerPos, radius, cache);
 

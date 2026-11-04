@@ -260,6 +260,7 @@ public class CommandChunkComfort extends CommandBase {
         Map<ChunkPos, Map<String,Integer>> chunkGroupPoints = new HashMap<>();
         int playerChunkX = pos.getX() >> 4;
         int playerChunkZ = pos.getZ() >> 4;
+        Map<BlockComfortRegistry.BlockKey, Integer> areaKeyCounts = new HashMap<>();
 
         for (int dx = -radius; dx <= radius; dx++) {
             for (int dz = -radius; dz <= radius; dz++) {
@@ -268,29 +269,33 @@ public class CommandChunkComfort extends CommandBase {
                 if (!data.initialized) continue;
 
                 Map<String,Integer> perChunkGroup = new HashMap<>();
-                processBlocksInChunk(data, perChunkGroup, groupTotals, groupContents);
+                processBlocksInChunk(data, perChunkGroup, groupContents);
+                data.keyCounts.forEach((key, count) -> areaKeyCounts.merge(key, count, Integer::sum));
                 // pass shared set
                 processEntitiesInChunk(player.world, chunkPos, perChunkGroup, groupTotals, groupContents, countedPaintings);
 
                 chunkGroupPoints.put(chunkPos, perChunkGroup);
             }
         }
+
+        // REASON: block limits apply to the whole comfort area, same as AreaComfortCalculator
+        AreaComfortCalculator.addAreaLimitedBlockPoints(areaKeyCounts,
+                (group, points) -> groupTotals.merge(group, points, Integer::sum));
         return chunkGroupPoints;
     }
 
     private void processBlocksInChunk(ChunkComfortData data,
                                       Map<String,Integer> perChunkGroup,
-                                      Map<String,Integer> groupTotals,
                                       Map<String,Map<String,Integer>> groupContents) {
+        // Per-chunk display only: points this chunk would give on its own
+        AreaComfortCalculator.addAreaLimitedBlockPoints(data.keyCounts,
+                (group, points) -> perChunkGroup.merge(group, points, Integer::sum));
+
         for (Map.Entry<Block, Integer> entry : data.blockCounts.entrySet()) {
             Block block = entry.getKey();
             if (!BlockComfortRegistry.isComfortBlock(block)) continue;
 
             BlockComfortRegistry.ComfortEntry blockEntry = BlockComfortRegistry.getBlockEntry(block);
-            int points = entry.getValue() * blockEntry.value;
-
-            perChunkGroup.merge(blockEntry.group, points, Integer::sum);
-            groupTotals.merge(blockEntry.group, points, Integer::sum);
 
             String canonicalId = BlockComfortRegistry.getCanonicalId(block);
             groupContents.computeIfAbsent(blockEntry.group, k -> new HashMap<>())

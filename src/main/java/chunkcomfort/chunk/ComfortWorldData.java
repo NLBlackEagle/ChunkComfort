@@ -24,6 +24,18 @@ public class ComfortWorldData extends WorldSavedData {
 
     public static final String DATA_NAME = "chunk_comfort";
 
+    /** 2 = raw per-key block counts ("keys"), "groups" holds decorative entity points only. */
+    private static final int DATA_FORMAT = 2;
+
+    private static BlockComfortRegistry.BlockKey firstKeyFor(Block block) {
+        BlockComfortRegistry.BlockKey wildcard = new BlockComfortRegistry.BlockKey(block, -1);
+        if (BlockComfortRegistry.BLOCK_ENTRIES.containsKey(wildcard)) return wildcard;
+        for (BlockComfortRegistry.BlockKey key : BlockComfortRegistry.BLOCK_ENTRIES.keySet()) {
+            if (key.block == block) return key;
+        }
+        return null;
+    }
+
     public ComfortWorldData(String name) {
         super(name);
     }
@@ -64,35 +76,20 @@ public class ComfortWorldData extends WorldSavedData {
         int minY = 0;
         int maxY = world.getHeight() - 1;
 
-        // REASON: ComfortEntry.limit was previously ignored for blocks — all matching
-        // blocks were summed unconditionally and only the GroupLimitRegistry cap was
-        // applied at the end. This meant e.g. waystones:waystone:2 with limit=1 would
-        // still count every waystone in the chunk. Now we track per-BlockKey counts
-        // during the scan and stop adding value once the entry limit is reached.
-        Map<BlockComfortRegistry.BlockKey, Integer> scanCounts = new java.util.HashMap<>();
-
+        // REASON: the per-entry limit used to be enforced here, per chunk, so a build
+        // spanning several chunks got each limit once per chunk. Now the scan stores raw
+        // counts per registered BlockKey (which may have meta=-1 for wildcard entries, so
+        // every metadata variant of a wildcard entry shares one counter) and
+        // AreaComfortCalculator applies the limit once over the whole comfort area.
         ChunkScanner.scanChunk(world, chunkPos, minY, maxY, (pos, block) -> {
             IBlockState state = world.getBlockState(pos);
 
             if (!isPrimaryBlock(state)) return;
 
-            BlockComfortRegistry.ComfortEntry entry = BlockComfortRegistry.getBlockEntry(block, state);
-            if (entry == null) return;
-
-            // REASON: use the registered BlockKey (which may have meta=-1 for wildcard
-            // entries) as the scan counter key, not the actual blockstate metadata.
-            // Without this, a wildcard entry like waystones:waystone (no metadata) would
-            // give each metadata variant its own counter — both :0 and :2 would pass a
-            // limit of 1 independently, counting the structure twice.
             BlockComfortRegistry.BlockKey key = BlockComfortRegistry.getKeyForEntry(block, state);
             if (key == null) return;
-            int currentCount = scanCounts.getOrDefault(key, 0);
 
-            if (currentCount >= entry.limit) return; // per-entry limit reached
-
-            scanCounts.put(key, currentCount + 1);
-            data.groupTotals.put(entry.group, data.groupTotals.getOrDefault(entry.group, 0) + entry.value);
-            data.blockCounts.put(block, data.blockCounts.getOrDefault(block, 0) + 1);
+            data.addBlock(key, block);
         });
 
         // REASON: previously iterated world.loadedEntityList (all entities in all loaded
@@ -154,6 +151,16 @@ public class ComfortWorldData extends WorldSavedData {
             }
             chunkTag.setTag("blocks", blocksTag);
 
+            NBTTagCompound keysTag = new NBTTagCompound();
+            for (Map.Entry<BlockComfortRegistry.BlockKey, Integer> keyEntry : data.keyCounts.entrySet()) {
+                ResourceLocation blockName = Block.REGISTRY.getNameForObject(keyEntry.getKey().block);
+                if (blockName != null) {
+                    keysTag.setInteger(blockName + "@" + keyEntry.getKey().meta, keyEntry.getValue());
+                }
+            }
+            chunkTag.setTag("keys", keysTag);
+            chunkTag.setInteger("format", DATA_FORMAT);
+
             chunkList.appendTag(chunkTag);
         }
 
@@ -172,10 +179,17 @@ public class ComfortWorldData extends WorldSavedData {
             int z = chunkTag.getInteger("z");
 
             ChunkComfortData data = new ChunkComfortData();
+            boolean currentFormat = chunkTag.getInteger("format") >= DATA_FORMAT;
 
-            NBTTagCompound groupsTag = chunkTag.getCompoundTag("groups");
-            for (String key : groupsTag.getKeySet()) {
-                data.groupTotals.put(key, groupsTag.getInteger(key));
+            // REASON: before format 2, "groups" mixed per-chunk-capped block points with
+            // decorative entity points. Block points are now derived from raw key counts, so
+            // old group totals would double count blocks and are dropped. Decorative entity
+            // points come back on the next rescan of the chunk.
+            if (currentFormat) {
+                NBTTagCompound groupsTag = chunkTag.getCompoundTag("groups");
+                for (String key : groupsTag.getKeySet()) {
+                    data.groupTotals.put(key, groupsTag.getInteger(key));
+                }
             }
 
             // REASON: on first load after this change, "blocks" tag won't exist in saves
@@ -188,6 +202,27 @@ public class ComfortWorldData extends WorldSavedData {
                     if (block != null) {
                         data.blockCounts.put(block, blocksTag.getInteger(key));
                     }
+                }
+            }
+
+            if (currentFormat && chunkTag.hasKey("keys")) {
+                NBTTagCompound keysTag = chunkTag.getCompoundTag("keys");
+                for (String key : keysTag.getKeySet()) {
+                    int at = key.lastIndexOf('@');
+                    if (at <= 0) continue;
+                    Block block = Block.REGISTRY.getObject(new ResourceLocation(key.substring(0, at)));
+                    if (block == null) continue;
+                    try {
+                        int meta = Integer.parseInt(key.substring(at + 1));
+                        data.keyCounts.put(new BlockComfortRegistry.BlockKey(block, meta), keysTag.getInteger(key));
+                    } catch (NumberFormatException ignored) {}
+                }
+            } else {
+                // REASON: old saves only have per-Block counts (capped per chunk). Map them to
+                // the block's first registered key as a best effort until the chunk is rescanned.
+                for (Map.Entry<Block, Integer> blockEntry : data.blockCounts.entrySet()) {
+                    BlockComfortRegistry.BlockKey key = firstKeyFor(blockEntry.getKey());
+                    if (key != null) data.keyCounts.merge(key, blockEntry.getValue(), Integer::sum);
                 }
             }
 
@@ -209,6 +244,8 @@ public class ComfortWorldData extends WorldSavedData {
     public void clearAllChunks() {
         for (ChunkComfortData data : chunks.values()) {
             data.groupTotals.clear();
+            data.keyCounts.clear();
+            data.blockCounts.clear();
             data.totalComfort = 0;
         }
         markDirty();

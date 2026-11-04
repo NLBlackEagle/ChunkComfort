@@ -37,16 +37,9 @@ public class ChunkUpdateManager {
         ChunkPos chunkPos = new ChunkPos(pos);
         ChunkComfortData data = worldData.getChunkData(chunkPos);
 
-        BlockComfortRegistry.ComfortEntry entry = BlockComfortRegistry.getBlockEntry(block, state);
-        if (entry != null) {
-            // REASON: respect the per-entry limit so e.g. a waystone with limit=1
-            // stops contributing comfort once one is already tracked in this chunk.
-            int currentCount = data.blockCounts.getOrDefault(block, 0);
-            if (currentCount < entry.limit) {
-                data.addComfort(entry.group, entry.value);
-                data.blockCounts.put(block, currentCount + 1);
-            }
-        }
+        // REASON: counts are raw; the per-entry limit is applied area-wide in
+        // AreaComfortCalculator, so every placed block is tracked here.
+        data.addBlock(BlockComfortRegistry.getKeyForEntry(block, state), block);
 
         worldData.setChunkData(chunkPos, data);
     }
@@ -72,13 +65,9 @@ public class ChunkUpdateManager {
         ChunkPos chunkPos = new ChunkPos(pos);
         ChunkComfortData data = worldData.getChunkData(chunkPos);
 
-        BlockComfortRegistry.ComfortEntry entry = BlockComfortRegistry.getBlockEntry(block);
-        if (entry != null) {
-            data.removeComfort(entry.group, entry.value);
-
-            int current = data.blockCounts.getOrDefault(block, 0);
-            if (current <= 1) data.blockCounts.remove(block);
-            else data.blockCounts.put(block, current - 1);
+        BlockComfortRegistry.BlockKey key = BlockComfortRegistry.getKeyForEntry(block, state);
+        if (key != null) {
+            data.removeBlock(key, block);
         }
 
         worldData.setChunkData(chunkPos, data);
