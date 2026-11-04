@@ -449,8 +449,7 @@ public class ForgeConfigHandler {
             if (line == null || line.trim().isEmpty() || line.trim().startsWith("#")) continue;
             try {
                 String id = line.split(",")[0].trim();
-                Block block = net.minecraft.block.Block.getBlockFromName(id);
-                boolean inBlock = block != null && BlockComfortRegistry.isComfortBlock(block);
+                boolean inBlock = BlockComfortRegistry.isRegisteredEntryId(id);
                 boolean inEntity = EntityComfortRegistry.getEntityEntryFromId(new net.minecraft.util.ResourceLocation(id)) != null;
                 if (!inBlock && !inEntity) {
                     ChunkComfort.LOGGER.warn(
