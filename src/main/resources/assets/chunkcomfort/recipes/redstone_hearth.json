@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "BBB",
+    "CRC",
+    "BBB"
+  ],
+  "key": {
+    "B": {
+      "item": "minecraft:stonebrick",
+      "data": 0
+    },
+    "C": {
+      "item": "minecraft:cobblestone"
+    },
+    "R": {
+      "item": "minecraft:redstone_block"
+    }
+  },
+  "result": {
+    "item": "chunkcomfort:redstone_hearth"
+  }
+}

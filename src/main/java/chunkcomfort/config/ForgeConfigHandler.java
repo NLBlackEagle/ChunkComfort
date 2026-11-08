@@ -65,7 +65,7 @@ public class ForgeConfigHandler {
         @Config.Name("Shelter Requirement (No Skylight)")
         public boolean requireShelter = true;
 
-        @Config.Comment("Require fire nearby for comfort (true/false).")
+        @Config.Comment({"Require a comfort anchor (hearth) nearby for comfort (true/false).", "Which blocks count is set in Fire Blocks, default the Redstone Hearth."})
         @Config.Name("Fire Requirement")
         public boolean requireFire = true;
 
@@ -75,7 +75,7 @@ public class ForgeConfigHandler {
         public int minLightLevel = 7;
 
         @Config.Comment({
-                "Vertical range (in blocks) to scan for fire around the player",
+                "Vertical range (in blocks) to scan for a hearth (Fire Blocks) around the player",
                 "The scan will check this value relative to the player's Y position",
                 "Default 24 (48 blocks total)"
         })
@@ -120,18 +120,15 @@ public class ForgeConfigHandler {
 
         //Comfort Entries
 
-        @Config.Comment("Blocks that count as fire sources. Supports metadata via @: e.g. minecraft:campfire@1 matches only meta 1, minecraft:campfire matches all variants")
+        @Config.Comment({"Blocks that count as the comfort anchor (hearth) for the Fire Requirement.", "Default is the Redstone Hearth, which gives light but no heat (unlike real fire with SimpleDifficulty).", "Supports metadata via @: e.g. minecraft:campfire@1 matches only meta 1, minecraft:campfire matches all variants"})
         @Config.Name("Fire Blocks")
         public String[] fireBlocks = new String[]{
-                "minecraft:fire"
+                "chunkcomfort:redstone_hearth"
         };
 
-        @Config.Comment("Items that count as fire starters")
+        @Config.Comment({"Items that count as fire starters (tooltip only).", "Empty by default since the hearth is placed, not lit. Add e.g. minecraft:flint_and_steel if you put fire in Fire Blocks."})
         @Config.Name("Fire Source Items")
-        public String[] fireSourceItems = new String[] {
-                "minecraft:flint_and_steel",
-                "minecraft:fire_charge"
-        };
+        public String[] fireSourceItems = new String[] {};
 
         @Config.Comment({
                 "Biome comfort modifiers",

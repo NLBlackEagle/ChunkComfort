@@ -238,11 +238,11 @@ public class CommandChunkComfort extends CommandBase {
         if (ForgeConfigHandler.server.minLightLevel > 0 && playerLight < ForgeConfigHandler.server.minLightLevel)
             status.append("Too dark. ");
         if (ForgeConfigHandler.server.requireShelter && !reqs.shelterOk && ForgeConfigHandler.server.requireFire && !reqs.fireOk)
-            status.append("No shelter or fire. ");
+            status.append("No shelter or hearth. ");
         else if (ForgeConfigHandler.server.requireShelter && !reqs.shelterOk)
             status.append("No shelter. ");
         else if (ForgeConfigHandler.server.requireFire && !reqs.fireOk)
-            status.append("No fire. ");
+            status.append("No hearth. ");
         if (ForgeConfigHandler.server.enableTemperatureComfort && !reqs.temperatureOk)
             status.append("Too cold/hot. ");
 

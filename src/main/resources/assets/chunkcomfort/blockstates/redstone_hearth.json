@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "chunkcomfort:redstone_hearth"
+    },
+    "facing=east": {
+      "model": "chunkcomfort:redstone_hearth",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "chunkcomfort:redstone_hearth",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "chunkcomfort:redstone_hearth",
+      "y": 270
+    }
+  }
+}

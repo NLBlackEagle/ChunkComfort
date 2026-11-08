@@ -1,6 +1,8 @@
 package chunkcomfort.registry;
 
 import chunkcomfort.ChunkComfort;
+import chunkcomfort.hearth.BlockHearth;
+import chunkcomfort.hearth.TileEntityHearth;
 import chunkcomfort.statue.BlockStatue;
 import chunkcomfort.statue.StatueType;
 import chunkcomfort.statue.TileEntityStatue;
@@ -18,12 +20,13 @@ import net.minecraftforge.fml.common.registry.GameRegistry;
 import java.util.ArrayList;
 import java.util.List;
 
-/** Blocks, items and tile entities added by ChunkComfort (statues and candles). */
+/** Blocks, items and tile entities added by ChunkComfort (statues, candles and the hearth). */
 @Mod.EventBusSubscriber(modid = ChunkComfort.MODID)
 public class ModContent {
 
     public static final List<BlockStatue> STATUES = new ArrayList<>();
     public static Item CANDLE;
+    public static Block REDSTONE_HEARTH;
 
     public static final CreativeTabs TAB = new CreativeTabs(ChunkComfort.MODID) {
         @Override
@@ -43,7 +46,14 @@ public class ModContent {
             event.getRegistry().register(statue);
         }
 
+        REDSTONE_HEARTH = new BlockHearth()
+                .setRegistryName(ChunkComfort.MODID, "redstone_hearth")
+                .setTranslationKey(ChunkComfort.MODID + ".redstone_hearth")
+                .setCreativeTab(TAB);
+        event.getRegistry().register(REDSTONE_HEARTH);
+
         GameRegistry.registerTileEntity(TileEntityStatue.class, new ResourceLocation(ChunkComfort.MODID, "statue"));
+        GameRegistry.registerTileEntity(TileEntityHearth.class, new ResourceLocation(ChunkComfort.MODID, "hearth"));
     }
 
     @SubscribeEvent
@@ -51,6 +61,8 @@ public class ModContent {
         for (BlockStatue statue : STATUES) {
             event.getRegistry().register(new ItemBlock(statue).setRegistryName(statue.getRegistryName()));
         }
+
+        event.getRegistry().register(new ItemBlock(REDSTONE_HEARTH).setRegistryName(REDSTONE_HEARTH.getRegistryName()));
 
         CANDLE = new Item()
                 .setRegistryName(ChunkComfort.MODID, "candle")

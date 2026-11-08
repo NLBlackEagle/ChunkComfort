@@ -13,9 +13,8 @@ chunkcomfort.effects.comfort=Comfort
 # Main header shown at the top of Comfort-related tooltips
 tooltip.chunkcomfort.header=§8[§6CC§8] §7Hold CTRL for comfort info
 
-# Tooltip shown for blocks counted as valid comfort fire sources
-# (campfires, fireplaces, etc.)
-tooltip.chunkcomfort.fireblocks=§6A comfy fire, key to establishing a warm, lit and sheltered comfort zone.
+# Tooltip shown for blocks counted as the comfort anchor (Fire Blocks config, default the Redstone Hearth)
+tooltip.chunkcomfort.fireblocks=§6A §cRedstone Hearth§6, key to establishing a lit and sheltered comfort zone.
 
 # Tooltip for items capable of creating a valid comfort fire
 # (flint & steel, fire charges, etc.)
@@ -26,7 +25,7 @@ tooltip.chunkcomfort.inactive=§8[§6CC§8] §7Perhaps some furniture would live
 # Shown instead of the line above for the first missing comfort requirement
 tooltip.chunkcomfort.missing.shelter=§8[§6CC§8] §7It's too exposed for comfort.
 tooltip.chunkcomfort.missing.light=§8[§6CC§8] §7It's too dark for comfort.
-tooltip.chunkcomfort.missing.fire=§8[§6CC§8] §7A fire would give comfort.
+tooltip.chunkcomfort.missing.fire=§8[§6CC§8] §7A §cRedstone Hearth§7 would give comfort.
 tooltip.chunkcomfort.missing.hot=§8[§6CC§8] §7It's too hot for comfort.
 tooltip.chunkcomfort.missing.cold=§8[§6CC§8] §7It's too cold for comfort.
 
@@ -223,7 +222,7 @@ debug.chunkcomfort.light_required=Light Level Required: %1$s
 debug.chunkcomfort.light_level=, Level: %1$s
 
 # Fire requirement enabled
-debug.chunkcomfort.fire_required=Fire Required: true
+debug.chunkcomfort.fire_required=Hearth Required: true
 
 # Whether valid fire source was found nearby
 debug.chunkcomfort.fire_found=, Found: %1$s
@@ -251,9 +250,9 @@ chunkcomfort.config.invalid_petting_entry=Invalid ChunkComfort petting comfort c
 
 
 # Messages displayed for comfort levels
-chunkcomfort.config.message.1=§6You dreamt of a warm, sheltered house with a comfy fire, a pet, and a carpet on the floor
-chunkcomfort.config.message.2=§6As you wake up a thought lingers, surely a sheltered place with a bed, a fire and banners would beat this?
-chunkcomfort.config.message.3=§6You dreamt of petting your pet while watching the flames dance within the fireplace
+chunkcomfort.config.message.1=§6You dreamt of a warm, sheltered house with a §cRedstone Hearth§6, a pet, and a carpet on the floor
+chunkcomfort.config.message.2=§6As you wake up a thought lingers, surely a sheltered place with a bed, a §cRedstone Hearth§6 and banners would beat this?
+chunkcomfort.config.message.3=§6You dreamt of petting your pet while watching the soft glow of the hearth
 chunkcomfort.config.message.4=§6You feel refreshed, though your residence could use some improvements
 chunkcomfort.config.message.5=§6As you wake and look around your house, you feel somewhat established
 chunkcomfort.config.message.6=§6You had one of those fleeting dreams about building a library expansion
@@ -272,7 +271,7 @@ toast.chunkcomfort.tierup.title.max=Comfort Maxed Hurray!
 toast.chunkcomfort.tierup.flavor=Your home grows ever more comfortable.
 
 # Per-tier flavour lines (optional, falls back to .flavor if missing)
-toast.chunkcomfort.tierup.tier0=A fire, a roof, it's a start.
+toast.chunkcomfort.tierup.tier0=A hearth, a roof, it's a start.
 toast.chunkcomfort.tierup.tier1=Comfy? Nah but livable!
 toast.chunkcomfort.tierup.tier2=You know what? Pillows!
 toast.chunkcomfort.tierup.tier3=What really is Comfortable?
@@ -305,6 +304,9 @@ tile.chunkcomfort.elements_statue.name=Elements Statue
 tile.chunkcomfort.arcane_statue.name=Arcane Statue
 tile.chunkcomfort.warrior_statue.name=Warrior Statue
 tile.chunkcomfort.healer_statue.name=Healer Statue
+
+# Hearth (comfort anchor)
+tile.chunkcomfort.redstone_hearth.name=Redstone Hearth
 
 # Plaque dedication shown at the top of the statue tooltip (leave a statue out to show none)
 tooltip.chunkcomfort.statue.plaque=§6§o%1$s
