@@ -47,7 +47,7 @@ public class BlockHearth extends Block {
         setHardness(2.0F);
         setResistance(10.0F);
         setSoundType(SoundType.STONE);
-        setLightLevel(1.0F); // light 15, one brighter than a torch
+        setLightLevel(10F / 15F); // light 10, a bit dimmer than a torch (14)
         setDefaultState(blockState.getBaseState().withProperty(FACING, EnumFacing.NORTH));
     }
 

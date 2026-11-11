@@ -12,6 +12,7 @@ import net.minecraft.block.properties.PropertyDirection;
 import net.minecraft.block.state.BlockFaceShape;
 import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.entity.EntityLivingBase;
@@ -225,10 +226,15 @@ public class BlockStatue extends Block {
         if (I18n.hasKey(plaqueKey)) {
             tooltip.add(I18n.format("tooltip.chunkcomfort.statue.plaque", I18n.format(plaqueKey)));
         }
+        // Dedication text under the plaque: .desc1, .desc2, ... as many lines as the lang file has
+        for (int line = 1; I18n.hasKey(getTranslationKey() + ".desc" + line); line++) {
+            tooltip.add(I18n.format("tooltip.chunkcomfort.statue.desc", I18n.format(getTranslationKey() + ".desc" + line)));
+        }
 
-        // Candle info only while sneak is held, to keep the tooltip short
-        if (!StatueClient.isSneakKeyDown()) {
-            tooltip.add(I18n.format("tooltip.chunkcomfort.statue.hold_sneak"));
+        // Candle info only while Shift is held, to keep the tooltip short.
+        // REASON: the real Shift key, not the sneak keybind, so the "Hold Shift" label is always right.
+        if (!GuiScreen.isShiftKeyDown()) {
+            tooltip.add(I18n.format("tooltip.chunkcomfort.statue.hold_shift"));
             return;
         }
 

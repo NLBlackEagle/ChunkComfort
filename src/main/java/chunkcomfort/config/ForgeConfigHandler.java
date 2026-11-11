@@ -36,7 +36,7 @@ public class ForgeConfigHandler {
 
         @Config.Comment({
                 "Show active comfort effects like beacon effects: in the inventory effect list and on the HUD (blue beacon frame),",
-                "with faint beacon-style particles. Off = the effects are hidden and only listed in the hover tooltip",
+                "(no potion particles either way). Off = the effects are hidden and only listed in the hover tooltip",
                 "Server side: the server's config decides for all players"
         })
         @Config.Name("Beacon Style")

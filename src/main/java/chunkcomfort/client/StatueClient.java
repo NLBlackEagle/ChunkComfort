@@ -35,8 +35,6 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.fml.relauncher.Side;
-import org.lwjgl.input.Keyboard;
-import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
 
 import java.util.ArrayList;
@@ -235,18 +233,6 @@ public class StatueClient {
         GlStateManager.disableBlend();
 
         event.setCanceled(true);
-    }
-
-    // --- Statue tooltip ---
-
-    /**
-     * Whether the sneak key is held, for the statue tooltip (candle info only shows while sneaking).
-     * REASON: KeyBinding.isKeyDown() isn't updated while a GUI is open, so read the key directly.
-     */
-    public static boolean isSneakKeyDown() {
-        int key = Minecraft.getMinecraft().gameSettings.keyBindSneak.getKeyCode();
-        if (key < 0) return Mouse.isButtonDown(key + 100); // bound to a mouse button
-        return key > 0 && Keyboard.isKeyDown(key);
     }
 
     // --- Action bar hint: what the aimed candle does ---

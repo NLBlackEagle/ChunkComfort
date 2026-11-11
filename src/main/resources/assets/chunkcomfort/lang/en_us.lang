@@ -315,13 +315,33 @@ tile.chunkcomfort.fortune_statue.plaque=In Memory of Skully the Cat
 tile.chunkcomfort.wind_statue.plaque=Statue of Eagle
 tile.chunkcomfort.guardian_statue.plaque=Nischi
 tile.chunkcomfort.elements_statue.plaque=FonnyMunkey & Kotlin
-tile.chunkcomfort.arcane_statue.plaque=CDSTK, Nanonaitor & Cath
+tile.chunkcomfort.arcane_statue.plaque=cdstk, Nanonaitor & Cath
 tile.chunkcomfort.healer_statue.plaque=NLBlackHeavenNL
+tile.chunkcomfort.warrior_statue.plaque=Shivaxi
+
+# Dedication lines under the plaque, one tooltip line per .descN (leave a statue out to show none)
+tooltip.chunkcomfort.statue.desc=§7§o%1$s
+tile.chunkcomfort.artisan_statue.desc1=A statue of fine craftsmanship, raised in Honor of Star Artsy the Artisan.
+tile.chunkcomfort.artisan_statue.desc2=Those who keep it near are said to share in Artsy’s blessings.
+tile.chunkcomfort.fortune_statue.desc1=A statue of fine craftsmanship, raised in loving Memory of Skully the Cat.
+tile.chunkcomfort.fortune_statue.desc2=Those who keep it near are said to feel Skully’s gentle presence.
+tile.chunkcomfort.wind_statue.desc1=A statue of fine craftsmanship, raised in Honor of Eagle.
+tile.chunkcomfort.wind_statue.desc2=Those who keep it near are said to share in Eagle’s watchful blessings.
+tile.chunkcomfort.guardian_statue.desc1=A statue of fine craftsmanship, raised in Honor of Nischi.
+tile.chunkcomfort.guardian_statue.desc2=Those who keep it near are said to share in Nischi’s blessings.
+tile.chunkcomfort.elements_statue.desc1=A statue of fine craftsmanship, raised in Honor of FonnyMunkey & Kotlin.
+tile.chunkcomfort.elements_statue.desc2=Those who keep it near are said to share in their blessings.
+tile.chunkcomfort.arcane_statue.desc1=A statue of fine craftsmanship, raised in Honor of cdstk, Nanonaitor & Cath.
+tile.chunkcomfort.arcane_statue.desc2=Those who keep it near are said to share in their blessings.
+tile.chunkcomfort.healer_statue.desc1=A statue of fine craftsmanship, raised in Honor of NLBlackHeavenNL.
+tile.chunkcomfort.healer_statue.desc2=Those who keep it near are said to share in NLBlackHeavenNL’s blessings.
+tile.chunkcomfort.warrior_statue.desc1=A statue of fine craftsmanship, raised in Honor of Shivaxi.
+tile.chunkcomfort.warrior_statue.desc2=Those who keep it near are said to share in Shivaxi’s blessings.
 
 # Statue item tooltip, one line per candle slot
 # %1$s = slot number, %2$s = what the candle does
-# Shown instead of the candle lines below while sneak isn't held
-tooltip.chunkcomfort.statue.hold_sneak=§8§o[Hold Sneak]
+# Shown instead of the candle lines below while Shift isn't held
+tooltip.chunkcomfort.statue.hold_shift=§8§o[Hold Shift]
 tooltip.chunkcomfort.statue.slot=§7Candle %1$s: %2$s
 tooltip.chunkcomfort.statue.activates=§a%1$s
 tooltip.chunkcomfort.statue.negates=§cblocks %1$s

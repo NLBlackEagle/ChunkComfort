@@ -50,11 +50,12 @@ public class HearthGlowRenderer extends TileEntitySpecialRenderer<TileEntityHear
         float lastY = OpenGlHelper.lastBrightnessY;
         OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, 240F, 240F);
 
+        int color = pulseColor(te, partialTicks);
         Tessellator tess = Tessellator.getInstance();
         BufferBuilder buffer = tess.getBuffer();
         buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.ITEM);
         for (BakedQuad quad : quads) {
-            LightUtil.renderQuadColor(buffer, quad, 0xFFFFFFFF);
+            LightUtil.renderQuadColor(buffer, quad, color);
         }
         tess.draw();
 
@@ -62,5 +63,23 @@ public class HearthGlowRenderer extends TileEntitySpecialRenderer<TileEntityHear
         GlStateManager.disablePolygonOffset();
         GlStateManager.enableLighting();
         GlStateManager.popMatrix();
+    }
+
+    /**
+     * Slow ember-like breathing: two sine waves of different speeds so it never looks like a
+     * clean loop, offset per position so neighbouring hearths don't pulse in sync. Green and
+     * blue dim more than red, so the dim phase reads deeper red rather than just darker.
+     */
+    private static int pulseColor(TileEntityHearth te, float partialTicks) {
+        long seed = te.getPos().toLong() * 31L;
+        float phase = (seed & 0xFFFF) / 65536F * (float) (Math.PI * 2);
+        float t = (te.getWorld().getTotalWorldTime() % 24000L) + partialTicks;
+        float wave = 0.65F * (float) Math.sin(t * 0.09F + phase)   // ~3.5 s cycle
+                   + 0.35F * (float) Math.sin(t * 0.23F + phase * 2F); // faster flicker on top
+        float p = 0.5F + 0.5F * wave; // 0..1
+
+        int r = (int) (255F * (0.85F + 0.15F * p));
+        int gb = (int) (255F * (0.55F + 0.45F * p));
+        return 0xFF000000 | (r << 16) | (gb << 8) | gb;
     }
 }
