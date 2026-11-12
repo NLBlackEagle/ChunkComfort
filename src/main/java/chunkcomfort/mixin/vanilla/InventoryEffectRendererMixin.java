@@ -90,7 +90,8 @@ public abstract class InventoryEffectRendererMixin {
         List<PlayerComfortManager.EffectEntry> effects =
                 PlayerComfortManager.getStackedEffects(comfortEffect.getAmplifier(), litStatueSlots);
 
-        if (effects.isEmpty()) return;
+        // No early return when effects is empty: the base Comfort tier has no effects but
+        // should still show the comfort points and how many are needed for the next level
 
         // --- Compute comfort ONCE ---
         EntityPlayer player = mc.player;
@@ -175,9 +176,10 @@ public abstract class InventoryEffectRendererMixin {
 
             // Inventory Hover Tooltip off: only the comfort level, no effect lists
             if (ForgeConfigHandler.display.inventoryHoverTooltip) {
-                tooltip.add("");
-
-                tooltip.add(I18n.format("tooltip.chunkcomfort.positive.effects"));
+                if (!effects.isEmpty()) {
+                    tooltip.add("");
+                    tooltip.add(I18n.format("tooltip.chunkcomfort.positive.effects"));
+                }
 
                 for (PlayerComfortManager.EffectEntry entry : effects) {
                     String effect = PlayerComfortManager.getDisplayName(entry);

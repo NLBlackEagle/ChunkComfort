@@ -63,6 +63,15 @@ public class PlayerComfortManager {
 
     public static void reloadConfig() {
         TIERS.clear();
+
+        // REASON: players placed a hearth, met every requirement and got nothing, so they
+        // couldn't tell the comfort zone worked. A built-in base tier at 0 points now gives
+        // plain "Comfort" (no effects) as soon as the requirements are met; the configured
+        // tiers start at Comfort II. Added first, so the stable sort keeps it at index 0.
+        ComfortTier base = new ComfortTier();
+        base.comfort = 0;
+        TIERS.add(base);
+
         String[] config = ForgeConfigHandler.server.comfortEffects;
 
         for (String line : config) {
@@ -129,7 +138,7 @@ public class PlayerComfortManager {
         // Tell the client which statue candles are lit and the player's comfort, so the Comfort
         // tooltip and statue hints can mark effects that are locked or still waiting on a candle
         if (player instanceof EntityPlayerMP) {
-            NetworkHandler.INSTANCE.sendTo(new PacketStatueStatus(litStatueSlots, comfort), (EntityPlayerMP) player);
+            NetworkHandler.INSTANCE.sendTo(new PacketStatueStatus(litStatueSlots, Math.max(comfort, 0)), (EntityPlayerMP) player);
         }
 
         // The comfort effects that should be running now (only lit ones)

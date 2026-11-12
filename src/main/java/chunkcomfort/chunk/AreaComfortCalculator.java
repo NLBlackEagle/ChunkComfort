@@ -115,6 +115,13 @@ public class AreaComfortCalculator {
         });
     }
 
+    /**
+     * Returned by calculatePlayerComfort when the player isn't in a comfort zone (requirements
+     * missing, blacklisted, boss nearby). 0 means the zone is active but has no points yet,
+     * which still earns the base Comfort tier.
+     */
+    public static final int NOT_IN_ZONE = -1;
+
     public static int calculatePlayerComfort(EntityPlayer player) {
         World world = player.world;
         BlockPos playerPos = player.getPosition();
@@ -129,7 +136,7 @@ public class AreaComfortCalculator {
             // REASON: early returns previously skipped setCachedComfort, leaving a
             // stale value in the cache that the client-side render kept displaying.
             PlayerComfortManager.setCachedComfort(player.getUniqueID(), 0);
-            return 0;
+            return NOT_IN_ZONE;
         }
 
         ComfortWorldData worldData = ComfortWorldData.get(world);
@@ -157,7 +164,7 @@ public class AreaComfortCalculator {
                 player.removePotionEffect(PotionRegistry.COMFORT);
             }
             PlayerComfortManager.setCachedComfort(player.getUniqueID(), 0);
-            return 0;
+            return NOT_IN_ZONE;
         }
 
         // All requirements passed, so when fire is required reqs.fireOk is the real scan
