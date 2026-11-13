@@ -165,10 +165,17 @@ public class CommandChunkComfort extends CommandBase {
 
         int radius = AreaComfortCalculator.getRadius();
 
-        boolean fireNearby = chunkcomfort.chunk.ComfortWorldData.hasFireNearby(player.world, player.getPosition(), radius);
-        int comfortActive = AreaComfortCalculator.calculateComfortActivation(player.world, player, fireNearby);
+        BlockPos anchor = AreaComfortCalculator.findActiveAnchor(player.world, player.getPosition());
+        int comfortActive = AreaComfortCalculator.calculateComfortActivation(player.world, player, anchor != null);
 
         if (!checkRequiredConditions(sender, player, comfortActive)) return;
+
+        // Same center as the real calculation: the hearth, or the player when there is none
+        BlockPos center = anchor != null ? anchor : player.getPosition();
+        if (anchor != null) {
+            sender.sendMessage(new TextComponentString("Comfort zone centred on hearth at "
+                    + anchor.getX() + ", " + anchor.getY() + ", " + anchor.getZ()));
+        }
 
         Map<String,Integer> groupTotals = new HashMap<>();
         Map<String,Map<String,Integer>> groupContents = new HashMap<>();
@@ -176,11 +183,11 @@ public class CommandChunkComfort extends CommandBase {
         Set<UUID> countedPaintings = new HashSet<>();
 
         Map<ChunkPos, Map<String,Integer>> chunkGroupPoints =
-                buildGroupData(player, player.getPosition(), radius, groupTotals, groupContents, countedPaintings);
+                buildGroupData(player, center, radius, groupTotals, groupContents, countedPaintings);
 
         displayComfortActivationDetails(sender, player);
-        displayPerChunkInfo(sender, player.getPosition(), radius, chunkGroupPoints);
-        displayGroupBreakdown(sender, player, groupTotals, groupContents);
+        displayPerChunkInfo(sender, center, radius, chunkGroupPoints);
+        displayGroupBreakdown(sender, player, center, groupTotals, groupContents);
     }
 
     private void executeReload(MinecraftServer server, ICommandSender sender) {
@@ -480,6 +487,7 @@ public class CommandChunkComfort extends CommandBase {
     private void displayGroupBreakdown(
             ICommandSender sender,
             EntityPlayer player,
+            BlockPos center,
             Map<String,Integer> groupTotals,
             Map<String,Map<String,Integer>> groupContents) {
 
@@ -492,7 +500,7 @@ public class CommandChunkComfort extends CommandBase {
         // ---- Biome Modifier (MATCH calculatePlayerComfort) ----
         String biomeName = "";
         ResourceLocation biomeId =
-                player.world.getBiome(player.getPosition()).getRegistryName();
+                player.world.getBiome(center).getRegistryName();
 
         if (biomeId != null) biomeName = biomeId.toString();
 

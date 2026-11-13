@@ -4,7 +4,6 @@ import chunkcomfort.config.ForgeConfigHandler;
 import chunkcomfort.integration.simpledifficulty.SimpleDifficultyIntegration;
 import chunkcomfort.integration.simpledifficulty.SimpleDifficultyTemperatureBridge;
 import chunkcomfort.registry.ComfortRequirements;
-import chunkcomfort.registry.FireBlockRegistry;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockAir;
 import net.minecraft.block.BlockGlass;
@@ -79,27 +78,11 @@ public class ComfortRequirementCheck {
         if (ForgeConfigHandler.server.requireFire && lightOk && shelterOk && temperatureOk) {
             // REASON: use the pre-computed fireNearby result when available to avoid
             // running the block scan twice per comfort check.
-            if (fireNearbyHint != null) {
-                fireOk = fireNearbyHint;
-            } else {
-                int radius = getRadius();
-                int verticalRange = ForgeConfigHandler.server.fireScanVerticalRange;
-                int minY = Math.max(0, pos.getY() - verticalRange);
-                int maxY = Math.min(world.getHeight() - 1, pos.getY() + verticalRange);
-
-                try {
-                    fireOk = ChunkScanner.anyBlockMatches(
-                            world,
-                            pos,
-                            radius,
-                            minY,
-                            maxY,
-                            FireBlockRegistry::isFireBlock
-                    );
-                } catch (ChunkScanner.StopScanException e) {
-                    fireOk = true; // early exit confirmed fire presence
-                }
-            }
+            // REASON: was a block-by-block scan of the whole area; now an index lookup for an
+            // active hearth (one that owns a zone) whose radius covers this position.
+            fireOk = fireNearbyHint != null
+                    ? fireNearbyHint
+                    : AreaComfortCalculator.findActiveAnchor(world, pos) != null;
         }
 
         return new ComfortRequirements(shelterOk, lightOk, fireOk, temperatureOk, playerTemp);
@@ -115,11 +98,6 @@ public class ComfortRequirementCheck {
         ComfortRequirements reqs = getRequirementsPresent(player.world, pos, player);
 
         return reqs.shelterOk && reqs.lightOk && reqs.fireOk && reqs.temperatureOk;
-    }
-
-    private static int getRadius() {
-        // Same clamped radius as the comfort calculation so both fire scans cover the same area
-        return AreaComfortCalculator.getRadius();
     }
 
     private static boolean scanShelter(World world, BlockPos pos) {

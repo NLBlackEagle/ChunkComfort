@@ -15,8 +15,14 @@ import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
 import net.minecraft.world.storage.WorldSavedData;
 
+import net.minecraft.world.chunk.Chunk;
+import net.minecraft.world.chunk.storage.ExtendedBlockStorage;
+
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 public class ComfortWorldData extends WorldSavedData {
 
@@ -59,16 +65,68 @@ public class ComfortWorldData extends WorldSavedData {
         return chunks.computeIfAbsent(pos, k -> new ChunkComfortData());
     }
 
-    public static boolean hasFireNearby(World world, BlockPos center, int radius) {
-        int verticalRange = chunkcomfort.config.ForgeConfigHandler.server.fireScanVerticalRange;
-        int minY = Math.max(0, center.getY() - verticalRange);
-        int maxY = Math.min(world.getHeight() - 1, center.getY() + verticalRange);
+    // --- Hearth (anchor) index ---
+    // REASON: comfort is centred on a hearth now, so we need to find hearths near a player
+    // quickly. The old fire check walked every block in the whole area on every comfort
+    // check. Instead each chunk is indexed once (a fast pass over its block sections) and
+    // then kept current by place/break events. The index is session-only: it is rebuilt
+    // lazily after a restart and dropped when a chunk unloads, so it never grows unbounded.
+    private final Map<ChunkPos, Set<BlockPos>> anchors = new HashMap<>();
+    private int anchorRegistryVersion = -1;
 
-        try {
-            return ChunkScanner.anyBlockMatches(world, center, radius, minY, maxY, FireBlockRegistry::isFireBlock);
-        } catch (ChunkScanner.StopScanException e) {
-            return true; // early exit = fire was found
+    /**
+     * Hearth positions in a chunk, indexing the chunk first if needed. Returns an empty
+     * set for chunks that are not loaded (never loads or generates a chunk).
+     */
+    public Set<BlockPos> getAnchors(World world, ChunkPos chunkPos) {
+        if (anchorRegistryVersion != FireBlockRegistry.getVersion()) {
+            anchors.clear(); // the Fire Blocks list changed, re-index everything lazily
+            anchorRegistryVersion = FireBlockRegistry.getVersion();
         }
+        Set<BlockPos> set = anchors.get(chunkPos);
+        if (set != null) return set;
+
+        Chunk chunk = world.getChunkProvider().getLoadedChunk(chunkPos.x, chunkPos.z);
+        if (chunk == null) return Collections.emptySet();
+
+        set = new HashSet<>();
+        int baseX = chunkPos.x << 4;
+        int baseZ = chunkPos.z << 4;
+        for (ExtendedBlockStorage section : chunk.getBlockStorageArray()) {
+            if (section == Chunk.NULL_BLOCK_STORAGE || section.isEmpty()) continue;
+            int baseY = section.getYLocation();
+            for (int y = 0; y < 16; y++) {
+                for (int z = 0; z < 16; z++) {
+                    for (int x = 0; x < 16; x++) {
+                        if (FireBlockRegistry.isFireBlock(section.get(x, y, z))) {
+                            set.add(new BlockPos(baseX + x, baseY + y, baseZ + z));
+                        }
+                    }
+                }
+            }
+        }
+        anchors.put(chunkPos, set);
+        return set;
+    }
+
+    /** Keeps an already indexed chunk current. Unindexed chunks pick it up when indexed. */
+    public void addAnchor(BlockPos pos) {
+        Set<BlockPos> set = anchors.get(new ChunkPos(pos));
+        if (set != null) set.add(pos.toImmutable());
+    }
+
+    public void removeAnchor(BlockPos pos) {
+        Set<BlockPos> set = anchors.get(new ChunkPos(pos));
+        if (set != null) set.remove(pos);
+    }
+
+    /** Forget a chunk's hearths; it is re-indexed the next time it is needed. */
+    public void forgetAnchors(ChunkPos chunkPos) {
+        anchors.remove(chunkPos);
+    }
+
+    public void clearAnchorIndex() {
+        anchors.clear();
     }
 
     public void recalcChunkWithFire(World world, ChunkPos chunkPos) {
@@ -242,6 +300,7 @@ public class ComfortWorldData extends WorldSavedData {
     }
 
     public void clearAllChunks() {
+        clearAnchorIndex();
         for (ChunkComfortData data : chunks.values()) {
             data.groupTotals.clear();
             data.keyCounts.clear();

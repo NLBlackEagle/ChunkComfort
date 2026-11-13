@@ -70,6 +70,28 @@ public class PlayerChunkComfortCache {
         shelterCheckCount = 0;
     }
 
+    /**
+     * Replace the area data with a (shared) area result. Leaves the shelter cache alone.
+     * REASON: area results are shared by every player at the same hearth, so each player
+     * gets a copy for tooltips, particles and statue candles instead of the shared maps.
+     */
+    public void copyAreaFrom(PlayerChunkComfortCache src) {
+        blockCounts.clear();
+        blockCounts.putAll(src.blockCounts);
+        groupTotals.clear();
+        groupTotals.putAll(src.groupTotals);
+        livingEntityCounts.clear();
+        livingEntityCounts.putAll(src.livingEntityCounts);
+        entityGroupTotals.clear();
+        entityGroupTotals.putAll(src.entityGroupTotals);
+        decorativeEntityCounts.clear();
+        decorativeEntityCounts.putAll(src.decorativeEntityCounts);
+        contextEntityCounts.clear();
+        contextEntityCounts.putAll(src.contextEntityCounts);
+        litStatueSlots.clear();
+        litStatueSlots.addAll(src.litStatueSlots);
+    }
+
     // ----------------- block/entity helpers -----------------
     public void addDecorativeEntityCount(Class<? extends Entity> entityClass, int count) {
         decorativeEntityCounts.put(entityClass, decorativeEntityCounts.getOrDefault(entityClass, 0) + count);

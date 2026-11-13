@@ -2,6 +2,7 @@ package chunkcomfort.chunk;
 
 import chunkcomfort.registry.BlockComfortRegistry;
 import chunkcomfort.registry.EntityComfortRegistry;
+import chunkcomfort.registry.FireBlockRegistry;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
@@ -15,6 +16,11 @@ public class ChunkUpdateManager {
     public static void onBlockPlaced(World world, BlockPos pos, Block block) {
 
         IBlockState state = world.getBlockState(pos);
+
+        // Keep the hearth index current (cheap, independent of the comfort-block logic below)
+        if (FireBlockRegistry.isFireBlock(state)) {
+            ComfortWorldData.get(world).addAnchor(pos);
+        }
 
         // REASON: two-block structures (hammocks, sleeping bags, beds, and metadata-based
         // multi-block blocks like waystones) have unreliable incremental updates because
@@ -48,6 +54,10 @@ public class ChunkUpdateManager {
     public static void onBlockBroken(World world, BlockPos pos, Block block) {
 
         IBlockState state = world.getBlockState(pos);
+
+        if (FireBlockRegistry.isFireBlock(state)) {
+            ComfortWorldData.get(world).removeAnchor(pos);
+        }
 
         // Same rescan approach for breaking — BreakEvent fires for both halves,
         // invalidating once is enough for calculatePlayerComfort to rescan correctly.
@@ -86,6 +96,7 @@ public class ChunkUpdateManager {
         ComfortWorldData worldData = ComfortWorldData.get(world);
         ChunkPos chunkPos = new ChunkPos(pos);
         worldData.getChunkData(chunkPos).initialized = false;
+        worldData.forgetAnchors(chunkPos); // multi-place may have placed a hearth; re-index lazily
         worldData.markDirty();
     }
 

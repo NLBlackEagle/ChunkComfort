@@ -76,6 +76,16 @@ public class BlockHearth extends Block {
     }
 
     @Override
+    public void onBlockPlacedBy(World world, BlockPos pos, IBlockState state, EntityLivingBase placer, net.minecraft.item.ItemStack stack) {
+        // Placement time decides which hearth owns the zone when two are in range
+        TileEntity te = world.getTileEntity(pos);
+        if (te instanceof TileEntityHearth) {
+            ((TileEntityHearth) te).placedTime = world.getTotalWorldTime();
+            te.markDirty();
+        }
+    }
+
+    @Override
     @SuppressWarnings("deprecation")
     public IBlockState withRotation(IBlockState state, Rotation rot) {
         return state.withProperty(FACING, rot.rotate(state.getValue(FACING)));

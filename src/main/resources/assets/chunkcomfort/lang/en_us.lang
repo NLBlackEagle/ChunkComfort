@@ -307,6 +307,7 @@ tile.chunkcomfort.healer_statue.name=Healer Statue
 
 # Hearth (comfort anchor)
 tile.chunkcomfort.redstone_hearth.name=Redstone Hearth
+chunkcomfort.hearth.already_nearby=§7Another hearth is already nearby, this one joins its comfort zone
 
 # Plaque dedication shown at the top of the statue tooltip (leave a statue out to show none)
 tooltip.chunkcomfort.statue.plaque=§6§o%1$s

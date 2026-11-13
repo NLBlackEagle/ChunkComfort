@@ -2,6 +2,7 @@ package chunkcomfort.chunk;
 
 import chunkcomfort.ChunkComfort;
 import chunkcomfort.config.ForgeConfigHandler;
+import chunkcomfort.hearth.TileEntityHearth;
 import chunkcomfort.network.NetworkHandler;
 import chunkcomfort.network.PacketComfortStatus;
 import chunkcomfort.player.PlayerComfortManager;
@@ -23,16 +24,12 @@ import net.minecraft.world.chunk.Chunk;
 
 import java.util.*;
 
-import static chunkcomfort.chunk.ComfortWorldData.hasFireNearby;
-
 public class AreaComfortCalculator {
 
     private static int CACHE_VERSION = 0;
     private static int cachedMaxComfort = -1;
     public static void incrementCacheVersion() {CACHE_VERSION++;}
     public static int getCacheVersion() {return CACHE_VERSION;}
-
-    private static final boolean DEBUG_COMFORT = false;
 
     private static final Map<UUID, PlayerChunkComfortCache> PLAYER_CACHES = new HashMap<>();
 
@@ -42,6 +39,7 @@ public class AreaComfortCalculator {
 
     public static void clearAllPlayerCaches() {
         PLAYER_CACHES.clear();
+        AREA_CACHE.clear();
     }
 
 
@@ -57,11 +55,91 @@ public class AreaComfortCalculator {
         return player != null && player.isPotionActive(PotionRegistry.COMFORT);
     }
 
-    public static int calculateComfortActivation(World world, EntityPlayer player, boolean fireNearby) {
+    // ---------------------------------------------------------------------
+    // Hearth anchors
+    // ---------------------------------------------------------------------
+
+    /** True when the two positions are within the comfort radius (in chunks) and the vertical range. */
+    private static boolean inRange(BlockPos a, BlockPos b, int radius) {
+        return Math.abs((a.getX() >> 4) - (b.getX() >> 4)) <= radius
+                && Math.abs((a.getZ() >> 4) - (b.getZ() >> 4)) <= radius
+                && Math.abs(a.getY() - b.getY()) <= ForgeConfigHandler.server.fireScanVerticalRange;
+    }
+
+    /** Placement time of a hearth; anchors without one (e.g. other configured blocks) count as newest. */
+    private static long anchorAge(World world, BlockPos pos) {
+        TileEntity te = world.getTileEntity(pos);
+        return te instanceof TileEntityHearth ? ((TileEntityHearth) te).placedTime : Long.MAX_VALUE;
+    }
+
+    /** Strict "a is older than b", with position as tie-break so exactly one of two hearths wins. */
+    private static boolean isOlder(long ageA, BlockPos a, long ageB, BlockPos b) {
+        if (ageA != ageB) return ageA < ageB;
+        return a.toLong() < b.toLong();
+    }
+
+    /**
+     * Every live hearth within the radius of center. Index entries whose block is gone
+     * (broken without an event, e.g. explosions) are dropped on the way. Returns a copy so
+     * callers can run nested lookups without touching the index sets mid-iteration.
+     */
+    private static List<BlockPos> anchorsNear(World world, BlockPos center) {
+        List<BlockPos> result = new ArrayList<>();
+        int radius = getRadius();
+        ComfortWorldData worldData = ComfortWorldData.get(world);
+        int cx = center.getX() >> 4;
+        int cz = center.getZ() >> 4;
+
+        for (int dx = -radius; dx <= radius; dx++) {
+            for (int dz = -radius; dz <= radius; dz++) {
+                Set<BlockPos> set = worldData.getAnchors(world, new ChunkPos(cx + dx, cz + dz));
+                if (set.isEmpty()) continue;
+                Iterator<BlockPos> it = set.iterator();
+                while (it.hasNext()) {
+                    BlockPos anchor = it.next();
+                    if (!FireBlockRegistry.isFireBlock(world.getBlockState(anchor))) {
+                        it.remove();
+                        continue;
+                    }
+                    if (inRange(center, anchor, radius)) result.add(anchor);
+                }
+            }
+        }
+        return result;
+    }
+
+    /**
+     * A hearth makes its own comfort zone only when no older hearth is within its radius.
+     * REASON: a second hearth placed next to the first must not start a second, overlapping
+     * zone. This is decided live rather than stored, so breaking the old hearth hands the
+     * zone to the next oldest one without any bookkeeping.
+     */
+    public static boolean isActiveAnchor(World world, BlockPos anchor) {
+        return findOlderAnchorNear(world, anchor) == null;
+    }
+
+    /** An older hearth within the radius of anchor (the one blocking its zone), or null. */
+    public static BlockPos findOlderAnchorNear(World world, BlockPos anchor) {
+        long age = anchorAge(world, anchor);
+        for (BlockPos other : anchorsNear(world, anchor)) {
+            if (!other.equals(anchor) && isOlder(anchorAge(world, other), other, age, anchor)) return other;
+        }
+        return null;
+    }
+
+    /** The nearest active hearth whose zone contains pos, or null. */
+    public static BlockPos findActiveAnchor(World world, BlockPos pos) {
+        List<BlockPos> candidates = anchorsNear(world, pos);
+        candidates.sort(Comparator.comparingDouble(a -> a.distanceSq(pos)));
+        for (BlockPos anchor : candidates) {
+            if (isActiveAnchor(world, anchor)) return anchor;
+        }
+        return null;
+    }
+
+    public static int calculateComfortActivation(World world, EntityPlayer player, boolean hearthNearby) {
         BlockPos pos = player.getPosition();
-        // REASON: pass pre-computed fireNearby so getRequirementsPresent does not run
-        // a second block scan for fire — the caller already ran hasFireNearby().
-        ComfortRequirements reqs = ComfortRequirementCheck.getRequirementsPresent(world, pos, player, fireNearby);
+        ComfortRequirements reqs = ComfortRequirementCheck.getRequirementsPresent(world, pos, player, hearthNearby);
         return countMetRequirements(reqs);
     }
 
@@ -125,7 +203,6 @@ public class AreaComfortCalculator {
     public static int calculatePlayerComfort(EntityPlayer player) {
         World world = player.world;
         BlockPos playerPos = player.getPosition();
-        int radius = getRadius();
 
         if (world.isRemote) return 0;
 
@@ -139,13 +216,11 @@ public class AreaComfortCalculator {
             return NOT_IN_ZONE;
         }
 
-        ComfortWorldData worldData = ComfortWorldData.get(world);
-        int centerChunkX = playerPos.getX() >> 4;
-        int centerChunkZ = playerPos.getZ() >> 4;
+        // REASON: the hearth lookup is a few index reads now (no block scan), so it runs up
+        // front and doubles as the fire/hearth requirement result.
+        BlockPos anchor = findActiveAnchor(world, playerPos);
 
-        // REASON: no fire hint here, so the fire scan runs inside getRequirementsPresent
-        // and only once light, shelter and temperature have passed (early exit).
-        ComfortRequirements reqs = ComfortRequirementCheck.getRequirementsPresent(world, playerPos, player, null);
+        ComfortRequirements reqs = ComfortRequirementCheck.getRequirementsPresent(world, playerPos, player, anchor != null);
         int comfortActive = countMetRequirements(reqs);
 
         // Tell the client which requirements are missing so the item tooltip can show them
@@ -167,14 +242,62 @@ public class AreaComfortCalculator {
             return NOT_IN_ZONE;
         }
 
-        // All requirements passed, so when fire is required reqs.fireOk is the real scan
-        // result. Only scan here when fire isn't a requirement — at most one scan per check.
-        boolean fireNearby = ForgeConfigHandler.server.requireFire
-                ? reqs.fireOk
-                : hasFireNearby(world, playerPos, radius);
+        // REASON: the comfort area is centred on the hearth's chunk, not the player's, so the
+        // zone stays put while the player moves around inside it. Every player at the same
+        // hearth shares one result. Without a hearth (only possible when the hearth is not a
+        // requirement) the area follows the player like before.
+        AreaResult area = anchor != null
+                ? getSharedArea(world, anchor)
+                : computeArea(world, playerPos, false);
 
         PlayerChunkComfortCache cache = getCache(player);
-        cache.clear();
+        cache.copyAreaFrom(area.data);
+
+        int finalComfort = Math.max(area.comfort + PettingComfortManager.getActivePettingPoints(player.getUniqueID()), 0);
+
+        PlayerComfortManager.setCachedComfort(player.getUniqueID(), finalComfort);
+        return finalComfort;
+    }
+
+    /** Comfort counted around one center: blocks, entities, statues and biome (no per-player parts). */
+    private static final class AreaResult {
+        final PlayerChunkComfortCache data = new PlayerChunkComfortCache();
+        int comfort;
+        long tick;
+        int version;
+    }
+
+    /** dimension -> hearth position -> last result for that hearth's area */
+    private static final Map<Integer, Map<BlockPos, AreaResult>> AREA_CACHE = new HashMap<>();
+
+    private static AreaResult getSharedArea(World world, BlockPos anchor) {
+        long now = world.getTotalWorldTime();
+        int maxAge = Math.max(ForgeConfigHandler.server.comfortCheckInterval, 1);
+        Map<BlockPos, AreaResult> dimCache = AREA_CACHE.computeIfAbsent(world.provider.getDimension(), k -> new HashMap<>());
+
+        AreaResult cached = dimCache.get(anchor);
+        if (cached != null && cached.version == CACHE_VERSION && now - cached.tick < maxAge) {
+            return cached;
+        }
+
+        // Drop results nobody has used for a while (hearth broken, players left)
+        dimCache.values().removeIf(r -> now - r.tick >= maxAge * 2L);
+
+        AreaResult fresh = computeArea(world, anchor, true);
+        dimCache.put(anchor.toImmutable(), fresh);
+        return fresh;
+    }
+
+    private static AreaResult computeArea(World world, BlockPos center, boolean hasAnchor) {
+        int radius = getRadius();
+        ComfortWorldData worldData = ComfortWorldData.get(world);
+        int centerChunkX = center.getX() >> 4;
+        int centerChunkZ = center.getZ() >> 4;
+
+        AreaResult result = new AreaResult();
+        result.tick = world.getTotalWorldTime();
+        result.version = CACHE_VERSION;
+        PlayerChunkComfortCache cache = result.data;
         Map<BlockComfortRegistry.BlockKey, Integer> areaKeyCounts = new HashMap<>();
 
         for (int dx = -radius; dx <= radius; dx++) {
@@ -182,7 +305,8 @@ public class AreaComfortCalculator {
                 ChunkPos chunkPos = new ChunkPos(centerChunkX + dx, centerChunkZ + dz);
                 ChunkComfortData data = worldData.getChunkData(chunkPos);
 
-                if (!data.initialized && fireNearby) {
+                // Full block scans only happen around a hearth, never in the open wilderness
+                if (!data.initialized && hasAnchor) {
                     worldData.recalcChunkWithFire(world, chunkPos);
                     data = worldData.getChunkData(chunkPos);
                 }
@@ -208,7 +332,7 @@ public class AreaComfortCalculator {
 
         addAreaLimitedBlockPoints(areaKeyCounts, cache::addGroupTotal);
 
-        addEntityComfort(world, playerPos, radius, cache);
+        addEntityComfort(world, center, radius, cache);
 
         // --- Combine block and entity group totals ---
         Set<String> allGroups = new HashSet<>();
@@ -219,30 +343,19 @@ public class AreaComfortCalculator {
         for (String group : allGroups) {
             int value = cache.groupTotals.getOrDefault(group, 0)
                     + cache.entityGroupTotals.getOrDefault(group, 0);
-
-            int totalLimit = GroupLimitRegistry.getCap(group);
-
-            totalComfort += Math.min(value, totalLimit);
+            totalComfort += Math.min(value, GroupLimitRegistry.getCap(group));
         }
 
-        ResourceLocation biomeReg = world.getBiome(playerPos).getRegistryName();
-        int biomeModifier = 0;
+        // Biome of the zone's center (the hearth), so the whole zone shares one modifier
+        ResourceLocation biomeReg = world.getBiome(center).getRegistryName();
         if (biomeReg != null) {
-            biomeModifier = BiomeComfortRegistry.getBiomeModifier(biomeReg.toString());
+            totalComfort += BiomeComfortRegistry.getBiomeModifier(biomeReg.toString());
         } else {
-            chunkcomfort.ChunkComfort.LOGGER.warn("[ChunkComfort] Biome at {} has no registry name, skipping biome modifier", playerPos);
+            chunkcomfort.ChunkComfort.LOGGER.warn("[ChunkComfort] Biome at {} has no registry name, skipping biome modifier", center);
         }
-        totalComfort += biomeModifier;
 
-        totalComfort += PettingComfortManager.getActivePettingPoints(player.getUniqueID());
-
-        int finalComfort = Math.max(totalComfort, 0);
-
-        debugComfortBreakdown(player, cache, allGroups, biomeModifier, finalComfort);
-
-
-        PlayerComfortManager.setCachedComfort(player.getUniqueID(), finalComfort);
-        return finalComfort;
+        result.comfort = totalComfort;
+        return result;
     }
 
     // REASON: previously two separate methods — addLivingEntityComfort (one AABB query
@@ -390,28 +503,5 @@ public class AreaComfortCalculator {
 
         cachedMaxComfort = Math.max(max, 0);
         return cachedMaxComfort;
-    }
-
-    private static void debugComfortBreakdown(
-            EntityPlayer player,
-            PlayerChunkComfortCache cache,
-            Set<String> allGroups,
-            int biomeModifier,
-            int totalComfort) {
-
-        if (!DEBUG_COMFORT) return;
-
-
-        for (String group : allGroups) {
-            int blockValue = cache.groupTotals.getOrDefault(group, 0);
-            int entityValue = cache.entityGroupTotals.getOrDefault(group, 0);
-            int combined = blockValue + entityValue;
-
-            int totalLimit = GroupLimitRegistry.getCap(group);
-
-            int applied = Math.min(combined, totalLimit);
-
-        }
-
     }
 }

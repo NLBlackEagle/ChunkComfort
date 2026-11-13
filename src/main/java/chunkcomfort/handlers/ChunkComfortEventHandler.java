@@ -3,6 +3,7 @@ package chunkcomfort.handlers;
 import chunkcomfort.chunk.*;
 import chunkcomfort.config.ForgeConfigHandler;
 import chunkcomfort.registry.EntityComfortRegistry;
+import chunkcomfort.registry.FireBlockRegistry;
 import chunkcomfort.registry.PettingComfortRegistry;
 import chunkcomfort.registry.PotionBlacklistRegistry;
 import net.minecraft.block.Block;
@@ -16,12 +17,14 @@ import net.minecraft.potion.Potion;
 import net.minecraft.potion.PotionEffect;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.world.World;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.entity.living.PotionEvent;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
 import net.minecraftforge.event.entity.player.PlayerWakeUpEvent;
 import net.minecraftforge.event.world.BlockEvent;
+import net.minecraftforge.event.world.ChunkEvent;
 import net.minecraftforge.fml.common.eventhandler.Event;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
@@ -38,6 +41,22 @@ public class ChunkComfortEventHandler {
         Block block = event.getPlacedBlock().getBlock();
         ChunkUpdateManager.onBlockPlaced(world, pos, block);
         ComfortBlockParticleSpawner.trySpawnComfortParticles(world, pos, event.getPlayer(), block, null);
+
+        // A hearth inside an older hearth's radius joins that zone instead of making its own
+        if (!world.isRemote && event.getPlayer() != null
+                && FireBlockRegistry.isFireBlock(event.getPlacedBlock())
+                && AreaComfortCalculator.findOlderAnchorNear(world, pos) != null) {
+            event.getPlayer().sendStatusMessage(
+                    new TextComponentTranslation("chunkcomfort.hearth.already_nearby"), true);
+        }
+    }
+
+    @SubscribeEvent
+    public void onChunkUnload(ChunkEvent.Unload event) {
+        World world = event.getWorld();
+        if (world.isRemote) return;
+        // Drop the session-only hearth index for this chunk; it is rebuilt if needed again
+        ComfortWorldData.get(world).forgetAnchors(event.getChunk().getPos());
     }
 
     @SubscribeEvent

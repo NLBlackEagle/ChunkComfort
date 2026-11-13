@@ -21,7 +21,12 @@ public class FireBlockRegistry {
     // Map<Block, Set<Integer>> means: for this block, only these meta values count
     private static final Map<Block, Set<Integer>> META_FIRE_BLOCKS = new HashMap<>();
 
+    /** Bumped on every reload so hearth indexes built from the old list are thrown away. */
+    private static int version = 0;
+    public static int getVersion() { return version; }
+
     public static void reload(String[] fireBlocks) {
+        version++;
 
         WILDCARD_FIRE_BLOCKS.clear();
         META_FIRE_BLOCKS.clear();
