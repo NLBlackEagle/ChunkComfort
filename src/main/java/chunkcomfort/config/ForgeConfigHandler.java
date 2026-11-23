@@ -65,7 +65,12 @@ public class ForgeConfigHandler {
         @Config.Name("Shelter Requirement (No Skylight)")
         public boolean requireShelter = true;
 
-        @Config.Comment({"Require a comfort anchor (hearth) nearby for comfort (true/false).", "Which blocks count is set in Fire Blocks, default the Redstone Hearth."})
+        @Config.Comment({
+                "Require standing in a hearth's comfort zone for comfort (true/false).",
+                "Which blocks count as a hearth is set in Fire Blocks, default the Redstone Hearth.",
+                "A hearth placed within the radius of an older hearth joins that zone instead of making its own.",
+                "When false, the comfort area follows the player instead of a hearth."
+        })
         @Config.Name("Fire Requirement")
         public boolean requireFire = true;
 
@@ -75,8 +80,8 @@ public class ForgeConfigHandler {
         public int minLightLevel = 7;
 
         @Config.Comment({
-                "Vertical range (in blocks) to scan for a hearth (Fire Blocks) around the player",
-                "The scan will check this value relative to the player's Y position",
+                "Vertical range (in blocks) of a hearth's comfort zone, measured from the hearth's Y position",
+                "The player must be within this height of the hearth, and entities are counted within it",
                 "Default 24 (48 blocks total)"
         })
         @Config.RangeInt(min = 1, max = 128)
@@ -84,11 +89,13 @@ public class ForgeConfigHandler {
         public int fireScanVerticalRange = 24;
 
         @Config.Comment({
-                "Chunk radius checked for comfort, recommended to leave this default.",
-                "1 = 3x3 chumks (9 chunks being scanned each comfort check interval)",
-                "2 = 5x5 chumks (25 chunks being scanned each comfort check interval)",
-                "3 = 7x7 chumks (49 chunks being scanned each comfort check interval)",
-                "This becomes very laggy very fast!"
+                "Chunk radius of a hearth's comfort zone, recommended to leave this default.",
+                "The zone is centred on the hearth's chunk, not on the player.",
+                "0 = only the hearth's chunk",
+                "1 = 3x3 chunks",
+                "2 = 5x5 chunks",
+                "3 = 7x7 chunks",
+                "Bigger zones take longer to count and let hearths block each other from further away."
         })
         @Config.RangeInt(min = 0, max = 3)
         public int chunkRadius = 1;
@@ -120,7 +127,7 @@ public class ForgeConfigHandler {
 
         //Comfort Entries
 
-        @Config.Comment({"Blocks that count as the comfort anchor (hearth) for the Fire Requirement.", "Default is the Redstone Hearth, which gives light but no heat (unlike real fire with SimpleDifficulty).", "Supports metadata via @: e.g. minecraft:campfire@1 matches only meta 1, minecraft:campfire matches all variants"})
+        @Config.Comment({"Blocks that count as a hearth (comfort anchor) for the Fire Requirement.", "Default is the Redstone Hearth, which gives light but no heat (unlike real fire with SimpleDifficulty).", "Supports metadata via @: e.g. minecraft:campfire@1 matches only meta 1, minecraft:campfire matches all variants"})
         @Config.Name("Fire Blocks")
         public String[] fireBlocks = new String[]{
                 "chunkcomfort:redstone_hearth"
