@@ -266,7 +266,7 @@ public class StatueClient {
                         : I18n.format("tooltip.chunkcomfort.statue.activates", name + level));
             }
         }
-        return String.join("§7, ", parts);
+        return String.join("\u00A77, ", parts);
     }
 
     @SubscribeEvent

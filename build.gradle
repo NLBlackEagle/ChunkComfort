@@ -12,6 +12,10 @@ base.archivesName = mod_name
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(8)
 
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
 minecraft {
     mappings channel: mappings_channel, version: mappings_version
 

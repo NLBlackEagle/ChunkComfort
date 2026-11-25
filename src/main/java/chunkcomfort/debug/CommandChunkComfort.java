@@ -76,14 +76,14 @@ public class CommandChunkComfort extends CommandBase {
         net.minecraft.item.ItemStack stack = player.getHeldItemMainhand();
 
         if (stack.isEmpty()) {
-            sender.sendMessage(new TextComponentString("§cYou are not holding an item."));
+            sender.sendMessage(new TextComponentString("\u00A7cYou are not holding an item."));
             return;
         }
 
         net.minecraft.item.Item item = stack.getItem();
         ResourceLocation itemId = item.getRegistryName();
 
-        sender.sendMessage(new TextComponentString("§6--- Held Item Debug ---"));
+        sender.sendMessage(new TextComponentString("\u00A76--- Held Item Debug ---"));
 
         // Registry name
         sender.sendMessage(new TextComponentString(
@@ -152,7 +152,7 @@ public class CommandChunkComfort extends CommandBase {
         sender.sendMessage(new TextComponentString("--- Block at feet ---"));
         sender.sendMessage(new TextComponentString("Block registry name: " + (blockName != null ? blockName : "null")));
         sender.sendMessage(new TextComponentString("Item registry name:  " + (itemName != null ? itemName : "null/no item")));
-        sender.sendMessage(new TextComponentString("In comfort registry: " + (isComfort ? "§aYES" : "§cNO")));
+        sender.sendMessage(new TextComponentString("In comfort registry: " + (isComfort ? "\u00A7aYES" : "\u00A7cNO")));
         if (isComfort) {
             BlockComfortRegistry.ComfortEntry entry = BlockComfortRegistry.getBlockEntry(block);
             sender.sendMessage(new TextComponentString("Group: " + entry.group + " | Value: " + entry.value + " | Limit: " + entry.limit));
@@ -470,9 +470,9 @@ public class CommandChunkComfort extends CommandBase {
                     int limit = ChunkComfortClientTooltipHandler.getGroupLimit(group);
                     int displayValue = Math.min(value, limit);
                     chunkTotal += displayValue;
-                    String color = (value > limit) ? "§c" : "§a";
+                    String color = (value > limit) ? "\u00A7c" : "\u00A7a";
 
-                    chunkGroupDisplay.append(color).append(group).append(": ").append(displayValue).append("§r  ");
+                    chunkGroupDisplay.append(color).append(group).append(": ").append(displayValue).append("\u00A7r  ");
                 }
 
                 sender.sendMessage(new TextComponentString(
@@ -527,9 +527,9 @@ public class CommandChunkComfort extends CommandBase {
         sender.sendMessage(new TextComponentString(I18n.format("debug.chunkcomfort.group_breakdown_syntax")));
 
         if (biomeModifier != 0) {
-            String color = biomeModifier > 0 ? "§a" : "§c";
+            String color = biomeModifier > 0 ? "\u00A7a" : "\u00A7c";
             sender.sendMessage(new TextComponentString(
-                    color + "Biome Modifier: " + biomeModifier + "§r"
+                    color + "Biome Modifier: " + biomeModifier + "\u00A7r"
             ));
         }
 
@@ -539,7 +539,7 @@ public class CommandChunkComfort extends CommandBase {
             int groupPointsRaw = groupTotals.getOrDefault(group, 0);
             int groupLimit = ChunkComfortClientTooltipHandler.getGroupLimit(group);
             int groupPointsDisplay = Math.min(groupPointsRaw, groupLimit);
-            String groupColor = (groupPointsRaw > groupLimit) ? "§c" : "§a";
+            String groupColor = (groupPointsRaw > groupLimit) ? "\u00A7c" : "\u00A7a";
 
             StringBuilder contentDisplay = new StringBuilder();
 
@@ -548,14 +548,14 @@ public class CommandChunkComfort extends CommandBase {
                 int count = e.getValue();
                 int displayCount = 0;
                 int itemLimit = 0;
-                String color = "§a";
+                String color = "\u00A7a";
 
                 // --- Block lookup O(1) ---
                 BlockComfortRegistry.ComfortEntry blockEntry = canonicalIdToBlockEntry.get(name);
                 if (blockEntry != null) {
                     itemLimit = blockEntry.limit;
                     displayCount = Math.min(count, itemLimit);
-                    color = (count > itemLimit) ? "§c" : "§a";
+                    color = (count > itemLimit) ? "\u00A7c" : "\u00A7a";
                     name = blockEntryToCanonicalId.get(blockEntry); // canonical name
                 } else {
                     // --- Living entity ---
@@ -574,7 +574,7 @@ public class CommandChunkComfort extends CommandBase {
 
                         itemLimit = livingEntry.limit;
                         displayCount = Math.min(count, itemLimit);
-                        if (count > itemLimit) color = "§c";
+                        if (count > itemLimit) color = "\u00A7c";
                         // Display a readable name: use context suffix if present
                         name = context != null ? baseName + " (" + context + ")" : baseName;
                     } else {
@@ -583,19 +583,19 @@ public class CommandChunkComfort extends CommandBase {
                         if (entityEntry != null) {
                             itemLimit = entityEntry.limit;
                             displayCount = Math.min(count, itemLimit);
-                            if (count > itemLimit) color = "§c";
+                            if (count > itemLimit) color = "\u00A7c";
                         }
                     }
                 }
 
-                contentDisplay.append(color).append("§b").append(name).append("§r ")
-                        .append(displayCount).append("/").append(itemLimit).append("§r, ");
+                contentDisplay.append(color).append("\u00A7b").append(name).append("\u00A7r ")
+                        .append(displayCount).append("/").append(itemLimit).append("\u00A7r, ");
             }
 
             if (contentDisplay.length() > 2) contentDisplay.setLength(contentDisplay.length() - 2);
 
             sender.sendMessage(new TextComponentString(
-                    groupColor + group + ": " + groupPointsDisplay + "/" + groupLimit + "§r | " + contentDisplay
+                    groupColor + group + ": " + groupPointsDisplay + "/" + groupLimit + "\u00A7r | " + contentDisplay
             ));
         }
 
